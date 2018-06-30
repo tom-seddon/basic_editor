@@ -21,8 +21,8 @@ build:
 	@python tools/checksize.py $(DEST)/basiced.rom $(DEST)/hibasiced.rom
 #	python checksize.py $(DEST)/rbasiced_b800.rom
 
-	@test -d lkg && md5sum $(DEST)/basiced.rom lkg/basiced.rom || true
-	@test -d lkg && md5sum $(DEST)/hibasiced.rom lkg/hibasiced.rom || true
+	@test -f lkg/basiced.rom && md5sum $(DEST)/basiced.rom lkg/basiced.rom || true
+	@test -f lkg/hibasiced.rom && md5sum $(DEST)/hibasiced.rom lkg/hibasiced.rom || true
 #
 #	python tools/make_reloc.py --not-emacs $(DEST)/rbasiced_8000.rom $(DEST)/rbasiced_b800.rom
 
