@@ -38,6 +38,16 @@ SVC_BASE = $8000
 .endif
 
 ;-------------------------------------------------------------------------
+
+; Language entry point modes.
+;
+; All modes must be non-zero.
+                LANGUAGE_MODE_NORMAL=1
+                LANGUAGE_MODE_ZSAVE=2
+                LANGUAGE_MODE_ZRUN=3
+
+
+;-------------------------------------------------------------------------
 ; SLRE---1-
 ; S=service
 ; L=language
@@ -98,42 +108,71 @@ star:
                 pha
 
 check_be:
+                ; *...
                 lda ($f2),Y
                 and #$df
                 cmp #"B"
                 bne star_done
-                
+
+                ; *B....
                 iny
-                lda ($f2),y
+                lda ($f2),Y
                 and #$df
-                cmp #"E"
-                bne star_done
+                pha
 
+                ; *B?...
                 iny
-                lda ($f2),y
+                lda ($f2),Y
                 cmp #13
-                bne star_done
+                beq check_command
+                pla
+star_done:
+                pla
+                tay
+                jmp done
 
+check_command:
+                ; *B?|M
+                pla
+                cmp #"E"
+                bne try_z
+                ; *BE|M
+                lda #LANGUAGE_MODE_NORMAL
+                bne enter_language
+
+try_z:
+                cmp #"Z"
+                bne try_r
+                ; *BZ|M
+                lda #LANGUAGE_MODE_ZSAVE
+                bne enter_language
+                
+try_r:
+                cmp #"R"
+                bne star_done
+                ; *BR|M
+                lda #LANGUAGE_MODE_ZRUN
+                
+enter_language:
+                
+                sta $df0,x
+                
                 .if HI
-                ; If that was *BE, and there's no Tube, just ignore
-                ; the request - this gives the non-HI ROM a chance, if
-                ; it's there, or a Bad Command, if it isn't.
+                ; if there's no Tube, just ignore the request - this
+                ; gives the non-HI ROM a chance, if it's there, or a
+                ; Bad Command, if it isn't (since the HI language code
+                ; can't run in the IO processor).
                 lda #$ea
                 ldx #$00
                 ldy #$ff
                 jsr osbyte
                 inx
                 bne star_done
-                ldx $f4
+                
                 .endif
                 
                 lda #$8e        ;enter language ROM
                 jmp osbyte
-
-star_done:
-                pla
-                tay
-                jmp done
 
 maybe_help:
                 cmp #9
@@ -163,29 +202,36 @@ done:
                 pla
                 rts
 .pend
-                
-                .logical LANG_BASE+(*-SVC_BASE)
+
+;-------------------------------------------------------------------------
+
+.logical LANG_BASE+(*-SVC_BASE)
+
+get_language_entry_mode:
+
 language_entry: .proc
                 CMP     #1              ; normal language entry?
                 BEQ     language_start
                 RTS
 
 language_start:
-                ; lda #0
-                ; sta $100
-                ; lda #255
-                ; sta $101
-                ; lda #"A"
-                ; sta $102
-                ; lda #"R"
-                ; sta $103
-                ; lda #"S"
-                ; sta $104
-                ; lda #"E"
-                ; sta $105
-                ; lda #0
-                ; sta $106
-                ; jmp $100
+                entry_mode_osword_block=language_entry_mode-4
+                ; $ffff0dfX
+                ldy #$0d
+                sty entry_mode_osword_block+1
+                ldy #$ff
+                sty entry_mode_osword_block+2
+                sty entry_mode_osword_block+3
+                lda #252
+                ldx #0
+                jsr osbyte
+                txa
+                ora #$f0
+                sta entry_mode_osword_block+0
+                ldx #<entry_mode_osword_block
+                ldy #>entry_mode_osword_block
+                lda #5
+                jsr osword
                 
                 JSR     init_brkv_and_oshwm
                 JSR     clear_line_commands
@@ -2083,6 +2129,10 @@ gotoxy .proc
 
 
 .pend
+
+print_next_string: .proc
+.pend
+
 print_n_chars .proc			
 		STX	byte_C
 		STY	byte_D
@@ -2110,7 +2160,7 @@ start:
                 LDY	#0
 
 loop:
-		LDA	($C),Y
+		LDA	(byte_C),Y
 		CMP	#$7F ; ''
                 BEQ print_space
                 plp
@@ -11056,6 +11106,12 @@ loc_BBB0:
 info_command:				
                 JSR	osnewl
 
+                ; lda language_entry_mode
+                ; clc
+                ; adc #'A'
+                ; jsr oswrch                
+
+                
                 ldx #<aScroll
                 ldy #>aScroll
                 lda #aScrollEnd-aScroll
