@@ -4,6 +4,15 @@ There's a nice OCR'd copy of the original manual available from stardot: https:/
 
 # Changes in this version
 
+## Command prompt changes
+
+Smaller HUD that shows the current program name (previously hidden
+away in the `INFO` output).
+
+## Help text changes
+
+The `HELP` output is a bit shorter and not as nicely formatted.
+
 ## Insert mode
 
 Insert mode is now the default.
@@ -28,13 +37,12 @@ available. (And modes 2 and 5, if you're so inclined.)
 
 ## File name
 
-When you `LOAD` or `SAVE` a file, the file name as saved off. You'll
-see this shown when in command mode.
+When you `LOAD` or `SAVE` a file, the current file name is set.
 
 Note that only the first 14 characters are stored off. You can
 explicitly save and load files with longer names, but the additional
-chars won't be stored. The command mode HUD will show the stored name,
-so it should at least be fairly obvious when this happens...
+chars won't be stored. The command mode HUD will show the shorter name
+when this happens, so it should at least be fairly obvious...
 
 ## Quick save
 
@@ -71,6 +79,10 @@ The new command `CASE` makes these commands case-sensitive (the
 default); the new command `NOCASE` makes them case-insensitive.
 
 The case sensitivity status can be seen using the `INFO` command.
+
+## Shift+ESCAPE
+
+You can press Shift+ESCAPE at the command prompt to get back to BASIC.
 
 # The HIBASIC Editor
 
