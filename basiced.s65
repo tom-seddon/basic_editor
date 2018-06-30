@@ -1,0 +1,14 @@
+osnewl = $ffe7
+osrdch = $ffe0
+oscli = $fff7
+oswrch = $ffee
+osbyte = $fff4
+osword = $fff1
+osfile = $ffdd
+
+                .dsection bss
+                .include "zp.s65"
+                .include "workspace.s65"
+                .include "cmds.s65"
+
+                .include "mainpart.s65"
