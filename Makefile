@@ -4,7 +4,7 @@ VER?=_
 ##########################################################################
 ##########################################################################
 
-TASS:=64tass --m65xx --nostart
+TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg
 BOOT:=../../beeb/beeb-files/stuff/65boot/0
 
 .PHONY:build

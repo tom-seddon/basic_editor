@@ -9,29 +9,29 @@ HI_ADDRESS = $b800
 
 .if COPRO==0
                 
-RELOCATABLE = 0
-HI = 0
+RELOCATABLE = false
+HI = false
 SVC_BASE = $8000
 LANG_BASE = $8000
 
 .elsif COPRO==1
                 
-RELOCATABLE = 0
-HI = 187
+RELOCATABLE = false
+HI = true
 SVC_BASE = $8000
                 LANG_BASE = HI_ADDRESS
                 
 .elsif COPRO==2
                 
-RELOCATABLE = 1
-HI = 0
+RELOCATABLE = true
+HI = false
 SVC_BASE = $8000
 LANG_BASE = $8000
 
 .elsif COPRO==3
                 
-RELOCATABLE = 1
-HI = 0
+RELOCATABLE = true
+HI = false
 SVC_BASE = $8000
                 LANG_BASE = HI_ADDRESS
                 
@@ -10948,7 +10948,7 @@ nocarry
                 ; do args
                 txa
                 and #$20
-                bne c
+                bne print_c
 
                 txa
                 and #$10
@@ -10960,15 +10960,15 @@ nocarry
 
                 txa
                 and #$8
-                bne p
+                bne print_p
 
                 txa
                 and #$2
-                bne n
+                bne print_n
 
                 txa
                 and #5
-                bne s
+                bne print_s
 
 next_help
                 lda #","
@@ -10979,19 +10979,19 @@ next_help
                 
                 jmp help_loop
 
-c
+print_c
                 ldx #'c'
                 bne onechar
 
-p
+print_p
                 ldx #'p'
                 bne onechar
 
-n
+print_n
                 ldx #'n'
                 bne onechar
 
-s
+print_s
                 ldx #'s'
 onechar
                 lda #32
