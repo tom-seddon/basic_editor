@@ -137,25 +137,26 @@ check_command:
                 cmp #"E"
                 bne try_z
                 ; *BE|M
-                lda #LANGUAGE_MODE_NORMAL
+                ldx #LANGUAGE_MODE_NORMAL
                 bne enter_language
 
 try_z:
                 cmp #"Z"
                 bne try_r
                 ; *BZ|M
-                lda #LANGUAGE_MODE_ZSAVE
+                ldx #LANGUAGE_MODE_ZSAVE
                 bne enter_language
                 
 try_r:
                 cmp #"R"
                 bne star_done
                 ; *BR|M
-                lda #LANGUAGE_MODE_ZRUN
+                ldx #LANGUAGE_MODE_ZRUN
                 
 enter_language:
-                
-                sta $df0,x
+                lda #1
+                ldy #0
+                jsr osbyte
                 
                 .if HI
                 ; if there's no Tube, just ignore the request - this
@@ -168,9 +169,9 @@ enter_language:
                 jsr osbyte
                 inx
                 bne star_done
-                
                 .endif
                 
+                ldx $f4
                 lda #$8e        ;enter language ROM
                 jmp osbyte
 
@@ -207,31 +208,17 @@ done:
 
 .logical LANG_BASE+(*-SVC_BASE)
 
-get_language_entry_mode:
-
 language_entry: .proc
                 CMP     #1              ; normal language entry?
                 BEQ     language_start
                 RTS
 
 language_start:
-                entry_mode_osword_block=language_entry_mode-4
-                ; $ffff0dfX
-                ldy #$0d
-                sty entry_mode_osword_block+1
-                ldy #$ff
-                sty entry_mode_osword_block+2
-                sty entry_mode_osword_block+3
-                lda #252
+                lda #1
                 ldx #0
+                ldy #$ff
                 jsr osbyte
-                txa
-                ora #$f0
-                sta entry_mode_osword_block+0
-                ldx #<entry_mode_osword_block
-                ldy #>entry_mode_osword_block
-                lda #5
-                jsr osword
+                stx language_entry_mode
                 
                 JSR     init_brkv_and_oshwm
                 JSR     clear_line_commands
