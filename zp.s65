@@ -1,181 +1,181 @@
                 * = 0
 
-byte_0
+byte_0:
                 .fill 1	
-unk_1
-		.fill 1 
-		.fill 1 
-		.fill 1 
-		.fill 1 
-		.fill 1 
-HIMEM
-		.fill 1
-		.fill 1 
-unk_8
-		.fill 1 
-unk_9
-		.fill 1 
-background_colour
+unk_1:
                 .fill 1 
-foreground_colour
                 .fill 1 
-byte_C
-		.fill 1	
-byte_D
-		.fill 1	
-byte_E
-		.fill 1	
-byte_F
-		.fill 1	
-cursor_offset
-                .fill 1	
-unk_11
-		.fill 1 
-TOP
-		.fill 1
-		.fill 1		
-spare_14
-                .fill 1	
-byte_15
-                .fill 1	
-unk_16
-		.fill 1 
-oshwm
-		.fill 1
-		.fill 1
-readline_ptr_lsb
                 .fill 1 
-readline_ptr_msb
                 .fill 1 
-unk_1B
-		.fill 1 
-unk_1C
-		.fill 1 
-unk_1D
-		.fill 1 
-unk_1E
-		.fill 1 
-unk_1F
-		.fill 1 
-byte_20
-                .fill 1	
-byte_21
-                .fill 1	
-byte_22
-                .fill 1	
-byte_23
-                .fill 1	
-byte_24
-                .fill 1	
-byte_25
-                .fill 1	
-byte_26
-                .fill 1	
-byte_27
-                .fill 1	
-byte_28
-                .fill 1	
-unk_29
-		.fill 1 
-unk_2A
-		.fill 1 
-byte_2B
-                .fill 1	
-byte_2C
-                .fill 1	
-byte_2D
-                .fill 1	
-unk_2E
-		.fill 1 
-unk_2F
-		.fill 1 
-unk_30
-		.fill 1 
-unk_31
-		.fill 1 
-unk_32
-		.fill 1 
-unk_33
-		.fill 1 
-unk_34
-		.fill 1 
-byte_35
-                .fill 1	
-byte_36
-                .fill 1	
-unk_37
-		.fill 1 
-byte_38
-                .fill 1	
-byte_39
-                .fill 1	
-byte_3A
-                .fill 1	
-byte_3B
-                .fill 1	
-is_insert_mode
                 .fill 1 
-scroll_status
-                .fill 1	
-byte_3E
-                .fill 1	
-byte_3F
-                .fill 1	
-byte_40
-                .fill 1	
-byte_41
-                .fill 1	
-byte_42
-                .fill 1	
-byte_43
-                .fill 1	
-byte_44
-                .fill 1	
-byte_45
-                .fill 1	
-byte_46
-                .fill 1	
-byte_47
-                .fill 1	
-byte_48
-                .fill 1	
-byte_49
-                .fill 1	
-current_line_no_lsb
+HIMEM:
+                .fill 1
                 .fill 1 
-current_line_no_msb
+unk_8:
                 .fill 1 
-		.fill 1 
-unk_4D
-		.fill 1 
-unk_4E
-		.fill 1 
-		.fill 1 
-byte_50
+unk_9:
+                .fill 1 
+background_colour:
+                .fill 1 
+foreground_colour:
+                .fill 1 
+byte_C:
                 .fill 1	
-byte_51
+byte_D:
                 .fill 1	
-program_name
+byte_E:
+                .fill 1	
+byte_F:
+                .fill 1	
+cursor_offset:
+                .fill 1	
+unk_11:
+                .fill 1 
+TOP:
+                .fill 1
+                .fill 1		
+spare_14:
+                .fill 1	
+byte_15:
+                .fill 1	
+unk_16:
+                .fill 1 
+oshwm:
+                .fill 1
+                .fill 1
+readline_ptr_lsb:
+                .fill 1 
+readline_ptr_msb:
+                .fill 1 
+unk_1B:
+                .fill 1 
+unk_1C:
+                .fill 1 
+unk_1D:
+                .fill 1 
+unk_1E:
+                .fill 1 
+unk_1F:
+                .fill 1 
+byte_20:
+                .fill 1	
+byte_21:
+                .fill 1	
+byte_22:
+                .fill 1	
+byte_23:
+                .fill 1	
+byte_24:
+                .fill 1	
+byte_25:
+                .fill 1	
+byte_26:
+                .fill 1	
+byte_27:
+                .fill 1	
+byte_28:
+                .fill 1	
+unk_29:
+                .fill 1 
+unk_2A:
+                .fill 1 
+byte_2B:
+                .fill 1	
+byte_2C:
+                .fill 1	
+byte_2D:
+                .fill 1	
+unk_2E:
+                .fill 1 
+unk_2F:
+                .fill 1 
+unk_30:
+                .fill 1 
+cursor_size:
+                .fill 1 
+unk_32:
+                .fill 1 
+unk_33:
+                .fill 1 
+unk_34:
+                .fill 1 
+byte_35:
+                .fill 1	
+byte_36:
+                .fill 1	
+unk_37:
+                .fill 1 
+byte_38:
+                .fill 1	
+byte_39:
+                .fill 1	
+byte_3A:
+                .fill 1	
+byte_3B:
+                .fill 1	
+is_insert_mode:
+                .fill 1 
+scroll_status:
+                .fill 1	
+byte_3E:
+                .fill 1	
+byte_3F:
+                .fill 1	
+byte_40:
+                .fill 1	
+byte_41:
+                .fill 1	
+byte_42:
+                .fill 1	
+byte_43:
+                .fill 1	
+byte_44:
+                .fill 1	
+byte_45:
+                .fill 1	
+byte_46:
+                .fill 1	
+byte_47:
+                .fill 1	
+byte_48:
+                .fill 1	
+byte_49:
+                .fill 1	
+current_line_no_lsb:
+                .fill 1 
+current_line_no_msb:
+                .fill 1 
+                .fill 1 
+unk_4D:
+                .fill 1 
+unk_4E:
+                .fill 1 
+                .fill 1 
+byte_50:
+                .fill 1	
+byte_51:
+                .fill 1	
+program_name:
                 .fill 15
-unk_61
-		.fill 1 
-byte_62
+unk_61:
+                .fill 1 
+byte_62:
                 .fill 1	
 case_insensitive_search:        ;$80 or $00.
                 .fill 1
 search_tmp:
-.fill 1
+                .fill 1
 print_1_char_a:
-.fill 1
+                .fill 1
 print_1_char_x:
-.fill 1
+                .fill 1
 print_1_char_y:
-.fill 1
+                .fill 1
 
 language_entry_mode:
                 ; if top bit set, call exit_and_OLD after printing a
                 ; BRK message.
                 .fill 1
 
-.cerror *>=$90,"too much zero page use"
+                .cerror *>=$90,"too much zero page use"
                 

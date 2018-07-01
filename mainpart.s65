@@ -272,7 +272,7 @@ language_start:
                 LDX     #5
                 STX     unk_61
                 LDX     #$60 ; '`'
-                STX     unk_31
+                STX     cursor_size
                 LDX     #0
                 STX     byte_62
                 INX
@@ -602,15 +602,15 @@ loc_82CB:
                 JSR     OSWRCH
                 LDA     is_insert_mode  ; 0=overtype 1=insert
                 PHA
-                LDA     unk_31
+                LDA     cursor_size
                 PHA
                 LDA     #0
                 STA     is_insert_mode  ; 0=overtype 1=insert
                 LDA     #$60 ; '`'
-                STA     unk_31
+                STA     cursor_size
                 JSR     reset_cursor_shape
                 PLA
-                STA     unk_31
+                STA     cursor_size
                 PLA
                 STA     is_insert_mode  ; 0=overtype 1=insert
                 RTS
@@ -1329,37 +1329,54 @@ six_spaces_string:.byte	 $20 ;
 		.byte  $20 ;
 		.byte  $20 ;
 		.byte  $20 ;
-		.byte  $20 ;
-byte_89C1:	.byte 7, 7, 7, 7, 7, 7,	7, $12 
-byte_89C9:	.byte 7, 7, 7, 9, 7, 7,	9, $13 
-byte_89D1:	.byte 7, 7, 7, 7, 7, 7,	7, $13 
-colour_chars:	.text "NRGYBMCW"
+.byte  $20 ;
+CRTC_cursor_start_values:
+                .byte 7, 7, 7, 7, 7, 7,	7, $12 
+CRTC_cursor_end_values_overtype:
+                .byte 7, 7, 7, 9, 7, 7,	9, $13 
+CRTC_cursor_end_values_insert:
+                .byte 7, 7, 7, 7, 7, 7,	7, $13 
+colour_chars:
+                .text "NRGYBMCW"
 
 colour_names_table: .proc
 base:
-.byte black-base,red-base,green-base,yellow-base,blue-base,magenta-base,cyan-base,white-base,end-base
-black: .text "black"
-red: .text "red"
-green: .text "green"
-yellow: .text "yellow"
-blue: .text "blue"
-magenta: .text "magenta"
-cyan: .text "cyan"
-white: .text "white"
+                .byte black-base,red-base,green-base,yellow-base,blue-base,magenta-base,cyan-base,white-base,end-base
+black:
+                .text "black"
+red:
+                .text "red"
+green:
+                .text "green"
+yellow:
+                .text "yellow"
+blue:
+                .text "blue"
+magenta:
+                .text "magenta"
+cyan:
+                .text "cyan"
+white:
+                .text "white"
 end:
-.pend
+                .pend
 
-aMarkedLine:	.text "Marked line: "
+aMarkedLine:
+                .text "Marked line: "
 aMarkedLineEnd:
-.text "None"
+                .text "None"
 aMarkedLineNoneEnd:
-aPendingCommands:.text "Pending commands: "
+                
+aPendingCommands:
+                .text "Pending commands: "
 aPendingCommandsEnd:
-.text "None"
+                .text "None"
 aPendingCommandsNoneEnd:
-aLastSearch:	.text "Last search : "
+                
+aLastSearch:
+                .text "Last search : "
 aLastSearchEnd:
-.text "None"
+                .text "None"
 aLastSearchNoneEnd:
                 
 print_on_off: .proc
@@ -1367,14 +1384,17 @@ print_on_off: .proc
                 beq off
 
                 jsr print_next_string
-.text "On",255
+                .text "On",255
+                
                 rts
 
 off:
                 jsr print_next_string
-.text "Off",255
+                .text "Off",255
+                
                 rts
-.pend
+                
+                .pend
                 
 do_command_line .proc		
 		JSR	clear_5B1_to_600
@@ -1409,7 +1429,8 @@ bye:
                 
                 
 ; End of function do_command_line
-.pend
+                .pend
+                
 command_table
                 .text "APPEND",0
 		.byte	 9 ;
@@ -4755,21 +4776,21 @@ reset_cursor_shape:
 		LDA	#0
 		LDY	is_insert_mode	; 0=overtype 1=insert
 		BNE	loc_9BD2
-		LDA	byte_89C1,X
+		LDA	CRTC_cursor_start_values,X
 
 loc_9BD2:				
-		ORA	unk_31
+		ORA	cursor_size
 		TAY
 		LDX	#10
 		JSR	write_crtc
 		JSR	get_current_mode_in_x
 		LDA	is_insert_mode	; 0=overtype 1=insert
 		BNE	loc_9BE6
-		LDY	byte_89C9,X
+		LDY	CRTC_cursor_end_values_overtype,X
 		BNE	loc_9BE9
 
 loc_9BE6:				
-		LDY	byte_89D1,X
+		LDY	CRTC_cursor_end_values_insert,X
 
 loc_9BE9:				
 		LDX	#11
@@ -6890,7 +6911,7 @@ run_or_exit_command: .proc
 		LDA	#0
 		STA	is_insert_mode	; 0=overtype 1=insert
 		LDA	#$60 ; '`'
-		STA	unk_31
+		STA	cursor_size
 		JSR	reset_cursor_shape
 		LDA	#26		; reset	text and graphics windows
 		JSR	OSWRCH
@@ -7124,7 +7145,7 @@ loc_A726:
 
 copy_key_edit_mode_command:		
 		LDX	#0
-		LDA	unk_31
+		LDA	cursor_size
 		BNE	loc_A745
 		LDX	#$40 ; '@'
 		BNE	loc_A74B
@@ -7135,7 +7156,7 @@ loc_A745:
 		LDX	#$60 ; '`'
 
 loc_A74B:				
-		STX	unk_31
+		STX	cursor_size
 		RTS
 
 top_of_screen_edit_mode_command:	
