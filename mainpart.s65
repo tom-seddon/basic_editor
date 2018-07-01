@@ -1336,25 +1336,21 @@ six_spaces_string:.byte	 $20 ;
 byte_89C1:	.byte 7, 7, 7, 7, 7, 7,	7, $12 
 byte_89C9:	.byte 7, 7, 7, 9, 7, 7,	9, $13 
 byte_89D1:	.byte 7, 7, 7, 7, 7, 7,	7, $13 
-colour_chars:	.text "NRGYBMCW"        
-colour_names_table:.byte  $C2 
-					
-aLack:		.text "lack"
-		.byte  $D2 ; Ò
-aEd:		.text "ed"
-		.byte  $C7 ; Ç
-aReen:		.text "reen"
-		.byte  $D9 ; Ù
-aEllow:		.text "ellow"
-		.byte  $C2 ; Â
-aLue:		.text "lue"
-		.byte  $CD ; Í
-aAgenta:	.text "agenta"
-		.byte  $C3 ; Ã
-aYan:		.text "yan"
-		.byte  $D7 ; ×
-aHite:		.text "hite"
-                .byte  $FF ;
+colour_chars:	.text "NRGYBMCW"
+
+colour_names_table: .proc
+base:
+.byte black-base,red-base,green-base,yellow-base,blue-base,magenta-base,cyan-base,white-base,end-base
+black: .text "black"
+red: .text "red"
+green: .text "green"
+yellow: .text "yellow"
+blue: .text "blue"
+magenta: .text "magenta"
+cyan: .text "cyan"
+white: .text "white"
+end:
+.pend
 
 aMarkedLine:	.text "Marked line: "
 aMarkedLineEnd:
@@ -11449,49 +11445,29 @@ sub_BD96:
 
 
 
-print_colour_scheme:			
+print_colour_scheme: .proc		
 					
-		LDA	foreground_colour ; get	foreground colour
-		CLC			; capitalize
+                LDX	foreground_colour
+                lda #$df
                 JSR	print_colour_name
                 jsr print_next_string
                 .text " on ",255
-		LDA	background_colour
-		SEC			; don't capitalize
+                LDX	background_colour
+                lda #$ff
 
-print_colour_name:			
-		PHP
-		STA	byte_3A
-		LDX	#$FF		; index	of current colour name
-		LDY	#0		; offset into table
-
-loc_BDB5:				
-		LDA	colour_names_table,Y ; get next	byte
-		BPL	next_byte	; if +ve, still	current	name
-		INX			; just found new colour	name, so inc X
-		CPX	byte_3A		; is it	the one?
-		BEQ	print_name	; print	if so.
-
-next_byte:				
-		INY
-		BNE	loc_BDB5
-
-print_name:				
-		AND	#$7F		; make printable
-		PLP
-		BCC	print_chars	; capitalize?
-		ORA	#$20 ; ' '      ; toupper
-
-print_chars:				
-					
-		JSR	OSWRCH
-		INY
-		LDA	colour_names_table,Y
-		BPL	print_chars
-		RTS
-; End of function print_colour_scheme
-
-
+                ; fall through
+print_colour_name:
+                ldy colour_names_table,x
+loop:
+                and colour_names_table,y
+                jsr oswrch
+                iny
+                tya
+                cmp colour_names_table+1,x
+                lda #$ff
+                bcc loop
+                rts
+.pend
 
 
 sub_BDD3:				
