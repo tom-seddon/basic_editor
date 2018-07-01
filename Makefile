@@ -1,5 +1,6 @@
 DEST:=.build
 VER?=_
+RELEASES:=./releases
 
 ##########################################################################
 ##########################################################################
@@ -29,9 +30,12 @@ build:
 ##########################################################################
 ##########################################################################
 
-#	python set_rom_version.py -o $(DEST)/$(VER)/zip/basiced.rom $(DEST)/basiced.rom $(VER)
-#	python set_rom_version.py -o $(DEST)/$(VER)/zip/hibasiced.rom $(DEST)/hibasiced.rom $(VER)
+.PHONY:release
+release:
+	rm -Rvf $(RELEASES)/$(VER)
+	mkdir -p $(RELEASES)/$(VER)
+	python tools/set_rom_version.py -o $(RELEASES)/$(VER)/basiced.rom $(DEST)/basiced.rom $(VER)
+	python tools/set_rom_version.py -o $(RELEASES)/$(VER)/hibasiced.rom $(DEST)/hibasiced.rom $(VER)
 
 ##########################################################################
 ##########################################################################
-
