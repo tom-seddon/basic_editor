@@ -84,10 +84,10 @@ The case sensitivity status can be seen using the `INFO` command.
 
 You can press Shift+ESCAPE at the command prompt to get back to BASIC.
 
-## `\*BZ` and `\*BR`
+## `*BZ` and `*BR`
 
-If the first line is a `REM>`, you can use `\*BZ` to do a `ZSAVE` from
-inside BASIC, and use `\*BR` to do a `ZRUN`.
+If the first line is a `REM>`, you can use `*BZ` to do a `ZSAVE` from
+inside BASIC, and use `*BR` to do a `ZRUN`.
 
 # The HIBASIC Editor
 
