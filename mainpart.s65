@@ -301,9 +301,8 @@ language_start_good_program:
 
                 jsr init_language_entry_mode
 
-                LDX     #0
                 LDA     #$D2
-                JSR     osbyte_with_y0 ;suppress sound
+                JSR     osbyte_with_x0_y0 ;suppress sound
                 
                 ; print_n_chars skips control chars if editor_mode_id
                 ; isn't 1. And since aResetOSWRCH is entirely control
@@ -826,15 +825,12 @@ initialise:
                 JSR     init_brkv_and_oshwm
                 LDX     #$ff
                 JSR     get_HIMEM_for_mode_X
-                LDX     #0              ; default output streams
                 LDA     #3              ; select output streams (AUG p119)
-                JSR     osbyte_with_y0
-                LDX     #0              ; keyboard on, rs423 off
+                JSR     osbyte_with_x0_y0; default output streams
                 LDA     #2              ; select input stream (AUG p118)
-                JSR     OSBYTE
-                LDX     #0              ; enable cursor editing
+                JSR     osbyte_with_x0_y0; keyboard on, rs423 off
                 LDA     #4              ; enable/disable cursor editing (AUG p120)
-                JSR     OSBYTE
+                JSR     osbyte_with_x0_y0; enable cursor editing
                 LDA     #13             ; Disable events (AUG p129)
                 LDX     #9
                 STX     byte_3A
@@ -848,31 +844,32 @@ disable_all_events_loop:
                 LDA     #200            ; set ESCAPE, BREAK effect (AUG p205)
                 LDY     #%11111110      ; normal ESCAPE action (bit 0 reset)
                 JSR     OSBYTE
-                LDX     #0              ; TAB key produces CHR$0
                 LDA     #219            ; read/write TAB key char (AUG p222)
-                JSR     osbyte_with_y0
+                JSR     osbyte_with_x0_y0 ; TAB key produces CHR$0
                 LDX     #27             ; ESCAPE key produces CHR$27
                 LDA     #220            ; read/write Escape char (AUG p223)
                 JSR     osbyte_with_y0
-                LDX     #0              ; ignore key
+                
                 LDA     #225            ; read/write function key status (AUG p225)
-                JSR     osbyte_with_y0
-                LDX     #0              ; ignore key
+                JSR     osbyte_with_x0_y0 ; ignore key
+                
                 LDA     #226            ; read/write SHIFT+function key status (AUG p225)
-                JSR     osbyte_with_y0
-                LDX     #0              ; ignore key
+                JSR     osbyte_with_x0_y0  ; ignore key
+                
                 LDA     #227            ; read/write CTRL+function key status (AUG p225)
-                JSR     osbyte_with_y0
-                LDX     #0              ; ESCAPE has normal action
+                JSR     osbyte_with_x0_y0 ; ignore key
+                
                 LDA     #229            ; read/write status of ESCAPE key (AUG p227)
-                JSR     osbyte_with_y0
-                LDX     #0              ; ESCAPE has normal effects
+                JSR     osbyte_with_x0_y0 ; ESCAPE has normal action
+                
                 LDA     #230            ; read/write flags determining ESCAPE effects (AUG p228)
-                JSR     osbyte_with_y0
-                LDA     #3              ; printer off
-                JSR     OSWRCH
-                ASL                     ; VDU6 - enable VDU drivers
-                JSR     OSWRCH
+                JSR     osbyte_with_x0_y0 ; ESCAPE has normal effects
+
+                jsr print_next_string
+.text 3                         ;printer off
+.text 6                         ;enable VDU drivers
+                .text 255
+                
                 LDA     #1
                 STA     editor_mode_id  ; 1=command mode, 2=edit mode
                 LDA     #0
@@ -1976,6 +1973,11 @@ memset_done:
 
 
 
+osbyte_with_x0_y0:.proc
+                ldx #0
+                ; fall through
+.pend
+                
 osbyte_with_y0:.proc
 					
 		LDY	#0
@@ -3416,9 +3418,8 @@ reset_keys_settings:
 		LDX	#128
 		LDA	#226		; reset	Shift+F	key status?
 		JSR	osbyte_with_y0
-		LDX	#0
 		LDA	#227
-		JMP	osbyte_with_y0
+		JMP	osbyte_with_x0_y0
 ; End of function reset_keys_settings
 
 
@@ -6896,9 +6897,8 @@ run_or_exit_command: .proc
 		LDA	#12		; CLS (run_or_exit_command)
 		JSR	OSWRCH
 		JSR	reset_keys_settings
-		LDX	#0
 		LDA	#228
-		JSR	osbyte_with_y0
+		JSR	osbyte_with_x0_y0
 		LDA	unk_16
                 BNE	loc_A64D
 run_or_exit_without_shutdown:
