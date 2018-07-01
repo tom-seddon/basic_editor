@@ -250,17 +250,12 @@ saving_message:
                 lda program_name
                 cmp #13
                 beq ret
-                
-                ldx #<aSaving
-                ldy #>aSaving
-                lda #aSavingEnd-aSaving
-                jsr print_n_chars
 
+                jsr print_next_string
+                .text "Saving: ",255
+                
                 jsr print_program_name
                 jmp osnewl
-
-aSaving: .text "Saving: "
-aSavingEnd:
 
 .pend
                 
@@ -315,11 +310,18 @@ language_start_good_program:
                 ; chars...
                 lda #1
                 sta editor_mode_id
-                
-                ldx #<aResetOSWRCH
-                ldy #>aResetOSWRCH
-                lda #aResetOSWRCHEnd-aResetOSWRCH
-                jsr print_n_chars
+
+                jsr print_next_string
+                .byte 3          ;printer off
+                .byte 6          ;enable VDU drivers
+                .byte 4          ;use text cursor
+                .byte 26         ;restore default windows
+                .byte 12         ;CLS
+                .byte 15         ;disable paged mode
+                .byte 20         ;reset VDU19 stuff
+                .byte 17,7       ;COLOUR7
+.byte 17,128     ;COLOUR128
+                .byte 255
                 
 command_prompt_loop:
                                         
@@ -497,11 +499,9 @@ loc_8218:
                 STA     byte_28         ; text window top
                 ; LDA   #$13            ; wait for vsync
                 ; JSR   OSBYTE
-; print "The BASIC Editor", "Program size" (etc.)
-                LDX     #<hud_text_1_begin
-                LDY     #>hud_text_1_begin
-                LDA     #hud_text_1_end-hud_text_1_begin
-                JSR     print_n_chars
+                ; print "The BASIC Editor", "Program size" (etc.)
+                jsr print_next_string
+                .byte 26,12,255
                 JSR     get_text_window_left_bottom
                 STY     byte_26
                 PLA
@@ -579,10 +579,8 @@ loc_8278:
                 jsr gotoxy
                 jsr print_program_name_padded
 
-                LDX     #<hud_text_2_begin
-                LDY     #>hud_text_2_begin
-                LDA     #hud_text_2_end-hud_text_2_begin
-                JSR     print_n_chars
+                jsr print_next_string
+                .text 30,"Size:",31,13,0,"Free:",13,10,"Name: ",255
 
                 
 ; set screen window
@@ -644,18 +642,6 @@ loc_82BA:
                 JSR     OSNEWL
                 JMP     beep
 .pend
-
-print_5_spaces .proc                               
-                                        
-                LDX     #<six_spaces_string
-                LDY     #>six_spaces_string
-                LDA     #5
-                JMP     print_n_chars
-.pend
-; End of function print_5_spaces
-
-
-
 
 get_text_window_left_bottom:            
                                         
@@ -1328,17 +1314,6 @@ aOName:
 aONameEnd:
                 .byte  $FF ;
                 
-aSearchString:	.text "  Search string  : "
-aReplaceString:	.text "  Replace string : "
-
-hud_text_1_begin:
-                .byte 26,12
-hud_text_1_end:
-
-hud_text_2_begin:
-                .text 30,"Size:",31,13,0,"Free:",13,10,"Name: "
-hud_text_2_end:
-                
 empty_program_string:.byte  $1F	;
 		.byte	 3 ;
 		.byte	 0 ;
@@ -1381,62 +1356,33 @@ aYan:		.text "yan"
 aHite:		.text "hite"
                 .byte  $FF ;
 
-help_footer_begin:
-                .text "n",$D,$A
-		.byte $A
-                .text "Where p is a program; s, s1, s2 are strings; n, n1, n2 are numbers; c is a colour [NRGYBMCW].",$D,$A
-help_footer_end:
-                
-aS1S2:		.text " s1 s2"
-aN1N2:		.text " n1 n2"
-aInsert: .text "Insert: "
-aInsertEnd:
-aScroll: .text "Scroll: "
-aScrollEnd:
-aCase: .text "Ignore search case: "
-aCaseEnd:
-aProgramName:	.text "Program name: "
-aFirstLine:	.text "First line  : "
-aLastLine:	.text "Last line  : "
-aCurrentLine:	.text "Current line: "
 aMarkedLine:	.text "Marked line: "
-aNone:		.text "None"
-aNo_ofLines:	.text "No.of lines: "
+aMarkedLineEnd:
+.text "None"
+aMarkedLineNoneEnd:
 aPendingCommands:.text "Pending commands: "
-aNone_1:	.text "None"
-aOn:		.text " on "
-aTabValue:	.text "Tab value   : "
+aPendingCommandsEnd:
+.text "None"
+aPendingCommandsNoneEnd:
 aLastSearch:	.text "Last search : "
-aNone_0:	.text "None"
-aResetOSWRCH:
-                .byte 3          ;printer off
-                .byte 6          ;enable VDU drivers
-                .byte 4          ;use text cursor
-                .byte 26         ;restore default windows
-                .byte 12         ;CLS
-                .byte 15         ;disable paged mode
-                .byte 20         ;reset VDU19 stuff
-                .byte 17,7       ;COLOUR7
-                .byte 17,128     ;COLOUR128
-aResetOSWRCHEnd:
-print_on_off .proc
-                pha
+aLastSearchEnd:
+.text "None"
+aLastSearchNoneEnd:
                 
-                lda #'O'
-                jsr oswrch
+print_on_off: .proc
+                ; prints "Off" if Z set, "On" if Z clear
+                beq off
 
-                pla
-                beq ff
+                jsr print_next_string
+.text "On",255
+                rts
 
-                lda #'n'
-                bne print
-
-ff:
-                lda #'f'
-                jsr oswrch
-print:
-                jmp oswrch
+off:
+                jsr print_next_string
+.text "Off",255
+                rts
 .pend
+                
 do_command_line .proc		
 		JSR	clear_5B1_to_600
 		LDA	#0
@@ -2224,29 +2170,48 @@ done:
                 
 .pend
 
+incz: .proc
+                inc 0,x
+                bne done
+                inc 1,x
+done:
+                rts
+.pend
+
 print_next_string: .proc
                 pla
                 sta byte_C
                 pla
                 sta byte_D
-
+                
                 ldy #0
+                ldx #byte_C
+                jsr incz
 loop:
-                inc byte_C
-                bne print
-                inc byte_D
-print:
                 lda (byte_C),Y
+                jsr incz
+                cmp #255
                 beq done
                 jsr print_1_char
                 jmp loop
-                
+
 done:
-                lda byte_D
-                pha
-                lda byte_C
-                pha
-                rts
+                jmp (byte_C)
+.pend
+
+print_5_spaces: .proc                               
+                                        
+                LDA     #5
+
+                ; fall through
+.pend
+
+print_n_spaces: .proc
+					
+                LDX     #<six_spaces_string
+                LDY     #>six_spaces_string
+
+                ; fall through
 .pend
 
 print_n_chars: .proc
@@ -3412,11 +3377,9 @@ read_line_780:
 ; C set	if nothing entered.
 
 get_search_string:			
-					
-		LDX	#<aSearchString
-		LDY	#>aSearchString
-		LDA	#$13
-		JSR	print_n_chars
+
+                jsr print_next_string
+                .text "  Search string  : ",255
 		JSR	read_line_700	; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
 		BCS	locret_94DD
 		DEC	byte_6BE	; ignore 13
@@ -3431,11 +3394,9 @@ locret_94DD:
 
 
 
-get_replace_string:			
-		LDX	#<aReplaceString
-		LDY	#>aReplaceString
-		LDA	#$13
-		JSR	print_n_chars
+get_replace_string:
+                jsr print_next_string
+                .text "  Replace string : ",255
 		JSR	read_line_780
 		DEC	unk_6BC		; ignore 13
 		RTS
@@ -5521,11 +5482,9 @@ loc_9F10:
 		BEQ	loc_9F26
 		ADC	byte_3B
 		TAY
-		JSR	gotoxy
-		LDX	#<six_spaces_string
-		LDY	#>six_spaces_string
-		LDA	#6
-		JSR	print_n_chars
+                JSR	gotoxy
+                lda #6
+                jsr print_n_spaces
 
 loc_9F26:				
 		INC	byte_36
@@ -6192,20 +6151,6 @@ goto_start_of_line:
 		LDY	byte_3B
 		JMP	gotoxy
 ; End of function goto_start_of_line
-
-
-
-; prints N spaces.
-;
-; Entry:
-; A = number of	spaces to print	(max 6)
-
-print_n_spaces:				
-					
-		LDX	#<six_spaces_string
-		LDY	#>six_spaces_string
-		JMP	print_n_chars
-; End of function print_n_spaces
 
 
 
@@ -8052,10 +7997,8 @@ loc_AB6A:
 		TAY
 		LDX	#0
 		JSR	gotoxy
-		LDA	#6
-		LDX	#<six_spaces_string
-		LDY	#>six_spaces_string
-		JSR	print_n_chars
+                LDA	#6
+                jsr print_n_spaces
 		CLC
 		LDA	unk_8
 		ADC	code_area_width
@@ -11139,26 +11082,28 @@ onechar
                 jsr oswrch
                 jmp next_help
 
-s1s2
-                ldx #<aS1S2
-                ldy #>aS1S2
-                lda #6
-                bne nchars
-
-n1n2
-                ldx #<aN1N2
-                ldy #>aN1N2
-                lda #6
-nchars
-                jsr print_n_chars
+s1s2:
+                jsr print_next_string
+.text " s1 s2",255
                 jmp next_help
 
+n1n2:
+                jsr print_next_string
+.text " n1 n2",255
+                jmp next_help           
+
 done
-print_help_footer:			
-                LDX	#<help_footer_begin
-		LDY	#>help_footer_begin
-		LDA	#help_footer_end-help_footer_begin
-		JMP	print_n_chars	; Print	"Where:	p is a program;" (etc.)
+print_help_footer:
+                jsr print_next_string
+.text "n",$D,$A
+.byte $A
+.text "Where p is a program; s, s1, s2 are strings; n, n1, n2 are numbers; c is a colour [NRGYBMCW].",$D,$A
+.byte 255
+                rts
+                ; LDX	#<help_footer_begin
+		; LDY	#>help_footer_begin
+		; LDA	#help_footer_end-help_footer_begin
+		; JMP	print_n_chars	; Print	"Where:	p is a program;" (etc.)
 .pend
 ;-------------------------------------------------------------------------
 
@@ -11200,31 +11145,25 @@ info_command:
                 ; adc #'A'
                 ; jsr oswrch                
 
-                
-                ldx #<aScroll
-                ldy #>aScroll
-                lda #aScrollEnd-aScroll
-                jsr print_n_chars
+
+                jsr print_next_string
+                .text "Scroll: ",255
 
                 lda scroll_status ;1=scroll 0=noscroll
                 jsr print_on_off
                 
                 jsr osnewl
 
-                ldx #<aInsert
-                ldy #>aInsert
-                lda #aInsertEnd-aInsert
-                jsr print_n_chars
+                jsr print_next_string
+                .text "Insert: ",255
 
                 lda is_insert_mode ;0=overtype 1=insert
                 jsr print_on_off
 
                 jsr osnewl
 
-                ldx #<aCase
-                ldy #>aCase
-                lda #aCaseEnd-aCase
-                jsr print_n_chars
+                jsr print_next_string
+                .text "Ignore search case: ",255
 
                 lda case_insensitive_search
                 jsr print_on_off
@@ -11257,26 +11196,28 @@ print_colours:
 loc_BC0B:				
 		JSR	OSNEWL
 		JSR	OSNEWL
-		LDX	#<aProgramName
-		LDY	#>aProgramName
-		LDA	#$E
-		JSR	print_n_chars
+		; LDX	#<aProgramName
+		; LDY	#>aProgramName
+		; LDA	#$E
+                ; JSR	print_n_chars
+                jsr print_next_string
+.text "Program name: ",255                
 		LDA	#2
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
 		LDX	#<program_name
 		LDY	#>program_name
 		LDA	#$F
 		JSR	print_n_chars
-		JSR	OSNEWL
+                JSR	OSNEWL
 		LDX	#<aLastSearch
 		LDY	#>aLastSearch
 		LDA	byte_62
 		BNE	loc_BC37
-		LDA	#$12
+		LDA	#aLastSearchNoneEnd-aLastSearch
 		BNE	loc_BC42
 
 loc_BC37:				
-		LDA	#$E
+		LDA	#aLastSearchEnd-aLastSearch
 		JSR	print_n_chars
 		LDX	#<unk_643
 		LDY	#>unk_643
@@ -11287,19 +11228,15 @@ loc_BC42:
 		LDA	#1
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
 		JSR	OSNEWL
-		JSR	OSNEWL
-		LDX	#<aTabValue
-		LDY	#>aTabValue
-		LDA	#$E
-		JSR	print_n_chars
+                JSR	OSNEWL
+                jsr print_next_string
+                .text "Tab value   : ",255
 		LDX	unk_61
 		LDY	#0
 		JSR	sub_BD96
-		JSR	sub_BD83
-		LDX	#<aNo_ofLines
-		LDY	#>aNo_ofLines
-		LDA	#$D
-		JSR	print_n_chars
+                JSR	sub_BD83
+                jsr print_next_string
+                .text "No.of lines: ",255
 		LDA	unk_16
 		BNE	loc_BC94
 		LDX	#0
@@ -11338,16 +11275,13 @@ loc_BC9C:
 		JMP	loc_BD22
 
 loc_BCA4:				
-		LDX	#<aFirstLine
-		LDY	#>aFirstLine
-		LDA	#$E
-		JSR	print_n_chars
+                jsr print_next_string
+.text "First line  : ",255
+                
 		JSR	sub_BD8D
 		JSR	sub_BD83
-		LDX	#<aLastLine
-		LDY	#>aLastLine
-		LDA	#$D
-		JSR	print_n_chars
+                jsr print_next_string
+                .text "Last line  : ",255
 		LDA	#-1
 		STA	byte_2B
 		JSR	find_line_by_number ; finds a line, given a line number
@@ -11365,11 +11299,9 @@ loc_BCA4:
 		LDA	($2F),Y
 		TAY
 		JSR	sub_BD96
-		JSR	OSNEWL
-		LDX	#<aCurrentLine
-		LDY	#>aCurrentLine
-		LDA	#$E
-		JSR	print_n_chars
+                JSR	OSNEWL
+                jsr print_next_string
+                .text "Current line: ",255
 		LDX	current_line_no_msb
 		LDY	current_line_no_lsb
 		JSR	sub_BD96
@@ -11380,7 +11312,7 @@ loc_BCA4:
 		LDY	#>aMarkedLine
 		PLP
 		BNE	loc_BCFF
-		LDA	#$D
+		LDA	#aMarkedLineEnd-aMarkedLine
 		JSR	print_n_chars
 		LDX	unk_4E
 		LDY	unk_4D
@@ -11388,7 +11320,7 @@ loc_BCA4:
 		JMP	loc_BD04
 
 loc_BCFF:				
-		LDA	#$11
+		LDA	#aMarkedLineNoneEnd-aMarkedLine
 		JSR	print_n_chars
 
 loc_BD04:				
@@ -11402,7 +11334,7 @@ loc_BD04:
 		LDA	byte_46
 		CMP	#$20 ; ' '
 		BNE	loc_BD25
-		LDA	#$16
+		LDA	#aPendingCommandsNoneEnd-aPendingCommands
 		JSR	print_n_chars
 
 loc_BD1F:				
@@ -11413,7 +11345,7 @@ loc_BD22:
 
 loc_BD25:				
 					
-		LDA	#$12
+		LDA	#aPendingCommandsEnd-aPendingCommands
 		JSR	print_n_chars
 		JSR	OSNEWL
 		LDA	byte_40
@@ -11521,11 +11453,9 @@ print_colour_scheme:
 					
 		LDA	foreground_colour ; get	foreground colour
 		CLC			; capitalize
-		JSR	print_colour_name
-		LDX	#<aOn
-		LDY	#>aOn
-		LDA	#4
-		JSR	print_n_chars	; print	" on "
+                JSR	print_colour_name
+                jsr print_next_string
+                .text " on ",255
 		LDA	background_colour
 		SEC			; don't capitalize
 
