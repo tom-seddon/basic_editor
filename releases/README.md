@@ -1,6 +1,6 @@
 # New in 1.40
 
-- `\*BZ` and `\*BR`
+- `*BZ` and `*BR`
 - Shorten error messages to make space
 
 # New in 1.39
