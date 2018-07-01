@@ -2117,68 +2117,102 @@ gotoxy .proc
 
 .pend
 
-print_next_string: .proc
+; print char in A.
+print_1_char: .proc
+                sta print_1_char_a
+                stx print_1_char_x
+                sty print_1_char_y
+
+                lda editor_mode_id
+                beq done
+
+                ldy #0
+                cmp #1
+                beq start
+                ldy #' '
+                
+start:
+                sty byte_3A
+
+                lda print_1_char_a
+                cmp #$7f
+                beq print_space
+
+                lda #$87
+                jsr osbyte      ;get mode in Y
+                tya
+
+                and #7
+                cmp #7
+                bne not_teletext
+
+teletext:
+                lda print_1_char_a
+                cmp #141
+                beq print_space
+
+not_teletext:
+                lda print_1_char_a
+                cmp byte_3A
+                bcs print_char
+
+print_space:
+                lda #' '
+
+print_char:
+                jsr oswrch
+                
+done:
+                ldy print_1_char_y
+                ldx print_1_char_x
+                lda print_1_char_a
+                rts
+                
 .pend
 
-print_n_chars .proc			
-		STX	byte_C
-		STY	byte_D
-		TAX
-		BEQ done
-                LDY	#0
-                pha
-		LDA	editor_mode_id	; 1=command mode, 2=edit mode
-		BEQ pla_then_done
-		CMP	#1
-                BEQ start
-		LDY	#$20 ; ' '
-
-start:				
-		STY	byte_3A
-
-                lda #$87        ;get MODE in Y
-                jsr osbyte
-                tya
-                and #7
-                cmp #7          ;set C if MODE 7
+print_next_string: .proc
                 pla
-                php
-                tax
-                LDY	#0
+                sta byte_C
+                pla
+                sta byte_D
 
+                ldy #0
 loop:
-		LDA	(byte_C),Y
-		CMP	#$7F ; ''
-                BEQ print_space
-                plp
-                php
-                bcc check_char
-
-mode7:
-		CMP	#141
-		BEQ print_space
-
-check_char:
-		CMP	byte_3A
-		BCS print_char
-
-print_space:				
-					
-		LDA	#$20 ; ' '
-
-print_char				
-		JSR	OSWRCH
-		INY
-		DEX
-		BNE loop
-
-pla_then_done:
-                pla
-
+                inc byte_C
+                bne print
+                inc byte_D
+print:
+                lda (byte_C),Y
+                beq done
+                jsr print_1_char
+                jmp loop
+                
 done:
-					
-		RTS
-; End of function print_n_chars
+                lda byte_D
+                pha
+                lda byte_C
+                pha
+                rts
+.pend
+
+print_n_chars: .proc
+                pha
+                stx byte_C
+                sty byte_D
+                tax
+                beq done
+
+                ldy #0
+loop:
+                lda (byte_C),Y
+                jsr print_1_char
+                iny
+                dex
+                bne loop
+done:
+                pla
+                rts
+.pend
 
 
 
@@ -2191,7 +2225,6 @@ done:
 ; Exit:
 ; X=line length	MOD screen width
 ; Y=ending Y
-.pend
 get_line_dimensions .proc
 					
 		LDA	byte_39

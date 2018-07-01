@@ -166,7 +166,14 @@ case_insensitive_search:        ;$80 or $00.
 search_tmp:
 .fill 1
 language_entry_mode:
-                .fill 1
+.fill 1
+print_1_char_a:
+.fill 1
+print_1_char_x:
+.fill 1
+print_1_char_y:
+.fill 1
+                
 
 .cerror *>=$90,"too much zero page use"
                 
