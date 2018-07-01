@@ -39,12 +39,12 @@ SVC_BASE = $8000
 
 ;-------------------------------------------------------------------------
 
-; Language entry point modes.
-;
-; All modes must be non-zero.
+                ; Language entry point modes.
+                ;
+                ; All modes must be non-zero.
                 LANGUAGE_MODE_NORMAL=1
-                LANGUAGE_MODE_ZSAVE=2
-                LANGUAGE_MODE_ZRUN=3
+                LANGUAGE_MODE_ZSAVE=$80
+                LANGUAGE_MODE_ZRUN=$81
 
 
 ;-------------------------------------------------------------------------
@@ -87,7 +87,8 @@ version_number_string:
 copyright:
                 .byte 0
 aC1984Acornsoft:
-                .text "(C) 1984 Acornsoft",0
+                ; was "(C) 1984 Acornsoft". Sorry, Acornsoft!
+                .text "(C)",0
                 .if HI||RELOCATABLE
                 ; this address gets fixed up by make_reloc, based on
                 ; the relocation value in the altrom.
@@ -154,6 +155,7 @@ try_r:
                 ldx #LANGUAGE_MODE_ZRUN
                 
 enter_language:
+                ; set the user flag for the language entry point.
                 lda #1
                 ldy #0
                 jsr osbyte
@@ -208,27 +210,72 @@ done:
 
 .logical LANG_BASE+(*-SVC_BASE)
 
+init_language_entry_mode: .proc
+                ; read the user flag that was set by the service call
+                ; 4 handler.
+                lda #1
+                ldx #0
+                ldy #$ff
+                jsr osbyte
+
+                stx language_entry_mode
+
+                ; reset flag, whatever it was
+                lda #1
+                ldx #0
+                ldy #0
+                jsr osbyte
+
+                lda language_entry_mode
+                
+                cmp #LANGUAGE_MODE_ZSAVE
+                beq zsave
+
+                cmp #LANGUAGE_MODE_ZRUN
+                beq zrun
+ret:
+                rts
+
+zsave:
+                jsr saving_message
+                jsr zsave_command
+                jmp exit_and_OLD
+
+zrun:
+                jsr saving_message
+                jsr zsave_command
+                jmp exit_and_OLD_and_RUN
+
+saving_message:
+                lda program_name
+                cmp #13
+                beq ret
+                
+                ldx #<aSaving
+                ldy #>aSaving
+                lda #aSavingEnd-aSaving
+                jsr print_n_chars
+
+                jsr print_program_name
+                jmp osnewl
+
+aSaving: .text "Saving: "
+aSavingEnd:
+
+.pend
+                
 language_entry: .proc
                 CMP     #1              ; normal language entry?
                 BEQ     language_start
                 RTS
 
 language_start:
-                lda #1
-                ldx #0
-                ldy #$ff
-                jsr osbyte
-                stx language_entry_mode
-                
                 JSR     init_brkv_and_oshwm
                 JSR     clear_line_commands
                 JSR     sub_B358
                 JSR     reset_program_name
                 LDX     #5
                 STX     unk_61
-                LDX     #0
-                LDA     #$D2
-                JSR     osbyte_with_y0
                 LDX     #$60 ; '`'
                 STX     unk_31
                 LDX     #0
@@ -239,34 +286,42 @@ language_start:
                 LDA     #$E4
                 JSR     osbyte_with_y0
                 JSR     clear_5B1_to_600
-                ldy #$ff
-                ; LDA   #$87            ; get MODE in Y (and char under cursor in X)
-                ; JSR   OSBYTE
-                JSR     validate_mode
+                ldx #$ff
+                JSR     get_HIMEM_for_mode_X
                 LDA     #0
                 STA     background_colour
                 sta case_insensitive_search
                 LDA     #7
                 STA     foreground_colour
 
-                ; print_n_chars skips control chars if editor_mode_id
-                ; isn't 1. And since aResetOSWRCH is entirely control
-                ; chars...
-                lda #1
-                sta editor_mode_id
-                ldx #<aResetOSWRCH
-                ldy #>aResetOSWRCH
-                lda #aResetOSWRCHEnd-aResetOSWRCH
-                jsr print_n_chars
-                
                 JSR     sub_8314
-                jsr find_rem_name
                 JSR     find_program
                 BCC     language_start_good_program
                 JSR     clear_program
                 JSR     clear_5B1_to_600
 
-language_start_good_program:                            
+language_start_good_program:
+
+                jsr     find_rem_name
+
+                jsr init_language_entry_mode
+
+                LDX     #0
+                LDA     #$D2
+                JSR     osbyte_with_y0 ;suppress sound
+                
+                ; print_n_chars skips control chars if editor_mode_id
+                ; isn't 1. And since aResetOSWRCH is entirely control
+                ; chars...
+                lda #1
+                sta editor_mode_id
+                
+                ldx #<aResetOSWRCH
+                ldy #>aResetOSWRCH
+                lda #aResetOSWRCHEnd-aResetOSWRCH
+                jsr print_n_chars
+                
+command_prompt_loop:
                                         
                 LDX     #$FF
                 TXS
@@ -310,7 +365,7 @@ loc_814D:
                                         
                 LDA     editor_mode_id  ; 1=command mode, 2=edit mode
                 CMP     #2              ; edit mode?
-                BNE     language_start_good_program     ; branch taken if not edit mode
+                BNE     command_prompt_loop     ; branch taken if not edit mode
 ; edit mode
                 LDA     byte_15
                 BEQ     loc_8163
@@ -318,12 +373,12 @@ loc_814D:
                 STA     byte_50
                 LDA     current_line_no_msb
                 STA     byte_51
-                JMP     language_start_good_program
+                JMP     command_prompt_loop
 
 loc_8163:                               
                 LDA     byte_6C1
                 CMP     #-1
-                BEQ     language_start_good_program
+                BEQ     command_prompt_loop
                 STA     byte_3A
                 LDA     byte_6C0
                 STA     byte_39
@@ -333,14 +388,14 @@ loc_8163:
                 INY
                 LDA     ($39),Y
                 STA     byte_51
-                JMP     language_start_good_program
+                JMP     command_prompt_loop
 ; End of function language_entry
 .pend
 
 
 
 init_brkv_and_oshwm: .proc
-                                        
+
                 CLI
                 CLD
                 LDA     #<brk_handler
@@ -362,18 +417,9 @@ init_brkv_and_oshwm: .proc
                 LDA     #$A
                 STA     unk_6B9
                 RTS
-; End of function init_brkv_and_oshwm
-
-
-
-
-                ; `validate_mode' is a poor name for this. Pass MODE
-     .pend           ; 255 in to set things up for the current mode.
-validate_mode .proc                        
-                tya
-                tax
-
-get_HIMEM_for_mode_X:                   
+.pend
+                
+get_HIMEM_for_mode_X: .proc
                 LDY     higher_order_address
                 INY
                 BNE     is_tube
@@ -552,26 +598,7 @@ loc_8278:
                 JSR     gotoxy
                 LDA     byte_15
                 BEQ     loc_82CB
-                JSR     OSNEWL
-                LDX     #$4F ; 'O'
-                LDY     #$28 ; '('
-
-loc_82AE:                               
-                LDA     $5D7,Y
-                CMP     #$20 ; ' '
-                BNE     loc_82BA
-                DEY
-                BNE     loc_82AE
-                LDX     #$27 ; '''
-
-loc_82BA:
-                TXA
-                LDX     #<unk_5B1
-                LDY     #>unk_5B1
-                JSR     print_n_chars
-                JSR     OSNEWL
-                JSR     OSNEWL
-                JSR     beep
+                jsr display_error_message
 
 loc_82CB:                               
                 LDA     #'>'
@@ -590,11 +617,34 @@ loc_82CB:
                 PLA
                 STA     is_insert_mode  ; 0=overtype 1=insert
                 RTS
-; End of function print_command_screen
-
-
-
 .pend
+
+display_error_message: .proc
+
+                JSR     OSNEWL
+
+                LDX     #$4F ; 'O'
+                LDY     #$28 ; '('
+
+loc_82AE:                               
+                LDA     $5D7,Y
+                CMP     #$20 ; ' '
+                BNE     loc_82BA
+                DEY
+                BNE     loc_82AE
+                LDX     #$27 ; '''
+
+loc_82BA:
+                TXA
+                LDX     #<unk_5B1
+                LDY     #>unk_5B1
+                JSR     print_n_chars
+                
+                JSR     OSNEWL
+                JSR     OSNEWL
+                JMP     beep
+.pend
+
 print_5_spaces .proc                               
                                         
                 LDX     #<six_spaces_string
@@ -701,8 +751,8 @@ line_start_ok:
                 BCS     TOP_in_bounds
 
 force_mode_7:                           
-                LDY     #$ff
-                JSR     validate_mode
+                LDX     #$ff
+                JSR     get_HIMEM_for_mode_X
                 LDA     #3
                 JSR     get_error       ; A = error code
 
@@ -788,8 +838,8 @@ scan_next_line:
 
 initialise:                             
                 JSR     init_brkv_and_oshwm
-                LDY     #$ff
-                JSR     validate_mode
+                LDX     #$ff
+                JSR     get_HIMEM_for_mode_X
                 LDX     #0              ; default output streams
                 LDA     #3              ; select output streams (AUG p119)
                 JSR     osbyte_with_y0
@@ -863,7 +913,7 @@ loc_8437:
                 LDA     #227
                 JMP     osbyte_with_y0
 
-brk_handler:
+brk_handler: .proc
                 JSR     clear_5B1_to_600
                 LDY     higher_order_address
                 INY
@@ -905,11 +955,12 @@ loc_848A:
 		LDA	#2
 		JSR	get_error	; A = error code
 
-loc_848F:				
-		JMP	language_entry.loc_814D
+loc_848F:
+                jsr maybe_verbose_exit_on_error
+                JMP	language_entry.loc_814D
 
-
-
+.pend
+                
 sub_8492:				
 		JSR	find_program
 ; End of function sub_8492
@@ -1198,7 +1249,7 @@ loc_85E0:
 error_messages_table:.byte  $C2	; Â
 aAdProgram:	.text "ad program" ;1
 		.byte  $D5 ; Õ
-aNknownErrorMessage:.text "nknown error message" ;2
+aNknownErrorMessage:.text "nknown error" ;2
 		.byte  $CE ; Î
 aORoomModeReset:.text "o room - Mode reset" ;3
 		.byte  $CC ; Ì
@@ -1211,10 +1262,10 @@ aIssingLineCommand:.text "issing line command" ;6
 aArgetNotFound:	.text "arget not found" ;7
 		.byte  $D3 ; Ó
 aTringNotFound:	.text "tring not found" ;8
-		.byte  $C9 ; É
-aNvalidCommand:	.text "nvalid command" ;9
-		.byte  $C9 ; É
-aNvalidArgument:.text "nvalid argument" ;10
+		.byte  $C2 ; É
+aNvalidCommand:	.text "ad command" ;9
+		.byte  $C2 ; É
+aNvalidArgument:.text "ad argument" ;10
 		.byte  $C2 ; Â
 aAdNumber:	.text "ad number" ;11
 		.byte  $D4 ; Ô
@@ -1236,9 +1287,9 @@ aOLabelsReinstated:.text "o labels reinstated" ;19
 		.byte  $CC ; Ì
 aInesTooLongToBeJoined:.text "ines too long to be joined" ;20
 		.byte  $CF ; Ï
-aNlyColoursNRGYBMCWAreValid:.text "nly colours N,R,G,Y,B,M,C,W are valid" ;21
-		.byte  $C9 ; É
-aNvalidLineNumber:.text	"nvalid line number" ;22
+aNlyColoursNRGYBMCWAreValid:.text "nly [NRGYBMCW] are valid" ;21
+		.byte  $C2 ; É
+aNvalidLineNumber:.text	"ad line number" ;22
 		.byte  $D2 ; Ò
 aEplaceStringMissing:.text "eplace string missing" ;23
 		.byte  $CF ; Ï
@@ -1249,10 +1300,10 @@ aTartLineIncrementTooBig:.text "tart line/Increment too big" ;25
 aOoManyLineCommands:.text "oo many line commands" ;26
 		.byte  $C9 ; É
 aNcompatibleLineCommands:.text "ncompatible line commands" ;27
-		.byte  $C9 ; É
-aNvalidDeleteCommand:.text "nvalid delete command" ;28
-		.byte  $C9 ; É
-aNvalidDestination:.text "nvalid destination" ;29
+		.byte  $C2 ; É
+aNvalidDeleteCommand:.text "ad delete command" ;28
+		.byte  $C2 ; É
+aNvalidDestination:.text "ad destination" ;29
 		.byte  $C4 ; Ä
 aEstinationMissing:.text "estination missing" ;30
 		.byte  $C9 ; É
@@ -1260,7 +1311,7 @@ aNcompleteLineCommand:.text "ncomplete line command" ;31
 		.byte  $C1 ; Á
 aRgumentMissing:.text "rgument missing" ;32
 		.byte  $D4 ; Ô
-aAbStopMustBeInRange080:.text "ab stop must be in range 0-80" ;33
+aAbStopMustBeInRange080:.text "ab stop must be 0-80" ;33
 		.byte  $CE ; Î
 aOMarkedLine:	.text "o marked line" ;34
 		.byte  $CE ; Î
@@ -1270,8 +1321,11 @@ aIneHasBeenTruncated:.text "ine has been truncated" ;36
 		.byte  $D5 ; Õ
 aPdatesWouldMakeLineTooLong:.text "pdates would make line too long" ;37
 		.byte  $C9 ; É
-aNcrementMustBeInRange1255:.text "ncrement must be in range 1-255" ;38
-                .text $CE,"o name"                                 ;39
+aNcrementMustBeInRange1255:.text "ncrement must be 1-255" ;38
+.text $CE;39
+aOName:
+.text "o name"                                 
+aONameEnd:
                 .byte  $FF ;
                 
 aSearchString:	.text "  Search string  : "
@@ -2557,7 +2611,8 @@ copy_error_loop:
 		INY			; next source byte...
 		INX			; next dest byte...
 		LDA	($C),Y		; load next byte from error table
-		BPL	copy_error_loop	; taken	if haven't ended up in the next error
+                BPL	copy_error_loop	; taken	if haven't ended up in the next error
+                jsr maybe_verbose_exit_on_error
 		RTS
 ; End of function get_error
 
@@ -3414,7 +3469,7 @@ reset_keys_settings:
 
 run_star_command:			
 		LDX	#7
-		JSR	validate_mode.get_HIMEM_for_mode_X
+		JSR	get_HIMEM_for_mode_X
 		JSR	reset_keys_settings
 		LDX	#0
 		LDY	#7
@@ -3689,13 +3744,13 @@ command_jump_table:.byte $20		   ; unknown
                 .word loc_9783		; address
                 .byte 0                  ; unknown
                 .byte CMD_ZAUTOSAVE      ; command_id
-                .word zstuff          ; address
+                .word zsave_command          ; address
                 .byte 0,CMD_CASE
                 .word case_command
                 .byte 0,CMD_NOCASE
                 .word nocase_command
                 .byte 0,CMD_ZRUN
-                .word zstuff
+                .word zrun_command
                 
 		.byte  $FF ;
 
@@ -6889,7 +6944,7 @@ loc_A5F7:
 		JSR	set_palette
 		RTS
 
-run_or_exit_command:			
+run_or_exit_command: .proc
 		LDA	#0
 		STA	is_insert_mode	; 0=overtype 1=insert
 		LDA	#$60 ; '`'
@@ -6904,11 +6959,10 @@ run_or_exit_command:
 		LDA	#228
 		JSR	osbyte_with_y0
 		LDA	unk_16
-		BNE	loc_A64D
+                BNE	loc_A64D
+run_or_exit_without_shutdown:
 		JSR	is_program_empty ; sets	C if no	program
 		BCS	loc_A64D
-		LDA	#8
-		STA	byte_3A		; position in "OLD|MRUN|M" string
 		LDX	#4		; ending position is by	default	after "OLD|M" part
 		LDA	current_command_id
 		CMP	#CMD_RUN	; is the command RUN?
@@ -6916,6 +6970,9 @@ run_or_exit_command:
 		LDX	#0		; if RUN, type "OLD|MRUN|M"
 
 type_commands:				
+		LDA	#8
+                STA	byte_3A		; position in "OLD|MRUN|M" string
+                
 		STX	byte_39		; ending position in string
 
 type_commands_loop:			
@@ -6937,7 +6994,19 @@ loc_A64D:
 		LDA	#187		; get ROM containing BASIC
 		JSR	OSBYTE
 		LDA	#142		; enter	language ROM
-		JSR	OSBYTE
+                JSR	OSBYTE
+
+.pend
+
+exit_and_OLD: .proc
+                ldx #4          ;"OLD|M"
+                jmp run_or_exit_command.type_commands
+.pend
+
+exit_and_OLD_and_RUN: .proc
+                ldx #0          ;"OLD|MRUN|M"
+                jmp run_or_exit_command.type_commands
+.pend
 
 top_edit_mode_command:			
 					
@@ -9487,8 +9556,8 @@ loc_B2FF:
 		JMP	loc_859D
 
 loc_B304:				
-		LDY	byte_3E
-		JSR	validate_mode
+		LDX	byte_3E
+		JSR	get_HIMEM_for_mode_X
 		JSR	find_program
 		LDX	byte_15
 		BEQ	locret_B329
@@ -11908,32 +11977,32 @@ find_current_line_by_number:
 					; Exit:
                                         ; (byte_2B) points to most suitable line
 
-zstuff: .proc
+zsave_command: .proc
                 lda program_name
                 cmp #13
-                bne save
+                beq no_program_name
 
-		LDA	#39     ;No program name
-		JMP	loc_859D
-
-save:
                 ; pretend program name was command line, and forward
                 ; straight to SAVE.
                 lda #<program_name
-                sta $3e
+                sta byte_3E
                 lda #>program_name
-                sta $3f
-                jsr save_command
+                sta byte_3F
+                jmp save_command
 
-                ; if this was ZRUN, run as well.
-                lda current_command_id
-                cmp #CMD_ZRUN
-                bne store_program_name.done
+no_program_name:
+                lda #39         ;No program name
+                jmp loc_859D
+.pend
+
+zrun_command: .proc
+                jsr zsave_command
+
                 lda #CMD_RUN
                 sta current_command_id
-
                 jmp run_or_exit_command
 .pend
+
 store_program_name .proc
                 jsr reset_program_name
 
@@ -12037,7 +12106,17 @@ case_command .proc
 nocase_command .proc
                 lda #$80
                 sta case_insensitive_search
+return:
                 rts
+.pend
+
+maybe_verbose_exit_on_error: .proc
+                bit language_entry_mode
+                bpl nocase_command.return
+
+                jsr display_error_message
+                jmp exit_and_OLD
+                
 .pend
 
 .here
