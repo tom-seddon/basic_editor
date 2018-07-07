@@ -167,9 +167,9 @@ search_tmp:
                 .fill 1
 print_1_char_a:
                 .fill 1
-print_1_char_x:
-                .fill 1
 print_1_char_y:
+                .fill 1
+print_1_char_teletext:
                 .fill 1
 itoa_value:
                 .fill 2

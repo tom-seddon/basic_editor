@@ -2189,10 +2189,20 @@ gotoxy .proc
 
 .pend
 
+prepare_for_print_1_char: .proc
+                lda #$87
+                jsr osbyte      ;get mode in Y
+                tya
+                and #7
+                cmp #7
+                ror a
+                sta print_1_char_teletext
+                rts
+                .pend
+
 ; print char in A.
 print_1_char: .proc
                 sta print_1_char_a
-                stx print_1_char_x
                 sty print_1_char_y
 
                 lda editor_mode_id
@@ -2210,13 +2220,8 @@ start:
                 cmp #$7f
                 beq print_space
 
-                lda #$87
-                jsr osbyte      ;get mode in Y
-                tya
-
-                and #7
-                cmp #7
-                bne not_teletext
+                bit print_1_char_teletext
+                bpl not_teletext
 
 teletext:
                 lda print_1_char_a
@@ -2236,7 +2241,6 @@ print_char:
                 
 done:
                 ldy print_1_char_y
-                ldx print_1_char_x
                 lda print_1_char_a
                 rts
                 
@@ -2251,6 +2255,8 @@ done:
 .pend
 
 print_next_string: .proc
+                jsr prepare_for_print_1_char
+                
                 pla
                 sta byte_C
                 pla
@@ -2290,8 +2296,12 @@ print_n_chars: .proc
                 pha
                 stx byte_C
                 sty byte_D
+                jsr prepare_for_print_1_char
+                pla
+                pha
                 tax
                 beq done
+
 
                 ldy #0
 loop:
