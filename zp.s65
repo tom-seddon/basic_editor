@@ -171,6 +171,10 @@ print_1_char_x:
                 .fill 1
 print_1_char_y:
                 .fill 1
+itoa_value:
+                .fill 2
+itoa_uninteresting:
+                .fill 1
 
 language_entry_mode:
                 ; if top bit set, call exit_and_OLD after printing a

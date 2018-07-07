@@ -319,7 +319,7 @@ language_start_good_program:
                 .byte 15         ;disable paged mode
                 .byte 20         ;reset VDU19 stuff
                 .byte 17,7       ;COLOUR7
-.byte 17,128     ;COLOUR128
+                .byte 17,128     ;COLOUR128
                 .byte 255
                 
 command_prompt_loop:
@@ -1790,76 +1790,76 @@ got_command:
 ; unk_0	holds digit count
 ; unk_1... filled with string
 
-itoa:					
-					
-		LDA	unk_37
-		PHA
-		LDA	byte_38
-		PHA
-		LDA	byte_39
-		PHA
-		LDA	byte_3A
-		PHA
-		STX	unk_37
-		STY	byte_38
-		LDA	#0
-		STA	byte_0
+itoa: .proc
 
-loc_8DCA:				
-		LDA	#0
-		STA	byte_39
-		STA	byte_3A
-		LDX	#$10
-		CLC
+                stx itoa_value
+                sty itoa_value+1
 
-loc_8DD3:				
-		ROL	unk_37
-		ROL	byte_38
-		ROL	byte_39
-		ROL	byte_3A
-		SEC
-		LDA	byte_39
-		SBC	#$A
-		TAY
-		LDA	byte_3A
-		SBC	#0
-		BCC	loc_8DEB
-		STY	byte_39
-		STA	byte_3A
+                ldy #4          ;tens column index
+                ldx #0          ;output digit index
+                lda #'0'
+                sta itoa_uninteresting
+loop:
+                jsr digit
 
-loc_8DEB:				
-		DEX
-		BNE	loc_8DD3
-		ROL	unk_37
-		ROL	byte_38
-		LDA	byte_39
-		CLC
-		ADC	#$30 ; '0'
-		LDY	byte_0
-		BEQ	loc_8E02
+                ; get digit in this column, and skip it if not
+                ; interesting.
+                lda 1,x                
+                cmp itoa_uninteresting 
+                beq next_digit
 
-loc_8DFB:				
-		LDX	byte_0,Y
-		STX	unk_1,Y
-		DEY
-		BNE	loc_8DFB
+                ; move to next output digit.
+                inx
 
-loc_8E02:				
-		STA	unk_1
-		INC	byte_0
-		LDA	unk_37
-		ORA	byte_38
-		BNE	loc_8DCA
-		PLA
-		STA	byte_3A
-		PLA
-		STA	byte_39
-		PLA
-		STA	byte_38
-		PLA
-		STA	unk_37
-		RTS
-; End of function itoa
+                ; effectively, make all digits interesting. 
+                dec itoa_uninteresting
+next_digit:
+                ; next tens column.
+                dey             
+                bpl loop
+
+                ; save output digit count.
+                stx 0           
+                rts
+
+digit: .proc
+                lda #'0'
+                sta 1,X
+loop:
+                ; subtract current tens value, but don't store it in
+                ; memory, in case there's a borrow.
+                sec
+                lda itoa_value+0
+                sbc tensL,Y
+                pha
+                lda itoa_value+1
+                sbc tensH,Y
+
+                ; if borrow, done.
+                bcc borrow
+
+                ; store new value in memory.
+                sta itoa_value+1
+                pla
+                sta itoa_value+0
+
+                ; increment digit count and repeat.
+                inc 1,X
+                bne loop
+                
+borrow:
+                ; discard new value and done.
+                pla
+                rts
+                .pend
+
+TENS:=(1,10,100,1000,10000)
+tensL:
+                .byte <TENS
+tensH:
+                .byte >TENS
+
+                .pend
 
 
 
