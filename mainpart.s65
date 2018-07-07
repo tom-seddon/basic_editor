@@ -1,41 +1,54 @@
 ;-------------------------------------------------------------------------
                 
-; COPRO==0: standard
-; COPRO==1: HI
-; COPRO==2: Relocatable ($8000 version)
-; COPRO==3: Relocatable ($b800 version)
+; BUILD_TYPE==0: standard
+; BUILD_TYPE==1: HI
+; BUILD_TYPE==2: Relocatable ($8000 version)
+; BUILD_TYPE==3: Relocatable ($b800 version)
+; BUILD_TYPE==4: assembled at $3800, for testing routines from BASIC
+
+; Only build types 0 and 1 are valid ROMs!
 
 HI_ADDRESS = $b800
 
-.if COPRO==0
+                .if BUILD_TYPE==0
                 
-RELOCATABLE = false
-HI = false
-SVC_BASE = $8000
-LANG_BASE = $8000
+RELOCATABLE: = false
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = $8000
 
-.elsif COPRO==1
+                .elsif BUILD_TYPE==1
                 
-RELOCATABLE = false
-HI = true
-SVC_BASE = $8000
-                LANG_BASE = HI_ADDRESS
+RELOCATABLE: = false
+HI: = true
+SVC_BASE: = $8000
+LANG_BASE: = HI_ADDRESS
                 
-.elsif COPRO==2
+                .elsif BUILD_TYPE==2
                 
-RELOCATABLE = true
-HI = false
-SVC_BASE = $8000
-LANG_BASE = $8000
+RELOCATABLE: = true
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = $8000
 
-.elsif COPRO==3
+                .elsif BUILD_TYPE==3
                 
-RELOCATABLE = true
-HI = false
-SVC_BASE = $8000
-                LANG_BASE = HI_ADDRESS
+RELOCATABLE: = true
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = HI_ADDRESS
+
+                .elsif BUILD_TYPE==4
+
+RELOCATABLE: = false
+HI: = false
+
+; the ROM ought to fit (at least, in Mode 7...) starting from $3c00,
+; but the TOC and/or extra debug junk might push the size past 16K.
+SVC_BASE: = $3800
+LANG_BASE:= $3800   
                 
-.endif
+                .endif
 
 ;-------------------------------------------------------------------------
 
@@ -64,6 +77,46 @@ ROM_FLAGS = %11000010
                 
                 .dsection code
                 * = SVC_BASE
+
+                .if BUILD_TYPE==4
+
+push_addrs: .macro
+                .for i=0,i<len(\1),i+=1
+                lda \1[i]
+                pha
+                .next
+                .endm
+
+pop_addrs: .macro
+                .for i=0,i<len(\1),i+=1
+                pla
+                sta \1[len(\1)-1-i]
+                .next
+                .endm
+
+                ; Y/X points to string on entry. On exit, $70/$71
+                ; holds result and $72 holds final status register
+                ; value.
+                jmp test_atoi
+
+test_atoi: .proc
+addrs:=(byte_C,byte_D,byte_3E,byte_3F)
+                push_addrs addrs
+                stx byte_C
+                sty byte_D
+                jsr atoi
+                php
+                pla
+                sta $72
+                lda byte_3E
+                sta $70
+                lda byte_3F
+                sta $71
+                pop_addrs addrs
+                rts
+                .pend     
+
+                .endif
 
 rom_start:
                 JMP     language_entry
@@ -1379,6 +1432,12 @@ aLastSearchEnd:
                 .text "None"
 aLastSearchNoneEnd:
                 
+TENS:=(1,10,100,1000,10000)
+tensL:
+                .byte <TENS
+tensH:
+                .byte >TENS
+                
 print_on_off: .proc
                 ; prints "Off" if Z set, "On" if Z clear
                 beq off
@@ -1799,7 +1858,7 @@ itoa: .proc
                 ldx #0          ;output digit index
                 lda #'0'
                 sta itoa_uninteresting
-loop:
+input_loop:
                 jsr digit
 
                 ; get digit in this column, and skip it if not
@@ -1816,7 +1875,7 @@ loop:
 next_digit:
                 ; next tens column.
                 dey             
-                bpl loop
+                bpl input_loop
 
                 ; save output digit count.
                 stx 0           
@@ -1825,7 +1884,7 @@ next_digit:
 digit: .proc
                 lda #'0'
                 sta 1,X
-loop:
+output_loop:
                 ; subtract current tens value, but don't store it in
                 ; memory, in case there's a borrow.
                 sec
@@ -1845,19 +1904,13 @@ loop:
 
                 ; increment digit count and repeat.
                 inc 1,X
-                bne loop
+                bne output_loop
                 
 borrow:
                 ; discard new value and done.
                 pla
                 rts
                 .pend
-
-TENS:=(1,10,100,1000,10000)
-tensL:
-                .byte <TENS
-tensH:
-                .byte >TENS
 
                 .pend
 
@@ -2307,94 +2360,86 @@ loc_8F74:
 ; entry: (byte_3E) points to command line;
 ; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
 
-atoi_from_command_line:			
+atoi_from_command_line:	.proc		
 					
 		LDA	byte_3E
 		STA	byte_C
 		LDA	byte_3F
-		STA	byte_D
-; End of function atoi_from_command_line
+                STA	byte_D
 
+                ; fall through
+                .pend
 
 
 ; entry: (unk_C) points	to text;
 ; exit:	C set if error,	or (byte_3E,byte_3F) holds value
 
-atoi:					
-		LDX	#0
-		STX	byte_3E
-		STX	byte_3F
-		LDY	#0
-		LDA	(byte_C),Y
-		PHA
+atoi: .proc
+                ldy #0
+                sty byte_3E
+                sty byte_3F
 
-atoi_loop:				
-		LDA	(byte_C),Y
-		CMP	#32
-		BEQ	atoi_done		; branch taken if space	char
-		CMP	#13
-		BEQ	atoi_done		; branch taken if CR
-		CMP	#'0'
-		BCC	atoi_error		; branch taken if definitely not digit
-		CMP	#$3A ; ':'
-		BCC	is_digit	; branch taken if digit
+                ; keep going until terminator, non-digit, or too many
+                ; digits.
+count_digits_loop:
+                lda (byte_C),Y
+                cmp #' '
+                beq got_digits  ;taken if space
+                cmp #13
+                beq got_digits  ;taken if CR
+                cmp #'0'
+                bcc atoi_error  ;taken if not digit
+                cmp #'9'+1
+                bcs atoi_error  ;taken if not digit
+                iny
+                cpy #6
+                bcc count_digits_loop
+atoi_error:
+                sec
+                rts
 
-atoi_error:					
-		PLA
-		SEC
+got_digits:
+                cpy #0
+                beq atoi_error
+
+                ldx #0          ;tens column counter
+                dey             ;string offset
+
+columns_loop:
+                
+                lda (byte_C),Y  ;get digit
+
+add_column_loop:
+                cmp #'0'        
+                beq column_done
+                
+                pha
+
+                clc
+                lda byte_3E
+                adc tensL,X
+                sta byte_3E
+                lda byte_3F
+                adc tensH,X
+                sta byte_3F
+
+                asl a
+                pla
+                bcs atoi_error  ;taken if >32767
+
+                ; C is clear here. Branch with BNE is OK; the
+                ; accumulator holds an ASCII value so it'll never end
+                ; up zero.
+                sbc #0          
+                bne add_column_loop
+column_done:
+                inx             ;next tens column
+                dey
+                bpl columns_loop
+atoi_done:
+                clc
 		RTS
-
-is_digit:				
-		INX			; count	number of digits
-		CPX	#5		; 5 digits?
-		BEQ	check_most_significant_digit ; ==5 is OK
-		BCC	add_digit	; <5 is	OK
-		BCS	atoi_error		; >5 is	an error
-
-check_most_significant_digit:		
-		PLA
-		PHA
-		CMP	#$34 ; '4'
-		BCS	atoi_error		; error	if most	significant digit >'3' (since 32767 is the largest valid value)
-
-add_digit:				
-		ASL	byte_3E
-		ROL	byte_3F		; value*2
-		LDA	byte_3F
-		PHA
-		LDA	byte_3E
-		ASL	byte_3E
-		ROL	byte_3F		; value*4
-		ASL	byte_3E
-		ROL	byte_3F		; value*8
-; value*8 + value*2 (=value*10)
-		CLC
-		ADC	byte_3E
-		STA	byte_3E
-		PLA
-		ADC	byte_3F
-		STA	byte_3F
-		LDA	($C),Y		; get char (which is known to be a digit)
-		SEC
-		SBC	#'0'            ; -'0' to make it a number
-		CLC
-		ADC	byte_3E
-		STA	byte_3E		; add in to accumulator
-		BCC	done_digit
-		INC	byte_3F		; adjust high byte for carry
-
-done_digit:				
-		INY
-		BNE	atoi_loop
-
-atoi_done:					
-		LDA	byte_3F
-		BMI	atoi_error
-		PLA
-		CLC
-		RTS
-; End of function atoi
-
+                .pend
 
 
 ; unk_6BD = command to run
