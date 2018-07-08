@@ -5167,10 +5167,8 @@ enter_edit_mode:
 		STA	byte_6AB
 
 loc_9D2D:
-                lda #26
-                jsr oswrch
-                lda #12
-                jsr oswrch
+                jsr print_next_string
+                .byte 26,12,255
 		JSR	find_program
 		BCC	loc_9D3F
 		JMP	language_entry.loc_814D
@@ -5527,11 +5525,9 @@ set_palette_entry:
 		TXA
 		JSR	OSWRCH
 		TYA
-		JSR	OSWRCH
-		LDA	#0
-		JSR	OSWRCH
-		JSR	OSWRCH
                 JSR	OSWRCH
+                jsr print_next_string
+                .byte 0,0,0,255
 set_palette_done:
 		RTS
 ; End of function set_palette
@@ -5618,8 +5614,7 @@ loc_9F65:
 beep:					
 					
 		LDA	#7
-		JSR	OSWRCH
-		RTS
+		JMP	OSWRCH
 ; End of function beep
 
 
@@ -6967,11 +6962,11 @@ run_or_exit_command: .proc
 		STA	is_insert_mode	; 0=overtype 1=insert
 		LDA	#$60 ; '`'
 		STA	cursor_size
-		JSR	reset_cursor_shape
-		LDA	#26		; reset	text and graphics windows
-		JSR	OSWRCH
-		LDA	#12		; CLS (run_or_exit_command)
-		JSR	OSWRCH
+                JSR	reset_cursor_shape
+                jsr print_next_string
+                .byte 26        ; reset text and graphics windows
+                .byte 12        ; CLS (run_or_exit_command)
+                .byte 255
 		JSR	reset_keys_settings
 		LDA	#228
 		JSR	osbyte_with_x0_y0
@@ -11124,12 +11119,9 @@ nocarry
                 and #5
                 bne print_s
 
-next_help
-                lda #","
-                jsr oswrch
-
-                lda #32
-                jsr oswrch
+next_help:
+                jsr print_next_string
+                .text ", ",255
                 
                 jmp help_loop
 
