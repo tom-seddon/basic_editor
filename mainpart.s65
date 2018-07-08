@@ -2368,7 +2368,9 @@ loc_8F74:
 
 
 ; entry: (byte_3E) points to command line;
-; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
+;
+; exit: C set if error, or (byte_3E,byte_3F) holds result and Y is
+; index of terminating char.
 
 atoi_from_command_line:	.proc		
 					
@@ -2412,6 +2414,8 @@ got_digits:
                 cpy #0
                 beq atoi_error
 
+                sty atoi_y      ;index of terminating char
+
                 ldx #0          ;tens column counter
                 dey             ;string offset
 
@@ -2447,6 +2451,7 @@ column_done:
                 dey
                 bpl columns_loop
 atoi_done:
+                ldy atoi_y
                 clc
 		RTS
                 .pend
