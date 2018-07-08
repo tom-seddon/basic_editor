@@ -52,12 +52,12 @@ LANG_BASE:= $3800
 
 ;-------------------------------------------------------------------------
 
-                ; Language entry point modes.
-                ;
-                ; All modes must be non-zero.
-                LANGUAGE_MODE_NORMAL=1
-                LANGUAGE_MODE_ZSAVE=$80
-                LANGUAGE_MODE_ZRUN=$81
+; Language entry point modes.
+;
+; All modes must be non-zero.
+LANGUAGE_MODE_NORMAL=1
+LANGUAGE_MODE_ZSAVE=$80
+LANGUAGE_MODE_ZRUN=$81
 
 
 ;-------------------------------------------------------------------------
@@ -76,7 +76,7 @@ ROM_FLAGS = %11000010
 ;-------------------------------------------------------------------------
                 
                 .dsection code
-                * = SVC_BASE
+* = SVC_BASE
 
                 .if BUILD_TYPE==4
 
@@ -582,7 +582,7 @@ loc_823B:
                                         ; Exit:
                                         ; unk_0 holds digit count
                                         ; unk_1... filled with string
-                JSR     print_number    ; print number.
+                JSR     print_itoa_result    ; print number.
                                         ;
                                         ; Suitable for use with the result of itoa.
                                         ;
@@ -613,7 +613,7 @@ loc_8259:
                                         ; Exit:
                                         ; unk_0 holds digit count
                                         ; unk_1... filled with string
-                JSR     print_number    ; print number.
+                JSR     print_itoa_result    ; print number.
                                         ;
                                         ; Suitable for use with the result of itoa.
                                         ;
@@ -2062,7 +2062,7 @@ osbyte_with_y0:.proc
 
 
 
-; print	number.
+; print_itoa_result.
 ;
 ; Suitable for use with	the result of itoa.
 ;
@@ -2070,16 +2070,15 @@ osbyte_with_y0:.proc
 ; unk_0	= digit	count
 ; unk_1... = digits
 
-print_number:				
+print_itoa_result: .proc
 					
 		LDX	#1
 		LDY	#0
 		LDA	byte_0
 		JSR	print_n_chars
 		RTS
-; End of function print_number
 
-
+                .pend
 
 ; move (maybe overlapping) memory regions.
 ;
@@ -6187,7 +6186,7 @@ redraw_line_number:
 					;
 					; Entry:
 					; A = number of	spaces to print	(max 6)
-		JSR	print_number	; print	number.
+		JSR	print_itoa_result	; print	number.
 					;
 					; Suitable for use with	the result of itoa.
 					;
@@ -11302,7 +11301,7 @@ loc_BC42:
                 .text "Tab value   : ",255
 		LDX	unk_61
 		LDY	#0
-		JSR	sub_BD96
+		JSR	print_number
                 JSR	sub_BD83
                 jsr print_next_string
                 .text "No.of lines: ",255
@@ -11330,7 +11329,7 @@ loc_BC8B:
 loc_BC8D:				
 		LDX	byte_38
 		LDY	byte_39
-		JSR	sub_BD96
+		JSR	print_number
 
 loc_BC94:				
 		JSR	OSNEWL
@@ -11367,13 +11366,13 @@ loc_BCA4:
 		DEY
 		LDA	($2F),Y
 		TAY
-		JSR	sub_BD96
+		JSR	print_number
                 JSR	OSNEWL
                 jsr print_next_string
                 .text "Current line: ",255
 		LDX	current_line_no_msb
 		LDY	current_line_no_lsb
-		JSR	sub_BD96
+		JSR	print_number
 		JSR	sub_BD83
 		JSR	sub_B37B
 		PHP
@@ -11385,7 +11384,7 @@ loc_BCA4:
 		JSR	print_n_chars
 		LDX	unk_4E
 		LDY	unk_4D
-		JSR	sub_BD96
+		JSR	print_number
 		JMP	loc_BD04
 
 loc_BCFF:				
@@ -11456,7 +11455,7 @@ loc_BD60:
 		TAY
 		LDA	$42,X
 		TAX
-		JSR	sub_BD96
+		JSR	print_number
 		LDX	#3
 		LDA	#$20 ; ' '
 
@@ -11498,7 +11497,7 @@ sub_BD8D:
 
 
 
-sub_BD96:				
+print_number: .proc			
 					
 		JSR	itoa		; Gets string representation of	16-bit number.
 					;
@@ -11508,15 +11507,14 @@ sub_BD96:
 					; Exit:
 					; unk_0	holds digit count
 					; unk_1... filled with string
-		JMP	print_number	; print	number.
-; End of function sub_BD96		;
+		JMP	print_itoa_result	; print	number.
 					; Suitable for use with	the result of itoa.
 					;
 					; Entry:
 					; unk_0	= digit	count
 					; unk_1... = digits
 
-
+                .pend
 
 print_colour_scheme: .proc		
 					
