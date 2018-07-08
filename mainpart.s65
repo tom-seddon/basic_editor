@@ -574,22 +574,7 @@ loc_823B:
                 LDA     TOP+1
                 SBC     oshwm+1
                 TAY
-                JSR     itoa            ; Gets string representation of 16-bit number.
-                                        ;
-                                        ; Entry:
-                                        ; Y,X = value
-                                        ;
-                                        ; Exit:
-                                        ; unk_0 holds digit count
-                                        ; unk_1... filled with string
-                JSR     print_itoa_result    ; print number.
-                                        ;
-                                        ; Suitable for use with the result of itoa.
-                                        ;
-                                        ; Entry:
-                                        ; unk_0 = digit count
-                                        ; unk_1... = digits
-
+                JSR print_number
 loc_8259:                               
                 JSR     print_5_spaces
 ; print bytes free
@@ -605,22 +590,7 @@ loc_8259:
                 LDA     HIMEM+1
                 SBC     TOP+1
                 TAY
-                JSR     itoa            ; Gets string representation of 16-bit number.
-                                        ;
-                                        ; Entry:
-                                        ; Y,X = value
-                                        ;
-                                        ; Exit:
-                                        ; unk_0 holds digit count
-                                        ; unk_1... filled with string
-                JSR     print_itoa_result    ; print number.
-                                        ;
-                                        ; Suitable for use with the result of itoa.
-                                        ;
-                                        ; Entry:
-                                        ; unk_0 = digit count
-                                        ; unk_1... = digits
-
+                JSR print_number
 loc_8278:                               
                 JSR     print_5_spaces
 
@@ -2070,15 +2040,10 @@ osbyte_with_y0:.proc
 ; unk_0	= digit	count
 ; unk_1... = digits
 
-print_itoa_result: .proc
+; print_itoa_result: .proc
 					
-		LDX	#1
-		LDY	#0
-		LDA	byte_0
-		JSR	print_n_chars
-		RTS
 
-                .pend
+;                 .pend
 
 ; move (maybe overlapping) memory regions.
 ;
@@ -6186,14 +6151,8 @@ redraw_line_number:
 					;
 					; Entry:
 					; A = number of	spaces to print	(max 6)
-		JSR	print_itoa_result	; print	number.
-					;
-					; Suitable for use with	the result of itoa.
-					;
-					; Entry:
-					; unk_0	= digit	count
-					; unk_1... = digits
-
+                jsr print_itoa_result
+                
 print_space_or_marker:			
 		LDX	#12
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
@@ -11507,12 +11466,15 @@ print_number: .proc
 					; Exit:
 					; unk_0	holds digit count
 					; unk_1... filled with string
-		JMP	print_itoa_result	; print	number.
-					; Suitable for use with	the result of itoa.
-					;
-					; Entry:
-					; unk_0	= digit	count
-					; unk_1... = digits
+
+                .pend
+
+print_itoa_result: .proc
+
+		LDX	#1
+		LDY	#0
+		LDA	byte_0
+		JMP	print_n_chars
 
                 .pend
 
