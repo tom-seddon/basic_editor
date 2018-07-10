@@ -52,6 +52,13 @@ LANG_BASE:= $3800
 
 ;-------------------------------------------------------------------------
 
+KEEP_DELETE_LINE_MEMSET = false
+KEEP_CLEAR_5B1_TO_600_MEMSET = false
+KEEP_DETOKENIZE_ONE_LINE_MEMSET = false
+KEEP_9E1D_MEMSET = false
+
+;-------------------------------------------------------------------------
+
 ; Language entry point modes.
 ;
 ; All modes must be non-zero.
@@ -97,7 +104,54 @@ pop_addrs: .macro
                 ; Y/X points to string on entry. On exit, $70/$71
                 ; holds result and $72 holds final status register
                 ; value.
-                jmp test_atoi
+                jmp test_atoi   ;+0
+
+                ; random thing I wanted to test.
+                jmp clear_5B1_to_600 ;+3
+
+                ; random thing I wanted to test.
+                jmp test_detokenize_one_line_memset ;+6
+
+                ; random thing I wanted to test.
+                jmp test_loc_9e1d_memset ;+9
+
+                ; ; A/X/Y as per memset. Changes $70.
+                jmp test_memset
+
+test_loc_9e1d_memset: .proc
+addrs:=(byte_C,byte_D,byte_3A)
+                push_addrs addrs
+                lda sub_9DEA.loc_9e2e
+                pha
+                lda #$60
+                sta sub_9DEA.loc_9e2e
+                jsr sub_9DEA.loc_9e1d
+                pla
+                sta sub_9DEA.loc_9e2e
+                pop_addrs addrs
+                rts
+                
+                .pend
+
+test_detokenize_one_line_memset: .proc
+addrs:=(byte_C,byte_D,byte_2C,byte_3A)
+                push_addrs addrs
+                lda #$ff        ;make it just do the memset
+                sta byte_2C
+                jsr detokenize_one_line
+                pop_addrs addrs
+                rts
+                .pend
+
+test_memset: .proc
+addrs:=(byte_C,byte_D,byte_3A)
+                sta $70
+                push_addrs addrs
+                lda $70
+                jsr memset
+                pop_addrs addrs
+                rts
+                .pend
 
 test_atoi: .proc
 addrs:=(byte_C,byte_D,byte_3E,byte_3F)
@@ -1971,7 +2025,7 @@ locret_8E6B:
 ; Y holds number of bytes to clear in Xth page.
 ; A holds value	to write.
 
-memset:.proc
+memset: .proc
 					
 		STA	byte_3A
 		TYA
@@ -2005,9 +2059,7 @@ fill_last_page_loop:
 
 memset_done:					
                 RTS
-.pend
-; End of function memset
-
+                .pend
 
 
 
@@ -2550,8 +2602,9 @@ command_ptr_ok:
 
 
 
-clear_5B1_to_600:			
-					
+clear_5B1_to_600: .proc
+
+                .if KEEP_CLEAR_5B1_TO_600_MEMSET
 		LDA	#0
 		STA	byte_15
 		LDA	#<unk_5B1
@@ -2567,7 +2620,18 @@ clear_5B1_to_600:
 					; X holds number of pages to clear.
 					; Y holds number of bytes to clear in Xth page.
 					; A holds value	to write.
-		RTS
+		.else
+                ldx #$4e
+                lda #0
+loop:
+                sta unk_5b1,x
+                dex
+                bpl loop
+                .endif
+                
+                rts
+                
+                .pend
 ; End of function clear_5B1_to_600
 
 
@@ -4848,19 +4912,42 @@ kbflush:
 
 
 
-detokenize_one_line:			
-					
+detokenize_one_line: .proc
+
+                .if !KEEP_DETOKENIZE_ONE_LINE_MEMSET
+
+                ldx #1
+                lda #$20
+loop400:
+                sta $400,x
+                inx
+                bne loop400
+loop500:
+                sta $500,x
+                inx
+                cpx #$25
+                bne loop500
+
+                .endif
+
+                .if KEEP_DETOKENIZE_ONE_LINE_MEMSET
 		LDA	#1
 		STA	byte_C
 		LDA	#4
 		STA	byte_D
+                .endif
+                
 		LDX	#0
 		STX	byte_400
 		STX	byte_6A8
+
+                .if KEEP_DETOKENIZE_ONE_LINE_MEMSET
 		INX			; X=1
 		LDY	#$24 ; '$'
 		LDA	#$20 ; ' '
 		JSR	memset		; Clear	$401 - $525
+                .endif
+                
 		LDX	byte_2C		; get MSB of address
 		INX
 		BNE	loc_9C26	; branch taken if MSB of address wasn't $FF
@@ -4889,8 +4976,7 @@ loc_9C26:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		LDA	#4		; "Line	too long"
 		JMP	loc_859D
-; End of function detokenize_one_line
-
+                .pend
 
 
 ; detokenize line and store result.
@@ -5249,7 +5335,7 @@ loc_9DE4:
 
 
 
-sub_9DEA:				
+sub_9DEA: .proc
 					
 		PHP
 		JSR	make_cursor_invisible
@@ -5290,6 +5376,10 @@ loc_9E19:
 		PLP
 		PHP
 		BCC	loc_9E5D
+
+loc_9e1d:
+
+                .if KEEP_9E1D_MEMSET
 		LDA	#1
 		STA	byte_C
 		LDA	#4
@@ -5303,7 +5393,15 @@ loc_9E19:
 					; X holds number of pages to clear.
 					; Y holds number of bytes to clear in Xth page.
 					; A holds value	to write.
-
+                .else
+                lda #$20
+                ldx #$4f
+loc_9e1d_fill_401_loop:
+                sta $400,x
+                dex
+                bne loc_9e1d_fill_401_loop
+                .endif
+                
 loc_9E2E:				
 		LDA	byte_3B
 		CMP	screen_height
@@ -5333,8 +5431,7 @@ loc_9E37:
 loc_9E5D:				
 		PLA
 		RTS
-; End of function sub_9DEA
-
+                .pend
 
 
 
@@ -7936,13 +8033,17 @@ loc_AADC:
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_AAA6
 
-delete_to_end_of_line_edit_mode_command: 
+delete_to_end_of_line_edit_mode_command: .proc
 		LDA	unk_11
 		BNE	locret_AACC
+                
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		CMP	byte_400
 		BEQ	loc_AAC8
 		BCS	locret_AACC
+
+                .if KEEP_DELETE_LINE_MEMSET
+                
 		CLC
 		LDA	#1
 		ADC	cursor_offset	; offset of cursor in detokenized buffer
@@ -7957,6 +8058,16 @@ delete_to_end_of_line_edit_mode_command:
 		TAY
 		INY
 		LDX	#0
+
+                lda byte_C
+                sta del_C
+                lda byte_D
+                sta del_D
+                lda byte_400
+                sta del_400
+                stx del_X
+                sty del_Y
+                
 		LDA	#$20 ; ' '
 		JSR	memset		; Set memory to	value.
 					;
@@ -7964,12 +8075,29 @@ delete_to_end_of_line_edit_mode_command:
 					; X holds number of pages to clear.
 					; Y holds number of bytes to clear in Xth page.
 					; A holds value	to write.
+
+                .else
+
+                lda byte_400
+                pha
+
+                ldx cursor_offset
+                lda #$20
+delete_loop:
+                sta $400,X
+                inx
+                cpx byte_400
+                bcc delete_loop
+                beq delete_loop
+
+                .endif
+                                        
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
 		DEX
 		STX	byte_400
 		JMP	loc_AAB7
 
-
+                .pend
 
 sub_AB1E:				
 		LDA	unk_9

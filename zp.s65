@@ -177,7 +177,6 @@ itoa_uninteresting:
                 .fill 1
 atoi_y:
                 .fill 1
-
 language_entry_mode:
                 ; if top bit set, call exit_and_OLD after printing a
                 ; BRK message.
