@@ -57,6 +57,11 @@ KEEP_CLEAR_5B1_TO_600_MEMSET = false
 KEEP_DETOKENIZE_ONE_LINE_MEMSET = false
 KEEP_9E1D_MEMSET = false
 
+
+;-------------------------------------------------------------------------
+
+LINE_NUMBER_TOKEN=$8d
+                
 ;-------------------------------------------------------------------------
 
 ; Language entry point modes.
@@ -95,9 +100,27 @@ push_addrs: .macro
                 .endm
 
 pop_addrs: .macro
-                .for i=0,i<len(\1),i+=1
+                .for i=len(\1)-1,i>=0,i-=1
                 pla
-                sta \1[len(\1)-1-i]
+                sta \1[i]
+                .next
+                .endm
+
+push_and_copy_addrs: .macro
+                .for i=0,i<len(\1),i+=1
+                lda \1[i]
+                pha
+                lda \2+i
+                sta \1[i]
+                .next
+                .endm
+
+pop_and_copy_addrs: .macro
+                .for i=len(\1)-1,i>=0,i-=1
+                lda \1[i]
+                sta \2+i
+                pla
+                sta \1[i]
                 .next
                 .endm
 
@@ -116,7 +139,22 @@ pop_addrs: .macro
                 jmp test_loc_9e1d_memset ;+9
 
                 ; ; A/X/Y as per memset. Changes $70.
-                jmp test_memset
+                jmp test_memset ;+12
+
+                ; X=replacement byte
+                ; Y=# chars to remove
+                ; ($72) is pointer
+                ; changes $70
+                jmp test_B0BB   ;+15
+
+test_B0BB: .proc
+addrs:=(byte_25,byte_26,byte_27,byte_28)
+                push_and_copy_addrs addrs,$70
+                txa
+                jsr sub_B0BB
+                pop_and_copy_addrs addrs,$70
+                rts
+                .pend
 
 test_loc_9e1d_memset: .proc
 addrs:=(byte_C,byte_D,byte_3A)
@@ -6584,6 +6622,30 @@ loc_A2B1:
 		RTS
 ; End of function sub_A2A1
 
+; flags bits:
+;
+; bit 0 set when valid as the prefix of a variable name (BGET, BPUT,
+; CLEAR, CLG, CLOSE, CLS, COUNT, END, ENDPROC, EOF, ERL, ERR, EXT,
+; FALSE, HIMEM, LOMEM, NEW, OLD, PAGE, PI, POS, PTR, REPORT, RETURN,
+; RND, RUN, STOP, TIME, TRUE, VPOS)
+;
+; bit 1 set when this keyword should set the RHS flag when tokenizing
+; (BPUT, CALL, CHAIN, CLOSE, COLOUR, DIM, DRAW, ENVELOPE, FOR, GCOL,
+; GOSUB, GOTO, HIMEM, IF, INPUT, LOAD, LOCAL, LOMEM, MODE, MOVE, NEXT,
+; ON, OSCLI, PAGE, PLOT, PRINT, PROC, PTR, READ, RESTORE, SAVE, SOUND,
+; TIME, TRACE, UNTIL, VDU, WIDTH)
+;
+; bit 2 set when this keyword should clear the LHS flag [ELSE, ERROR,
+; LET, THEN]
+;
+; bit 3 set when this keyword must be followed by a valid symbol [FN,
+; PROC]
+;
+; bit 4 set when byte_24 should be set [AUTO, DELETE, ELSE, GOSUB,
+; GOTO, LIST, RENUMBER, RESTORE, THEN, TRACE]
+;
+; bit 5 set if tokenizing should stop [DATA, REM]
+                
 token_table:	.text "AND"
 		.byte  $80 ; €
 		.byte	 0 ;
@@ -6950,6 +7012,8 @@ aVpos:		.text "VPOS"
 aWidth:		.text "WIDTH"
 		.byte  $FE ; þ
 		.byte	 2 ;
+                
+                ; LHS forms.
 aPage:		.text "PAGE"
 		.byte  $D0 ; Ð
 		.byte	 0 ;
@@ -8260,7 +8324,7 @@ at_end:
 					
 		LDA	#$D		; CR
 		STA	$401,X		; store	at end of text
-		JSR	sub_B0AC
+		JSR	setjmp
 		LDX	#$FF
 
 find_cr:				
@@ -9167,78 +9231,101 @@ loc_B0A9:
 
 
 
-sub_B0AC:				
+; TODO - misnamed - this looks actually more like it's the entry point
+; for sub_B196.
+setjmp: .proc
 		TSX
 		STX	old_stack_ptr
-		LDA	#1
+		LDA	#<unk_401
 		STA	byte_27
-		LDA	#4
+		LDA	#>unk_401
 		STA	byte_28
 		JMP	sub_B196
-; End of function sub_B0AC
+                .pend
 
 
 
-
-sub_B0BB:				
+; Remove bytes from current line and replace them with a new value.
+;
+; A = replacement byte.
+; Y = number of bytes to remove - 1
+; (byte_27) points to where to remove them from.
+                
+sub_B0BB: .proc
 					
-		PHA
-		CLC
-		TYA
-		ADC	byte_27
-		STA	byte_25
-		LDY	#0
-		TYA
+		PHA             ;save original A
+
+                ; (byte_25) is source pointer: (byte_27)+Y
+		CLC            
+		TYA             
+		ADC	byte_27 
+		STA	byte_25 
+		LDY	#0      
+		TYA             
 		ADC	byte_28
 		STA	byte_26
 		PLA
-		STA	($27),Y
+                
+                ; store original A in program
+		STA	(byte_27),Y
 
+                ; keep moving bytes from source to dest until eol.
 loc_B0CC:				
 		INY
-		LDA	($25),Y
-		STA	($27),Y
+		LDA	(byte_25),Y
+		STA	(byte_27),Y
 		CMP	#$D
 		BNE	loc_B0CC
+                
 		RTS
-; End of function sub_B0BB
+                .pend
 
 
 
 
-sub_B0D6:				
-		AND	#$F
-		STA	byte_21
-		STY	byte_22
+sub_B0D6: .proc
+		AND	#$F     ;turn ASCII digit into its value
+		STA	byte_21 ;save in LSB
+		STY	byte_22 ;Y=0 on entry here... it's only called
+                                ;from one place
 
 loc_B0DC:				
-		INY
-		LDA	($27),Y
-		CMP	#$3A ; ':'
-		BCS	loc_B119
-		CMP	#$30 ; '0'
-		BCC	loc_B119
-		AND	#$F
-		PHA
-		LDX	byte_22
-		LDA	byte_21
-		ASL
-		ROL	byte_22
+		INY                 ;next byte
+		LDA	(byte_27),Y ;get next byte from input
+		CMP	#'9'+1      ;is it a digit?
+		BCS	loc_B119    ;taken if not a digit
+		CMP	#'0'        ;is it a digit?
+		BCC	loc_B119    ;taken if not a digit
+		AND	#$F         ;turn it ints its digit value
+		PHA                 ;save
+		LDX	byte_22     ;
+                
+                ; shift value left 2, bailing out if negative.
+		LDA	byte_21     
+		ASL                 
+		ROL	byte_22     
+		BMI	loc_B114    
+		ASL                 
+		ROL	byte_22     
 		BMI	loc_B114
-		ASL
-		ROL	byte_22
-		BMI	loc_B114
-		ADC	byte_21
-		STA	byte_21
+                
+                ; add original value, giving value*5. 
+		ADC	byte_21 ;carry clear at this point...
+		STA	byte_21     
 		TXA
 		ADC	byte_22
+
+                ; shift value left 1, giving value*10, bailing out if
+                ; negative or carry.
 		ASL	byte_21
 		ROL
 		BMI	loc_B114
 		BCS	loc_B114
 		STA	byte_22
-		PLA
-		ADC	byte_21
+
+                ; add new digit in.
+		PLA            
+		ADC	byte_21 ;carry clear at this point...
 		STA	byte_21
 		BCC	loc_B0DC
 		INC	byte_22
@@ -9247,14 +9334,15 @@ loc_B0DC:
 
 loc_B114:				
 		PLA
-		LDY	#0
-		SEC
+		LDY	#0      ;restore Y value
+		SEC             ;
 		RTS
+                .pend
 
 loc_B119:				
 		JSR	ensure_4_bytes_spare
 		DEY
-		LDA	#$8D ;-$73 ;	''
+		LDA	#LINE_NUMBER_TOKEN
 		JSR	sub_B0BB
 		LDA	byte_27
 		ADC	#2
@@ -9302,30 +9390,39 @@ clc_then_rts:
 
 
 
-; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
+; sets C if:
+;
+; A>='a'&&A<='z'
+; A=='_'
+; A==GBP
+; A>='A'&&A<='Z'
+; A>='0'&&A<='9'
 
-issymchar:				
-		CMP	#$7B ; '{'
-		BCS	clc_then_rts	; branch taken if >'z'
-		CMP	#$5F ; '_'
-		BCS	locret_B17E	; branch taken if >='_' (0x5F='_', 0x60='œ', 0x61='A', ...)
-		CMP	#$5B ; '['
-		BCS	clc_then_rts	; branch taken if >'Z'
-		CMP	#$41 ; 'A'
-		BCS	locret_B17E	; branch taken if >='A'
-; End of function issymchar
+issymchar: .proc
+		CMP	#'z'+1
+		BCS	clc_then_rts
+                CMP	#'_' ;cover '_' (0x5f), GBP (0x60) and lower-case
+                             ;letters (0x61...)
+		BCS	isdigit.done
+		CMP	#'Z'+1
+		BCS	clc_then_rts
+		CMP	#'A'
+		BCS	isdigit.done
+                ; fall through
+                .pend
 
 
 
 ; sets C if A is a digit char
 
-isdigit:				
-		CMP	#$3A ; ':'      ; >'9'?
-		BCS	clc_then_rts	; branch taken if >'9'
-		CMP	#$30 ; '0'
+isdigit:.proc			
+		CMP	#'9'+1
+		BCS	clc_then_rts
+		CMP	#'0'
 
-locret_B17E:				
+done:
 		RTS
+                .pend
 ; End of function isdigit
 
 
@@ -9333,7 +9430,7 @@ locret_B17E:
 ; sets C if A is a number char (0-9 or '.')
 
 isnumchar:				
-		CMP	#$2E ; '.'
+		CMP	#'.'
 		BNE	isdigit		; sets C if A is a digit char
 		RTS
 ; End of function isnumchar
@@ -9346,7 +9443,7 @@ isnumchar:
 increment_27:				
 		JSR	ensure_1_byte_spare
 		INC	byte_27
-		BNE	locret_B17E
+		BNE	isdigit.done
 		INC	byte_28
 		RTS
 ; End of function increment_27
@@ -9356,245 +9453,287 @@ increment_27:
 
 fetch_next_byte:			
 		JSR	increment_27
-		LDA	($27),Y
+		LDA	(byte_27),Y
 		RTS
 ; End of function fetch_next_byte
 
 
 
 
-sub_B196:				
+; (byte_27) always points to unk_401 - the input buffer.
+sub_B196: .proc
 		LDY	#0
 		STY	byte_23
 		STY	byte_24
 
 sub_B196_scan_line:				
-		LDA	(byte_27),Y
-		CMP	#$D
-		BEQ	locret_B17E
-		CMP	#$20 ; ' '
-		BNE	check_for_hex
+		LDA	(byte_27),Y   ;get byte from input
+		CMP	#$D           ;end of line?
+		BEQ	isdigit.done   ;taken if end of line
+		CMP	#' '          ;
+		BNE	check_for_hex ;taken if not space
 
-skip_byte:				
-		JSR	increment_27
-		BNE	sub_B196_scan_line
+next_input_byte:				
+		JSR	increment_27       ;next byte in input
+		BNE	sub_B196_scan_line ;JMP, in effect
 
 check_for_hex:				
-		CMP	#$26 ; '&'
-		BNE	check_for_string
-
+		CMP	#'&'             ;hex value?
+		BNE	check_for_string ;taken if not a hex value
+                ; handle hex value
 check_hex_value:			
-		JSR	fetch_next_byte
-		JSR	isdigit		; sets C if A is a digit char
-		BCS	check_hex_value
-		CMP	#$41 ; 'A'
-		BCC	sub_B196_scan_line
-		CMP	#$47 ; 'G'
-		BCC	check_hex_value
-		BCS	sub_B196_scan_line
+		JSR	fetch_next_byte ;get byte from input
+		JSR	isdigit		;sets C if A is a digit char
+		BCS	check_hex_value ;taken if digit - i.e., good
+                                        ;hex char
+		CMP	#'A'            ;
+		BCC	sub_B196_scan_line ;taken if A<'A' - i.e., bad
+                                           ;hex char
+		CMP	#'F'+1             ;
+		BCC	check_hex_value ;taken if A>='A' && A<='F' -
+                                        ;i.e., good hex char
+		BCS	sub_B196_scan_line ;taken if bad hex char
 
 check_for_string:			
-		CMP	#$22 ; '"'
-		BNE	check_for_colon
-
+		CMP	#'"'
+		BNE	check_for_colon ;taken if not string
+                ; handle string
 loc_B1C5:				
-		JSR	fetch_next_byte
-		CMP	#$22 ; '"'
-		BEQ	skip_byte
-		CMP	#$D
-		BNE	loc_B1C5
-		RTS
+		JSR	fetch_next_byte ;get byte from input
+		CMP	#'"'            ;
+		BEQ	next_input_byte       ;taken if end of string
+		CMP	#$D             ;end of line?
+		BNE	loc_B1C5        ;taken if not end of line
+		RTS                     ;...
 
 check_for_colon:			
-		CMP	#$3A ; ':'
-		BNE	check_for_comma
-		STY	byte_23
-		STY	byte_24
-		BEQ	skip_byte
+		CMP	#':'
+		BNE	check_for_comma ;taken if not colon
+                ; handle colon
+		STY	byte_23         ;reset
+		STY	byte_24         ;reset
+		BEQ	next_input_byte       ;JMP, in effect
 
 check_for_comma:			
-		CMP	#$2C ; ','
-		BEQ	skip_byte
-		CMP	#$2A ; '*'
-		BNE	check_for_dot
+		CMP	#','      ;
+		BEQ	next_input_byte ;taken if comma
+		CMP	#'*'      ;
+		BNE	check_for_dot ;taken if not *
+                ; handle * operator or * command
 		LDA	byte_23
-		BNE	loc_B228
+		BNE	loc_B228 ;taken if the * was on the RHS - so
+                                 ;it's the * operator, not a * command
+
+                ; stop tokenizing on * command.
 		RTS
 
 check_for_dot:				
-		CMP	#$2E ; '.'
-		BEQ	got_dot
-		JSR	isdigit		; sets C if A is a digit char
-		BCC	loc_B224
-		LDX	byte_24
-		BEQ	got_dot
-		JSR	sub_B0D6
-		BCC	loc_B22E
+		CMP	#'.'
+		BEQ	got_dot  ;taken if dot
+		JSR	isdigit  ;sets C if A is a digit char
+		BCC	check_for_token ;taken if not digit char
+                ; handle digit char
+		LDX	byte_24  ;
+		BEQ	got_dot  ;taken if at start of statement
+		JSR	sub_B0D6 ;
+		BCC	loc_B22E ;but sub_B0D6 always leaves with
+                                 ;carry set...?
 
 got_dot:				
-		LDA	($27),Y
-		JSR	isnumchar	; sets C if A is a number char (0-9 or '.')
-		BCC	loc_B207
-		JSR	increment_27
-		JMP	got_dot
+		LDA	(byte_27),Y
+		JSR	isnumchar	;sets C if A is a number char (0-9 or '.')
+		BCC	loc_B207        ;taken if not number char
+		JSR	increment_27    ;next input byte
+		JMP	got_dot         ;loop
 
 loc_B207:				
-		LDX	#-1
-		STX	byte_23
-		STY	byte_24
+		LDX	#255
+		STX	byte_23 ;now on RHS
+		STY	byte_24 ;not start of statement
 		JMP	sub_B196_scan_line
 
 loc_B210:				
-		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
-		BCC	loc_B228
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	£)
+		BCC	loc_B228        ;taken if not valid symbol char
 
 loc_B215:				
 		LDY	#0
 
-loc_B217:				
+loc_B217:
+                ; find next non-symbol char
 		LDA	(byte_27),Y
-		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
-		BCC	loc_B207
-		JSR	increment_27
-		JMP	loc_B217
+		JSR	issymchar	;sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
+		BCC	loc_B207        ;taken if not valid symbol char
+		JSR	increment_27    ;next input char
+		JMP	loc_B217        ;
 
-loc_B224:				
-		CMP	#$41 ; 'A'
-		BCS	loc_B231
+check_for_token:				
+		CMP	#'A'
+		BCS	check_for_token_2
 
 loc_B228:				
-		LDX	#-1
+		LDX	#255
 		STX	byte_23
 		STY	byte_24
 
 loc_B22E:				
-		JMP	skip_byte
+		JMP	next_input_byte
 
-loc_B231:				
+check_for_token_2:
 		CMP	#'X'
-		BCS	loc_B210	; skip out if >=X, since no tokens start with X, Y or Z
+		BCS	loc_B210 ; bail if >=X, since no tokens start
+                                 ; with X, Y or Z
 		LDX	#<token_table
 		STX	byte_25
 		LDX	#>token_table
 		STX	byte_26
 
 loc_B23D:				
-		CMP	(byte_25),Y	; compare to char in table
-		BCC	loc_B217	; taken	if char	in table is less
-		BNE	find_token_byte	; taken	if char	is different
+		CMP	(byte_25),Y	; compare first char to char
+                                        ; in table
+		BCC	loc_B217	; taken if A<char in table -
+                                        ; the tokens are sorted at
+                                        ; least by first char, so if
+                                        ; it wasn't found by now, it
+                                        ; won't be
+		BNE	find_token_byte	; taken if first char is
+                                        ; otherwise different
 
-loc_B243:				
+compare_chars_loop:
 		INY			; next char
 		LDA	(byte_25),Y	; get next char	from table
-		BMI	loc_B27C	; taken	if token value found
-		CMP	(byte_27),Y	; compare to byte in program
-		BEQ	loc_B243	; taken	if chars equal
-		LDA	(byte_27),Y	; get byte from	program
+		BMI	found_token	; taken	if token value found
+		CMP	(byte_27),Y	; compare to byte in input
+		BEQ	compare_chars_loop
+
+                ; input differs - is it abbreviated?
+		LDA	(byte_27),Y	; get byte from	input
 		CMP	#'.'            ; is it an abbreviation?
-		BEQ	loc_B25D	; taken	if abbreviated
+		BEQ	skip_dot	; taken	if abbreviated
 
 find_token_byte:			
 		INY
 		LDA	(byte_25),Y
 		BPL	find_token_byte
+
+                ; after token $FE come the LHS tokens for PAGE, PTR,
+                ; TIME, LOMEM and HIMEM.
 		CMP	#$FE		; reached WIDTH	in the table?
-		BNE	loc_B26A	; taken	if not WIDTH
-		BCS	loc_B215	; taken	if WIDTH or OSCLI (???)
+		BNE	next_token_in_table ; taken if not WIDTH
+		BCS	loc_B215	; taken if WIDTH... though why
+                                        ; not BEQ?
 
-loc_B25D:				
+skip_dot:				
 		INY
 
-loc_B25E:				
-		LDA	($25),Y
-		BMI	loc_B27C
+find_token_end:				
+		LDA	(byte_25),Y
+		BMI	found_token ;found the token number
+                ; add 1 to address
 		INC	byte_25
-		BNE	loc_B25E
+		BNE	find_token_end
 		INC	byte_26
-		BNE	loc_B25E
+		BNE	find_token_end
 
-loc_B26A:				
-		SEC
-		INY
+next_token_in_table:
+                ; add Y+2 to (byte_25) - skip token byte and flags
+                ; byte.
+		SEC             
+		INY             
 		TYA
 		ADC	byte_25
 		STA	byte_25
 		BCC	loc_B275
 		INC	byte_26
 
-loc_B275:				
-		LDY	#0
-		LDA	($27),Y
-		JMP	loc_B23D
+loc_B275:		
+		LDY	#0          ;reset Y
+		LDA	(byte_27),Y ;restore input byte
+		JMP	loc_B23D    ;back to the tokenization
+                                    ;process...
 
-loc_B27C:				
-		TAX
-		INY
-		LDA	($25),Y
-		STA	byte_21
-		DEY
-		LSR
-		BCC	loc_B28D
-		LDA	($27),Y
-		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
-		BCS	loc_B215
+found_token:				
+		TAX                 ;store token number
+		INY                 ;next table byte
+		LDA	(byte_25),Y ;get flags
+		STA	byte_21     ;
+		DEY                 ;restore Y
+		LSR                 ;get bit 0
+		BCC	is_token    ;taken if flags bit 0 clear - this
+                                    ;is definitely a token
 
-loc_B28D:				
-		TXA
-		BIT	byte_21
-		BVC	loc_B299
-		LDX	byte_23
-		BNE	loc_B299
-		CLC
-		ADC	#$40 ; '@'
+                ; check if this is actually a variable name
+		LDA	(byte_27),Y ;get input byte
+		JSR	issymchar ; sets C if A is a valid symbol char
+                                  ; (A-Z, a-z, 0-9, _, œ)
+		BCS	loc_B215  ;taken if valid symbol char - this
+                                  ;is the prefix of a variable name,
+                                  ;not a token
+
+is_token:				
+		TXA              ;get token value
+		BIT	byte_21  ;test flags byte
+		BVC	loc_B299 ;taken if flags byte bit 6 clear
+
+                ; swap from RHS to LHS token for PAGE, PTR, TIME,
+                ; LOMEM or HIMEM.
+		LDX	byte_23  ;test expression side
+		BNE	loc_B299 ;taken if on RHS
+		CLC              ;
+		ADC	#$40     ;swap token
 
 loc_B299:				
-		DEY
-		JSR	sub_B0BB
-		LDY	#0
-		LDX	#-1
-		LDA	byte_21
-		LSR
-		LSR
-		BCC	loc_B2AB
-		STX	byte_23
+		DEY              ;count of chars to replace
+		JSR	sub_B0BB ;replace chars with the token
+		LDY	#0       ;
+		LDX	#255     ;
+		LDA	byte_21  ;get flags byte
+		LSR              ;C = flags bit 0
+		LSR              ;C = flags bit 1
+		BCC	loc_B2AB ;taken if bit 1 clear
+                ; set tokenizing flags
+		STX	byte_23  ;set the RHS flag
 		STY	byte_24
 
 loc_B2AB:				
-		LSR
-		BCC	loc_B2B2
+		LSR              ;C = flags bit 2
+		BCC	loc_B2B2 ;taken if bit 2 clear
+                ; reset tokenizing flags
 		STY	byte_23
 		STY	byte_24
 
 loc_B2B2:				
-		LSR
-		BCC	loc_B2C6
-		PHA
-		INY
+		LSR              ;C=flags bit 3
+		BCC	loc_B2C6 ;taken if bit 3 clear
+                ; scan PROC/FN name
+		PHA              ;save remaining bits
+		INY              ;Y=1
 
-loc_B2B7:				
-		LDA	($27),Y
-		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	œ)
-		BCC	loc_B2C4
-		JSR	increment_27
-		JMP	loc_B2B7
+PROC_or_FN_name:				
+		LDA	(byte_27),Y ;get next input byte
+		JSR	issymchar ; sets C if A is a valid symbol char
+                                  ; (A-Z, a-z, 0-9, _, œ)
+		BCC	PROC_or_FN_name_done  ;taken if not a valid symbol char
+		JSR	increment_27 ;next input byte
+		JMP	PROC_or_FN_name     ;keep going
 
-loc_B2C4:				
-		DEY
-		PLA
+PROC_or_FN_name_done:				
+		DEY             ;ignore the terminating char
+		PLA             ;get flags back again...
 
 loc_B2C6:				
-		LSR
-		BCC	loc_B2CB
+		LSR              ;C=flags bit 4
+		BCC	loc_B2CB ;taken if bit 4 clear
 		STX	byte_24
 
 loc_B2CB:				
-		LSR
-		BCS	locret_B2D1
-		JMP	skip_byte
+		LSR                 ;C=flags bit 5
+		BCS	stop_tokenizing ;taken if bit 5 set
+		JMP	next_input_byte
 
-locret_B2D1:				
+stop_tokenizing:				
 		RTS
-; End of function sub_B196
+                .pend
 
 
 
@@ -9617,10 +9756,11 @@ ensure_4_bytes_spare:
 loc_B2DC:				
 		CLC
 		ADC	byte_27
-		BCS	longjmp
-		CMP	#$FC
-		BEQ	loc_B2E7
-		BCS	longjmp
+		BCS	longjmp ;taken if carry - which means
+                                ;definitely no space
+		CMP	#256-4
+		BEQ	loc_B2E7 ;taken if it just fits
+		BCS	longjmp  ;taken if it doesn't fit
 
 loc_B2E7:				
 		PLA
@@ -9631,7 +9771,7 @@ longjmp:
 					
 		LDY	#0
 		LDA	#$D
-		STA	($27),Y
+		STA	(byte_27),Y
 		STA	byte_6A8
 		LDX	old_stack_ptr
 		TXS
