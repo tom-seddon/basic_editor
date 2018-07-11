@@ -2642,9 +2642,10 @@ command_ptr_ok:
 
 clear_5B1_to_600: .proc
 
-                .if KEEP_CLEAR_5B1_TO_600_MEMSET
 		LDA	#0
 		STA	byte_15
+                
+                .if KEEP_CLEAR_5B1_TO_600_MEMSET
 		LDA	#<unk_5B1
 		STA	byte_C
 		LDA	#>unk_5B1
