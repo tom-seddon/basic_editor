@@ -1,3 +1,15 @@
+# New in 1.41-beta
+
+**1.41-beta is beta** - there may be issues, though hopefully only
+minor, as some of the changes were rather invasive
+
+- Command prompt HUD is gone (information still available via `INFO`)
+- Program name mechanism has changed (see documentation)
+- Speed improvements
+- Free up space for future additions
+- ROM version number is now bogus - really not sure this is worth
+  bothering about though
+
 # New in 1.40
 
 - `*BZ` and `*BR`

@@ -224,8 +224,7 @@ aTheBasicEditor_0:
                 .text "HI"
                 .endif
                 .text "BASIC Editor",0
-version_number_string:
-                .text " $VER"
+                .text VER
 .if RELOCATABLE
                 .text "r"
 .endif
@@ -338,6 +337,9 @@ print_help:
                 ldy #0
 print_help_name_loop:
                 lda aTheBasicEditor_0,Y
+                bne +
+                lda #32
++
                 jsr oswrch
                 iny
                 cpy #aC1984Acornsoft-aTheBasicEditor_0
