@@ -6,8 +6,10 @@ There's a nice OCR'd copy of the original manual available from stardot: https:/
 
 ## Command prompt changes
 
-Smaller HUD that shows the current program name (previously hidden
-away in the `INFO` output).
+The command prompt HUD is gone. The command line shows the number of
+bytes free.
+
+The information previously shown in the HUD can be seen with `INFO`.
 
 ## Help text changes
 
@@ -35,39 +37,20 @@ available. (And modes 2 and 5, if you're so inclined.)
 
 `R` was previously the abbreviation for `RENUMBER`.
 
-## File name
-
-When you `LOAD` or `SAVE` a file, the current file name is set.
-
-Note that only the first 14 characters are stored off. You can
-explicitly save and load files with longer names, but the additional
-chars won't be stored. The command mode HUD will show the shorter name
-when this happens, so it should at least be fairly obvious...
-
-## Quick save
-
-The new `ZSAVE` command (abbreviation `Z`) saves the program using the
-current file name.
-
-The new `ZRUN` command (abbreviation `ZR`) saves the program using the
-current file name, then runs it. It's equivalent to doing `ZSAVE` then
-`RUN`.
-
-## `REM>`
+## `REM>`, `ZSAVE`, `ZRUN`
 
 The first line in the program may be a `REM` in the BASIC V style that
 names the program:
 
     10 REM > Filename
 
-If such a line is present, the program's name will be taken from the
-`REM` after an `OLD` command or on entry to the ROM (i.e., after BREAK
-or `*BE`). `ZSAVE`/`ZRUN` will then save the program to the right
-file.
-     
 The line number doesn't matter (it just has to be the first line), and
 the spaces are optional. If it's the first line, `100REM>Filename`
 (say) will do just as well.
+
+You can save the program to this file using the new `ZSAVE` command
+(abbrevation `Z`), or save it to this file and then run it using the
+new `ZRUN` command (abbrevation `ZR`).
 
 ## Case-insensitive search
 

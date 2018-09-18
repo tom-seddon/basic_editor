@@ -155,8 +155,8 @@ byte_50:
                 .fill 1	
 byte_51:
                 .fill 1	
-program_name:
-                .fill 15
+; program_name:
+;                 .fill 15
 tab_value:
                 .fill 1 
 search_string_length:
@@ -181,6 +181,11 @@ language_entry_mode:
                 ; if top bit set, call exit_and_OLD after printing a
                 ; BRK message.
                 .fill 1
+
+                ; points to CR-terminated program name, wherever it
+                ; is.
+program_name_ptr:
+                .fill 2
 
                 ; language zero page runs up to $8f, but it would be
                 ; nice to leave $70...$8f free as BASIC reserves that

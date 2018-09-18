@@ -392,9 +392,8 @@ zrun:
                 jmp exit_and_OLD_and_RUN
 
 saving_message:
-                lda program_name
-                cmp #13
-                beq ret
+                jsr find_program_name
+                bcc ret
 
                 jsr print_next_string
                 .text "Saving: ",255
@@ -413,7 +412,6 @@ language_start:
                 JSR     init_brkv_and_oshwm
                 JSR     clear_line_commands
                 JSR     sub_B358
-                JSR     reset_program_name
                 LDX     #5
                 STX     tab_value
                 LDX     #$60 ; '`'
@@ -442,14 +440,12 @@ language_start:
 
 language_start_good_program:
 
-                jsr     find_rem_name
-
                 jsr init_language_entry_mode
 
                 LDA     #$D2
                 JSR     osbyte_with_x0_y0 ;suppress sound
                 
-                ; print_n_chars skips control chars if editor_mode_id
+                ; The char printing control chars if editor_mode_id
                 ; isn't 1. And since aResetOSWRCH is entirely control
                 ; chars...
                 lda #1
@@ -504,11 +500,11 @@ loc_8144:
 
 loc_8147:                               
                                         
-                JSR     print_command_screen
+                JSR     print_command_prompt
                 JSR     do_command_line
 
 loc_814D:                               
-                                        
+                
                 LDA     editor_mode_id  ; 1=command mode, 2=edit mode
                 CMP     #2              ; edit mode?
                 BNE     command_prompt_loop     ; branch taken if not edit mode
@@ -538,7 +534,13 @@ loc_8163:
 ; End of function language_entry
 .pend
 
+enter_command_mode: .proc
+                lda #12
+                jsr oswrch
 
+                jmp language_entry.loc_814d
+                
+                .pend
 
 init_brkv_and_oshwm: .proc
 
@@ -594,127 +596,17 @@ get_HIMEM:
 
 
 .pend
-print_command_screen .proc
-TEXT_WINDOW_TOP = 3
-                JSR     make_cursor_invisible
-                JSR     get_text_window_left_bottom
-                STX     byte_25
-                STY     byte_26
-                LDX     #$A
-                JSR     OSBYTE
-                STX     byte_27
-                STY     byte_28
-                LDA     #$86
-                JSR     OSBYTE
-                TYA
-                PHA
-
-                ; see if text window is set up. if it is, obviously
-                ; (?) the HUD just needs updating. otherwise, redraw
-                ; it completely.
-                LDA     #26
-                JSR     OSWRCH
-                JSR     get_text_window_left_bottom
-                CPY     byte_26
-                BNE     loc_8218
-                LDA     #0
-                CMP     byte_25
-                BNE     loc_8218
-                lda #160        ;read VDU vars
-                ldx #10         ;text window right
-                jsr osbyte
-                cpx byte_27
-                BNE     loc_8218
-                LDA     #TEXT_WINDOW_TOP
-                CMP     byte_28
-                BEQ     loc_823B
-
-loc_8218:                               
-                                        
-                LDA     #0
-                STA     byte_25         ; text window left
-                lda #160                ;read VDU vars
-                ldx #10                 ;text window right
-                jsr osbyte
-                stx byte_27     ;text window right
-                ; LDA   #39
-                ; STA   byte_27         ; text window right
-                LDA     #TEXT_WINDOW_TOP
-                STA     byte_28         ; text window top
-                ; LDA   #$13            ; wait for vsync
-                ; JSR   OSBYTE
-                ; print "The BASIC Editor", "Program size" (etc.)
-                jsr print_next_string
-                .byte 26,12,255
-                JSR     get_text_window_left_bottom
-                STY     byte_26
-                PLA
-                LDA     #0
-                PHA
-
-loc_823B:                               
-                LDA     #26             ; restore default text window
-                JSR     OSWRCH
-; print program size
-                LDX     #6
-                LDY     #0
-                JSR     gotoxy
-                LDA     unk_16
-                BNE     loc_8259
-                LDX     TOP
-                SEC
-                LDA     TOP+1
-                SBC     oshwm+1
-                TAY
-                JSR print_number
-loc_8259:                               
-                JSR     print_5_spaces
-; print bytes free
-                LDX     #19
-                LDY     #0
-                JSR     gotoxy
-                LDA     unk_16
-                BNE     loc_8278
-                SEC
-                LDA     HIMEM
-                SBC     TOP
-                TAX
-                LDA     HIMEM+1
-                SBC     TOP+1
-                TAY
-                JSR print_number
-loc_8278:                               
-                JSR     print_5_spaces
-
-; print program name
-
-                ldx #6
-                ldy #1
-                jsr gotoxy
-                jsr print_program_name_padded
-
-                jsr print_next_string
-                .text 30,"Size:",31,13,0,"Free:",13,10,"Name: ",255
-
-                
-; set screen window
-                LDA     #28
-                STA     byte_24
-                LDX     #$24 ; '$'
-                LDY     #0
-                LDA     #5
-                JSR     print_n_chars
-                PLA
-                TAY
-                LDX     #0
-                JSR     gotoxy
+print_command_prompt: .proc
                 LDA     byte_15
                 BEQ     loc_82CB
                 jsr display_error_message
 
-loc_82CB:                               
-                LDA     #'>'
-                JSR     OSWRCH
+loc_82CB:
+                jsr print_bytes_free
+                
+                jsr print_next_string
+                .text ' >',255
+                
                 LDA     is_insert_mode  ; 0=overtype 1=insert
                 PHA
                 LDA     cursor_size
@@ -980,11 +872,6 @@ disable_all_events_loop:
                 LDA     #230            ; read/write flags determining ESCAPE effects (AUG p228)
                 JSR     osbyte_with_x0_y0 ; ESCAPE has normal effects
 
-                jsr print_next_string
-.text 3                         ;printer off
-.text 6                         ;enable VDU drivers
-                .text 255
-                
                 LDA     #1
                 STA     editor_mode_id  ; 1=command mode, 2=edit mode
                 LDA     #0
@@ -1420,9 +1307,9 @@ aIneHasBeenTruncated:.text "ine has been truncated" ;36
 aPdatesWouldMakeLineTooLong:.text "pdates would make line too long" ;37
 		.byte  $C9 ; É
 aNcrementMustBeInRange1255:.text "ncrement must be 1-255" ;38
-.text $CE;39
+                .text $CE;39
 aOName:
-.text "o name"                                 
+                .text "o REM>"                                 
 aONameEnd:
                 .byte  $FF ;
                 
@@ -2323,7 +2210,7 @@ loop:
 
 done:
                 jmp (byte_C)
-.pend
+                .pend
 
 print_5_spaces: .proc                               
                                         
@@ -3355,7 +3242,6 @@ load_command .proc
 		JSR	do_osfile_from_oshwm
 		JSR	clear_line_commands
                 JSR	sub_B358
-                jsr store_program_name
                 jmp sub_8314
 .pend
                 
@@ -3379,11 +3265,6 @@ append_command .proc
 
 locret_9424:				
                 RTS
-.pend
-
-save_command2 .proc
-                jsr save_command
-                jmp store_program_name
 .pend
 
 save_command
@@ -3611,7 +3492,7 @@ command_jump_table:.byte $20		   ; unknown
 		.word it_cmd		; address
 		.byte 8			; unknown
 		.byte $1B		; command_id
-		.word language_entry.loc_814D		; address
+		.word enter_command_mode		; address
 		.byte 0			; unknown
 		.byte CMD_toggle_insert_overtype; command_id
 		.word toggle_insert_overtype_command; address
@@ -3710,7 +3591,7 @@ command_jump_table:.byte $20		   ; unknown
 		.word append_command	; address
 		.byte 0			; unknown
 		.byte CMD_SAVE		; command_id
-		.word save_command2	; address
+		.word save_command	; address
 		.byte 0			; unknown
 		.byte CMD_FIND		; command_id
 		.word find_command	; address
@@ -5259,8 +5140,8 @@ enter_edit_mode:
 		STA	byte_6AB
 
 loc_9D2D:
-                jsr print_next_string
-                .byte 26,12,255
+                ; jsr print_next_string
+                ; .byte 26,12,255
 		JSR	find_program
 		BCC	loc_9D3F
 		JMP	language_entry.loc_814D
@@ -7217,7 +7098,6 @@ loc_A681:
 
 new_command:				
 		JSR	clear_program
-		JSR	reset_program_name
 
 loc_A6BE:				
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
@@ -7227,23 +7107,6 @@ loc_A6BE:
 
 locret_A6C8:				
 		RTS
-
-
-
-reset_program_name:			
-					
-		LDX	#$E
-		LDA	#13 ; ' '
-
-loc_A6CD:				
-		STA	program_name,X
-		DEX
-		BPL	loc_A6CD
-		RTS
-; End of function reset_program_name
-
-
-
 
 old_command .proc				
 		JSR	is_program_empty ; sets	C if no	program
@@ -7258,7 +7121,6 @@ old_command .proc
 good_program:				
 					
                 JSR	sub_8314
-                jsr find_rem_name
                 JMP	loc_A6BE
 .pend
 ; End of function old_command
@@ -11431,15 +11293,50 @@ loc_BBB0:
 .pend
 
 
+print_bytes_free: .proc
+                lda unk_16
+                bne bad
+
+                lda himem
+                sbc top
+                tax
+                lda himem+1
+                sbc top+1
+                tay
+                jmp print_number
+
+bad:
+                lda #'?'
+                jmp oswrch
+                .pend
+                
 info_command:				
                 JSR	osnewl
 
                 ; lda language_entry_mode
                 ; clc
                 ; adc #'A'
-                ; jsr oswrch                
+                ; jsr oswrch
 
+                lda unk_16
+                bne print_scroll_status
 
+                ldx top
+                sec
+                lda top+1
+                sbc oshwm+1
+                tay
+                jsr print_number
+
+                jsr print_next_string
+                .text " used, ",255
+
+                jsr print_bytes_free
+                
+                jsr print_next_string
+                .text " free",13,10,255
+
+print_scroll_status:
                 jsr print_next_string
                 .text "Scroll: ",255
 
@@ -11495,13 +11392,10 @@ loc_BC0B:
 		; LDA	#$E
                 ; JSR	print_n_chars
                 jsr print_next_string
-.text "Program name: ",255                
+                .text "Program name: ",255                
 		LDA	#2
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
-		LDX	#<program_name
-		LDY	#>program_name
-		LDA	#$F
-		JSR	print_n_chars
+                jsr print_program_name
                 JSR	OSNEWL
 		LDX	#<aLastSearch
 		LDY	#>aLastSearch
@@ -12184,15 +12078,14 @@ find_current_line_by_number:
                                         ; (byte_2B) points to most suitable line
 
 zsave_command: .proc
-                lda program_name
-                cmp #13
-                beq no_program_name
+                jsr find_program_name
+                bcc no_program_name
 
                 ; pretend program name was command line, and forward
                 ; straight to SAVE.
-                lda #<program_name
+                lda program_name_ptr+0
                 sta byte_3E
-                lda #>program_name
+                lda program_name_ptr+1
                 sta byte_3F
                 jmp save_command
 
@@ -12209,90 +12102,67 @@ zrun_command: .proc
                 jmp run_or_exit_command
 .pend
 
-store_program_name .proc
-                jsr reset_program_name
+print_program_name: .proc
+                jsr find_program_name
+                bcc done
 
                 ldy #0
-loop
-                lda ($3e),y     ;next char from command line or whatever
-                cmp #13
-                beq store_program_name.done
-                sta program_name,y
-                iny
-                cpy #14         ;leave at least one 13
-                bne loop
-done
-
-                rts
-.pend
-print_program_name_padded .proc
-
-                jsr print_program_name
-                
-loop
-                cpx #14
-                bcs done
-
-                lda #32
-                jsr oswrch
-                inx
-                bne loop
-
-done
-                rts
-.pend
-print_program_name .proc
-                ldx #0
-loop
-                lda program_name,X
+loop:
+                lda (program_name_ptr),Y
                 cmp #13
                 beq done
                 jsr oswrch
-                inx
+                iny
                 bne loop
-                
-done
+
+done:
                 rts
-.pend
-find_rem_name .proc
+                .pend
+
+;-------------------------------------------------------------------------
+
+find_program_name: .proc
                 ; check for intial 13.
                 ldy #0
                 lda ($17),y
                 cmp #13
-                bne done
+                bne no
 
                 ; check line MSB - no program if -ve.
                 iny
 
                 lda ($17),y
-                bmi done
+                bmi no
 
                 ldy #3
                 ; look for REM
                 jsr skipspaces
                 cmp #$F4        ;REM
-                bne done
+                bne no
 
                 ; look for >
                 jsr skipspaces
                 cmp #'>'
-                bne done
+                bne no
 
                 ; no name if just spaces.
                 jsr skipspaces
                 cmp #13
-                beq done
+                beq no
 
                 ; point ($3e) at name
                 clc
                 tya
                 adc $17
-                sta $3e
+                sta program_name_ptr+0
                 lda $18
                 adc #0
-                sta $3f
-                jsr store_program_name
-done
+                sta program_name_ptr+1
+                sec
+                rts
+
+no:
+                clc
                 rts
 
 skipspaces
