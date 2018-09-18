@@ -464,6 +464,15 @@ language_start_good_program:
                 .byte 255
                 
 command_prompt_loop:
+
+                ; If coming from edit mode, clear the screen.
+
+                lda editor_mode_id
+                cmp #1
+                beq +
+                lda #12
+                jsr oswrch
++
                                         
                 LDX     #$FF
                 TXS
@@ -503,8 +512,7 @@ loc_8147:
                 JSR     print_command_prompt
                 JSR     do_command_line
 
-loc_814D:                               
-                
+command_loop:
                 LDA     editor_mode_id  ; 1=command mode, 2=edit mode
                 CMP     #2              ; edit mode?
                 BNE     command_prompt_loop     ; branch taken if not edit mode
@@ -534,13 +542,13 @@ loc_8163:
 ; End of function language_entry
 .pend
 
-enter_command_mode: .proc
-                lda #12
-                jsr oswrch
+; enter_command_mode: .proc
+;                 lda #12
+;                 jsr oswrch
 
-                jmp language_entry.loc_814d
+;                 jmp language_entry.command_loop;ok
                 
-                .pend
+;                 .pend
 
 init_brkv_and_oshwm: .proc
 
@@ -942,7 +950,7 @@ loc_848A:
 
 loc_848F:
                 jsr maybe_verbose_exit_on_error
-                JMP	language_entry.loc_814D
+                JMP	language_entry.command_loop;???
 
 .pend
                 
@@ -1157,7 +1165,7 @@ loc_859D:
 
 loc_85A6:				
 		JSR	get_error	; A = error code
-		JMP	language_entry.loc_814D
+		JMP	language_entry.command_loop;???
 ; End of function sub_8495
 
 
@@ -2694,7 +2702,7 @@ loc_912C:
 		STA	current_line_no_msb
 		PLA
 		STA	current_line_no_lsb
-		JMP	language_entry.loc_814D
+		JMP	language_entry.command_loop
 
 line_valid:				
 		JSR	detokenize_one_line
@@ -3138,8 +3146,8 @@ loc_934B:
 loc_9359:				
 		LDA	current_command_id
 		STA	byte_6AF
-		CMP	#$E2
-		BEQ	loc_937E
+		CMP	#CMD_QCHANGE
+		BEQ	loc_937E ;taken if command was QCHANGE
 		JSR	sub_BDD3
 		JMP	loc_934B
 
@@ -3156,8 +3164,8 @@ loc_9369:
 		JSR	get_error	; A = error code
 
 loc_937B:				
-		JMP	language_entry.loc_814D
-
+		JMP	language_entry.command_loop
+                
 loc_937E:				
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#2
@@ -3492,7 +3500,7 @@ command_jump_table:.byte $20		   ; unknown
 		.word it_cmd		; address
 		.byte 8			; unknown
 		.byte $1B		; command_id
-		.word enter_command_mode		; address
+		.word language_entry.command_loop        ; address
 		.byte 0			; unknown
 		.byte CMD_toggle_insert_overtype; command_id
 		.word toggle_insert_overtype_command; address
@@ -5140,11 +5148,9 @@ enter_edit_mode:
 		STA	byte_6AB
 
 loc_9D2D:
-                ; jsr print_next_string
-                ; .byte 26,12,255
 		JSR	find_program
 		BCC	loc_9D3F
-		JMP	language_entry.loc_814D
+		JMP	language_entry.command_loop;ok
 
 loc_9D3F:				
 		JSR	set_palette
@@ -7116,7 +7122,7 @@ old_command .proc
 		STA	($17),Y
 		JSR	find_program
 		BCC good_program
-		JMP	language_entry.loc_814D
+		JMP	language_entry.command_loop;ok
 
 good_program:				
 					
