@@ -21,8 +21,8 @@ build:
 	@python tools/checksize.py $(DEST)/basiced.rom $(DEST)/hibasiced.rom
 #	python checksize.py $(DEST)/rbasiced_b800.rom
 
-	@test -d $(BOOTVOL) && cp -v $(DEST)/basiced.rom $(BOOTVOL)/RBETOM && cp -v $(DEST)/hibasiced.rom $(BOOTVOL)/RHBETOM
-	@test -d $(BEVOL) && cp -v $(DEST)/basiced.rom $(BEVOL)/RBETOM && cp -v $(DEST)/hibasiced.rom $(BEVOL)/RHBETOM && cp -v $(DEST)/basiced_type4.rom $(BEVOL)/RBE4TOM
+	@test -d $(BOOTVOL) && cp -v $(DEST)/basiced.rom $(BOOTVOL)/R.BETOM && touch $(BOOTVOL)/R.BETOM.inf && cp -v $(DEST)/hibasiced.rom $(BOOTVOL)/RHBETOM && touch $(BOOTVOL)/RHBETOM.inf
+	@test -d $(BEVOL) && cp -v $(DEST)/basiced.rom $(BEVOL)/R.BETOM && touch $(BEVOL)/R.BETOM.inf && cp -v $(DEST)/hibasiced.rom $(BEVOL)/R.HBETOM && touch $(BEVOL)/R.HBETOM.inf && cp -v $(DEST)/basiced_type4.rom $(BEVOL)/R.BE4TOM && touch $(BEVOL)/R.BE4TOM.inf
 
 	@test -f lkg/basiced.rom && md5sum $(DEST)/basiced.rom lkg/basiced.rom || true
 	@test -f lkg/hibasiced.rom && md5sum $(DEST)/hibasiced.rom lkg/hibasiced.rom || true
