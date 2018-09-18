@@ -157,9 +157,9 @@ byte_51:
                 .fill 1	
 program_name:
                 .fill 15
-unk_61:
+tab_value:
                 .fill 1 
-byte_62:
+search_string_length:
                 .fill 1	
 case_insensitive_search:        ;$80 or $00.
                 .fill 1

@@ -415,11 +415,11 @@ language_start:
                 JSR     sub_B358
                 JSR     reset_program_name
                 LDX     #5
-                STX     unk_61
+                STX     tab_value
                 LDX     #$60 ; '`'
                 STX     cursor_size
                 LDX     #0
-                STX     byte_62
+                STX     search_string_length
                 INX
                 STX     is_insert_mode  ; 0=overtype 1=insert
                 STX     scroll_status   ; 1=scroll, 0=noscroll
@@ -2750,7 +2750,7 @@ find_command:
 
 got_search_string:			
 		LDY	byte_6BE
-		STY	byte_62		; ?byte_62 = search string length
+		STY	search_string_length
 
 copy_search_string_loop:		
 		DEY
@@ -3999,7 +3999,7 @@ sub_9706:
 
 
 tab_key_command:			
-		LDA	unk_61
+		LDA	tab_value
 		STA	unk_6AA
 
 loc_9720:				
@@ -4075,7 +4075,7 @@ loc_977A:
 		LDA	byte_3E
 		CMP	#$51 ; 'Q'
 		BCS	loc_9775
-		STA	unk_61
+		STA	tab_value
 		RTS
 
 loc_9783:				
@@ -4084,7 +4084,7 @@ loc_9783:
 		JMP	loc_9720
 
 continue_edit_mode_command:		
-		LDA	byte_62
+		LDA	search_string_length
 		BNE	loc_9794
 		LDA	#$23 ; '#'
 
@@ -4104,7 +4104,7 @@ loc_979D:
 		STA	byte_3E
 		LDA	#6
 		STA	byte_3F
-		LDA	byte_62
+		LDA	search_string_length
 		STA	byte_6BE
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_97B0
@@ -11505,7 +11505,7 @@ loc_BC0B:
                 JSR	OSNEWL
 		LDX	#<aLastSearch
 		LDY	#>aLastSearch
-		LDA	byte_62
+		LDA	search_string_length
 		BNE	loc_BC37
 		LDA	#aLastSearchNoneEnd-aLastSearch
 		BNE	loc_BC42
@@ -11515,7 +11515,7 @@ loc_BC37:
 		JSR	print_n_chars
 		LDX	#<unk_643
 		LDY	#>unk_643
-		LDA	byte_62
+		LDA	search_string_length
 
 loc_BC42:				
 		JSR	print_n_chars
@@ -11525,7 +11525,7 @@ loc_BC42:
                 JSR	OSNEWL
                 jsr print_next_string
                 .text "Tab value   : ",255
-		LDX	unk_61
+		LDX	tab_value
 		LDY	#0
 		JSR	print_number
                 JSR	sub_BD83
