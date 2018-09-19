@@ -4217,7 +4217,7 @@ loc_98DB:
 		INY
 		STY	unk_700
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -4249,7 +4249,7 @@ loc_98DB:
 		LDY	unk_700
 		INY
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -7599,7 +7599,7 @@ loc_A8CC:
                 ; copy 252 bytes - TODO fix
 		LDX	#0
 		LDY	#$FC
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;constant; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -7795,7 +7795,7 @@ loc_A9F3:
 					
 		LDX	#0
 		LDY	unk_503
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10178,7 +10178,7 @@ loc_B53E:
 		SBC	#6
 		TAY
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10536,7 +10536,7 @@ loc_B745:
 		SBC	#2
 		TAY
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10553,7 +10553,7 @@ loc_B745:
 		STA	byte_F
 		LDY	byte_36
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10846,7 +10846,7 @@ loc_B8DB:
 		ASL
 		TAY
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10938,7 +10938,7 @@ loc_B977:
 		STA	byte_F
 		LDX	#0
 		LDY	unk_700
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10999,7 +10999,7 @@ loc_B9C4:
 		STA	byte_D
 		LDX	#0
 		LDY	unk_700
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -12041,7 +12041,7 @@ loc_BF73:
 		ASL
 		TAY
 		LDX	#0
-		JSR	memmove		; move (maybe overlapping) memory regions.
+		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
