@@ -422,7 +422,7 @@ language_start:
                 STX     search_string_length
                 INX
                 STX     is_insert_mode  ; 0=overtype 1=insert
-                STX     scroll_status   ; 1=scroll, 0=noscroll
+                STX     is_scroll_on   ; 1=scroll, 0=noscroll
                 LDA     #$E4
                 JSR     osbyte_with_y0
                 JSR     clear_5B1_to_600
@@ -848,17 +848,26 @@ initialise:
                 JSR     osbyte_with_x0_y0; keyboard on, rs423 off
                 LDA     #4              ; enable/disable cursor editing (AUG p120)
                 JSR     osbyte_with_x0_y0; enable cursor editing
-                LDA     #13             ; Disable events (AUG p129)
-                LDX     #9
-                STX     byte_3A
 
-disable_all_events_loop:                
-                LDX     byte_3A
-                JSR     osbyte_with_y0
-; X=0 now
-                DEC     byte_3A
-                BPL     disable_all_events_loop
+                ; This seems a bit pointless - especially after it got
+                ; in the way of some event-driven debug stuff of mine!
+                ; - but maybe there's a good reason for it that I'll
+                ; rediscover the hard way.
+                
+;                 LDA     #13             ; Disable events (AUG p129)
+;                 LDX     #9
+;                 STX     byte_3A
+
+; disable_all_events_loop:                
+;                 LDX     byte_3A
+;                 JSR     osbyte_with_y0
+; ; X=0 now
+;                 DEC     byte_3A
+;                 BPL     disable_all_events_loop
+
+                
                 LDA     #200            ; set ESCAPE, BREAK effect (AUG p205)
+                ldx #0
                 LDY     #%11111110      ; normal ESCAPE action (bit 0 reset)
                 JSR     OSBYTE
                 LDA     #219            ; read/write TAB key char (AUG p222)
@@ -3123,7 +3132,7 @@ loc_932C:
 loc_9337:				
 		LDY	#0
 		STY	byte_6B3
-		STY	unk_11
+		STY	cursor_offset_msb
 		INY
 		STY	cursor_offset	; offset of cursor in detokenized buffer
 		LDA	($2B),Y
@@ -3902,7 +3911,7 @@ loc_9720:
 		INX
 		STX	byte_39
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
-		LDY	unk_11
+		LDY	cursor_offset_msb
 		JSR	get_line_dimensions ; work out dimensions of line.
 					;
 					; Entry:
@@ -3999,16 +4008,16 @@ loc_979D:
 		STA	byte_6BE
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_97B0
-		INC	unk_11
+		INC	cursor_offset_msb
 
 loc_97B0:				
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BEQ	loc_97C4
 		BNE	loc_97F0
 
 loc_97B6:				
 		LDY	#0
-		STY	unk_11
+		STY	cursor_offset_msb
 		INY
 		STY	cursor_offset	; offset of cursor in detokenized buffer
 		LDA	($2B),Y
@@ -4059,7 +4068,7 @@ split_statement_edit_mode_command:
 		JSR	rstrip_detokenized_line
 		CPY	#0
 		BEQ	loc_9801
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BEQ	loc_9804
 
 loc_9801:				
@@ -5365,7 +5374,7 @@ loc_9E5D:
 
 sub_9E5F:				
 					
-		JSR	sub_A01E
+		JSR	calculate_screen_chars_in_line
 		JSR	save_line_number ; saves line number from program.
 					;
 					; Entry:
@@ -5530,8 +5539,8 @@ set_palette_done:
 sub_9F00:				
 		JSR	make_cursor_invisible
 		LDA	#1
-		LDX	unk_8
-		LDY	unk_9
+		LDX	screen_chars_in_line+0
+		LDY	screen_chars_in_line+1
 		JSR	sub_A0B1
 		LDX	#0
 		STX	byte_36
@@ -5560,7 +5569,7 @@ loc_9F26:
 ; treats command ID as ASCII char and puts that	char into the current line as appropriate.
 
 execute_key_command:			
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BNE	beep
 		JSR	sub_AB1E
 		LDX	byte_400	; X = line length
@@ -5702,7 +5711,7 @@ sub_9FD8:
 		LDX	#1
 		STX	cursor_offset	; offset of cursor in detokenized buffer
 		DEX
-		STX	unk_11
+		STX	cursor_offset_msb
 		LDX	#6
 		LDY	byte_3B
 		JMP	gotoxy
@@ -5712,7 +5721,7 @@ sub_9FD8:
 
 ; sets C if no program
 
-is_program_empty:			
+is_program_empty: .proc
 					
 		CLC
 		LDY	#1
@@ -5722,34 +5731,36 @@ is_program_empty:
 
 locret_9FF1:				
 		RTS
-; End of function is_program_empty
+                .pend
 
 
 
-
-sub_9FF2:				
+; check if there's room to store (byte_27) bytes past TOP. Causes a
+; 'No room' error if not.
+check_for_room: .proc
 		CLC
-		LDA	TOP
-		ADC	byte_27
-		TAX
-		LDA	TOP+1
-		ADC	byte_28
-		CMP	HIMEM+1
-		BCC	locret_A00D
-		BEQ	loc_A007
+		LDA	TOP     ;get TOP LSB
+		ADC	byte_27 ;add size of update LSB
+		TAX             ;save new TOP LSB
+		LDA	TOP+1   ;get TOP MSB
+		ADC	byte_28 ;add size of update MSB
+		CMP	HIMEM+1 ;has new TOP MSB gone past HIMEM MSB?
+		BCC	locret_A00D ;taken if definitely not
+		BEQ	loc_A007    ;taken if it's equal
 
-loc_A002:				
-		LDA	#5
+                ; No room...
+no_room:				
+		LDA	#5      ;No room
 		JMP	loc_859D
 
 loc_A007:				
-		CPX	HIMEM
-		BEQ	locret_A00D
-		BCS	loc_A002
+		CPX	HIMEM   ;compare new TOP LSB to HIMEM LSB
+		BEQ	locret_A00D ;taken if equal
+		BCS	no_room     ;taken if greater
 
 locret_A00D:				
 		RTS
-; End of function sub_9FF2
+                .pend
 
 
 
@@ -5771,7 +5782,7 @@ loc_A017:
 
 
 
-sub_A01E:				
+calculate_screen_chars_in_line: .proc
 		JSR	get_line_height	; get height of	current	line
 					;
 					; Entry:
@@ -5783,22 +5794,24 @@ sub_A01E:
 loc_A021:				
 		STX	byte_2D
 		LDA	#0
-		STA	unk_8
-		STA	unk_9
+		STA	screen_chars_in_line+0
+		STA	screen_chars_in_line+1
 
+                ; screen_chars_in_line = code_area_width * X
+                
 loc_A029:				
 		LDA	code_area_width
 		CLC
-		ADC	unk_8
-		STA	unk_8
+		ADC	screen_chars_in_line+0
+		STA	screen_chars_in_line+0
 		BCC	loc_A035
-		INC	unk_9
+		INC	screen_chars_in_line+1
 
 loc_A035:				
 		DEX
 		BNE	loc_A029
 		RTS
-; End of function sub_A01E
+                .pend
 
 
 
@@ -5821,7 +5834,7 @@ save_line_number:
 		RTS
 ; End of function save_line_number
 
-
+;-------------------------------------------------------------------------
 
 ; gets pointer to line visible on screen.
 ;
@@ -5832,7 +5845,7 @@ save_line_number:
 ; (byte_2B) points to BASIC line
 ; X decremented
 
-get_line_ptr:				
+get_line_ptr: .proc
 					
 		LDA	$6C0,X
 		STA	byte_2C
@@ -5840,9 +5853,9 @@ get_line_ptr:
 		LDA	$6C0,X
 		STA	byte_2B
 		RTS
-; End of function get_line_ptr
+                .pend
 
-
+;-------------------------------------------------------------------------
 
 ; determines whether current line is empty.
 ;
@@ -5852,7 +5865,7 @@ get_line_ptr:
 ; Exit:
 ; C set	if line	empty.
 
-is_line_empty:				
+is_line_empty: .proc
 					
 		JSR	is_program_empty ; sets	C if no	program
 		BCC	is_not_empty
@@ -5874,7 +5887,7 @@ is_not_empty:
 					
 		CLC
 		RTS
-; End of function is_line_empty
+                .pend
 
 
 
@@ -5937,10 +5950,9 @@ loc_A09B:
 		JSR	detokenize_one_line
 		LDX	#0
 		STX	byte_6B3
-		JSR	sub_A01E
+		JSR	calculate_screen_chars_in_line
 		RTS
 ; End of function sub_A069
-
 
 
 ; gets pointer to line visible on screen.
@@ -6940,7 +6952,7 @@ scroll_command:
 		LDX	#1
 
 loc_A5DE:				
-		STX	scroll_status	; 1=scroll, 0=noscroll
+		STX	is_scroll_on	; 1=scroll, 0=noscroll
 		RTS
 ; End of function scroll_command
 
@@ -7135,7 +7147,7 @@ good_program:
 
 
 extend_statement_edit_mode_command .proc	
-		LDX	unk_9
+		LDX	screen_chars_in_line+1
 		DEX
 		BNE	loc_A6F4
 		JMP	beep
@@ -7146,7 +7158,7 @@ loc_A6F4:
 .pend
                 
 swap_case_edit_mode_command: .proc
-		LDX	unk_11
+		LDX	cursor_offset_msb
 		DEX
 		BEQ	loc_A715
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
@@ -7212,11 +7224,11 @@ top_of_screen_edit_mode_command:
 
 
 cursor_left_edit_mode_command:		
-		JSR	sub_A775
+		JSR	move_cursor_left
 		BCC	loc_A768
-		LDA	unk_9
-		STA	unk_11
-		LDA	unk_8
+		LDA	screen_chars_in_line+1
+		STA	cursor_offset_msb
+		LDA	screen_chars_in_line+0
 		STA	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_A7A2
 
@@ -7226,54 +7238,55 @@ loc_A768:
 		SBC	#1
 		STA	cursor_offset	; offset of cursor in detokenized buffer
 		BCS	loc_A7A2
-		DEC	unk_11
+		DEC	cursor_offset_msb
                 BEQ	loc_A7A2
 ; End of function cursor_left_edit_mode_command
 
 
 
 
-sub_A775: .proc
+; returns C=0 if moved within line, or C=1 if potentially moved
+; outside line.
+move_cursor_left: .proc
 					
 		CLC
-		LDX	cursor_offset	; offset of cursor in detokenized buffer
-		DEX
-		BNE	locret_A783
-		LDA	unk_11
-		BNE	locret_A783
-		JSR	sub_BE98
+		LDX	cursor_offset ;get cursor offset
+		DEX                   ;
+		BNE	locret_A783   ;taken if index >0 - can move
+                                      ;left within line
+		LDA	cursor_offset_msb ;
+		BNE	locret_A783   ;taken if index >=256 - can move
+                                      ;left within line
+		JSR	move_cursor_to_previous_line      ;
 		SEC
 
 locret_A783:				
                 RTS
 .pend
-; End of function sub_A775
-
-
-
 
 cursor_right_edit_mode_command:		
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		CMP	unk_8
-		BNE	loc_A79C
-		LDA	unk_11
-		CMP	unk_9
+		LDA	cursor_offset ; offset of cursor in detokenized buffer
+		CMP	screen_chars_in_line+0
+		BNE	loc_A79C ;taken if not past end of line
+
+		LDA	cursor_offset_msb   ;
+		CMP	screen_chars_in_line+1
 		BNE	loc_A79C
 		JSR	sub_B7A1
 
-loc_A793:				
+start_of_line:
 					
 		LDX	#0
-		STX	unk_11
+		STX	cursor_offset_msb
 		INX
 		STX	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_A7A2
-
+		BNE	loc_A7A2        ;JMP, in effect
+                
 loc_A79C:				
 					
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_A7A2
-		INC	unk_11
+		INC	cursor_offset_msb
 
 loc_A7A2:				
 					
@@ -7290,128 +7303,146 @@ shift_cursor_right_edit_mode_command:
 		JMP	cursor_right_edit_mode_command
 
 ctrl_cursor_left_edit_mode_command:	
-		JSR	sub_A775
-		JMP	loc_A793
+		JSR	move_cursor_left
+		JMP	start_of_line
 
 
 
 ctrl_cursor_right_edit_mode_command:	
 					
 		JSR	sub_B7A1
-		JMP	loc_A793
+		JMP	start_of_line
 ; End of function ctrl_cursor_right_edit_mode_command
 
 
 
 
-sub_A7BD:				
+move_cursor_down_on_screen: .proc
 		CLC
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		ADC	code_area_width
 		STA	cursor_offset	; offset of cursor in detokenized buffer
 		BCC	locret_A7C9
-		INC	unk_11
+		INC	cursor_offset_msb
 
 locret_A7C9:				
 		RTS
-; End of function sub_A7BD
+                .pend
 
 
-cursor_down_edit_mode_command:		
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
+cursor_down_edit_mode_command:
+
+                ; Save old offset.
+		LDA	cursor_offset
 		PHA
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		PHA
-		JSR	sub_A7BD
+                
+		JSR	move_cursor_down_on_screen
+
+                ; cursor_offset -= screen_chars_in_line
 		SEC
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		SBC	unk_8
-		STA	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	unk_11
-		SBC	unk_9
-		STA	unk_11
-		JSR	sub_A804
-		BCC	loc_A7EA
+		LDA	cursor_offset
+		SBC	screen_chars_in_line+0
+		STA	cursor_offset
+		LDA	cursor_offset_msb
+		SBC	screen_chars_in_line+1
+		STA	cursor_offset_msb
+
+                ; If cursor_offset>0, the movement took it off the end
+                ; of the line, so sort that out.
+		JSR	is_cursor_offset_negative_or_zero
+		BCC	loc_A7EA ;taken if cursor_offset>0
+
+                ; Cursor should remain on the same line, though it's
+                ; now in the wrong place, so fix that up.
 		PLA
 		PLA
-		JMP	loc_A834
+		JMP	offset_cursor_by_screen_chars_in_line
 
 loc_A7EA:				
-		PLA
-		TAX
-		PLA
-		TAY
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		PLA             ;
+		TAX             ;cursor offset MSB
+		PLA             ;
+		TAY             ;cursor offset LSB
+		LDA	cursor_offset 
 		PHA
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		PHA
-		STX	unk_11
-		STY	cursor_offset	; offset of cursor in detokenized buffer
+		STX	cursor_offset_msb
+		STY	cursor_offset
+                
 		JSR	sub_B7A1
+                
 		PLA
-		STA	unk_11
+		STA	cursor_offset_msb
 		PLA
 		STA	cursor_offset	; offset of cursor in detokenized buffer
 		JMP	position_edit_mode_cursor
 
 
 
-sub_A804:				
+; returns C=1 if negative
+is_cursor_offset_negative_or_zero: .proc
 		SEC
-		LDA	unk_11
-		BMI	locret_A812
-		BEQ	loc_A80D
-		BNE	loc_A811
+		LDA	cursor_offset_msb
+		BMI	locret_A812 ;taken if offset<0 - is negative
+		BEQ	loc_A80D ;taken if (offset&0xff00)==0 - may be zero
+		BNE	loc_A811    ;taken if offset>0 - not negative
 
 loc_A80D:				
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		BEQ	locret_A812
+		BEQ	locret_A812     ;taken if zero - is zero
 
 loc_A811:				
 		CLC
 
 locret_A812:				
 		RTS
-; End of function sub_A804
+                .pend
 
 
-
-
-sub_A813:				
+move_cursor_up_on_screen: .proc
 		SEC
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		SBC	code_area_width
 		STA	cursor_offset	; offset of cursor in detokenized buffer
 		BCS	locret_A81F
-		DEC	unk_11
+		DEC	cursor_offset_msb
 
 locret_A81F:				
 		RTS
-; End of function sub_A813
+                .pend
 
 
-cursor_up_edit_mode_command:		
-		JSR	sub_A813
+cursor_up_edit_mode_command: .proc
+		JSR	move_cursor_up_on_screen
 
 loc_A823:
-		JSR	sub_A804
-		BCS	loc_A82B
+		JSR	is_cursor_offset_negative_or_zero
+		BCS	loc_A82B ;taken if offset is negative or zero
 		JMP	loc_A7A2
 
 loc_A82B:				
-		JSR	sub_A7BD
-		JSR	sub_BE98
-		JSR	sub_A813
+		JSR	move_cursor_down_on_screen ;undo the movement
+		JSR	move_cursor_to_previous_line ;
 
-loc_A834:				
+                ; move cursor up again, then offset it by the area of
+                ; the line on screen, so it ends up at the right place
+                ; on the last row of the line.
+		JSR	move_cursor_up_on_screen
+                .pend
+
+offset_cursor_by_screen_chars_in_line: .block
 		CLC
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		ADC	unk_8
+		ADC	screen_chars_in_line+0
 		STA	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	unk_11
-		ADC	unk_9
-		STA	unk_11
+		LDA	cursor_offset_msb
+		ADC	screen_chars_in_line+1
+		STA	cursor_offset_msb
 		JMP	position_edit_mode_cursor
+                .bend
 
 ctrl_cursor_up_edit_mode_command:	
 		JSR	sub_AA06
@@ -7427,7 +7458,7 @@ ctrl_cursor_up_edit_mode_command:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JSR	sub_A069
-		JMP	loc_A793
+		JMP	start_of_line
 
 ctrl_cursor_down_edit_mode_command:	
 		JSR	sub_AA06
@@ -7499,7 +7530,7 @@ shift_cursor_down_edit_mode_command:
 
 position_edit_mode_cursor:		
 					
-		LDY	unk_11
+		LDY	cursor_offset_msb
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_A8AF
 		DEY
@@ -7529,7 +7560,7 @@ loc_A8AF:
 
 
 
-sub_A8C0:				
+sub_A8C0: .proc
 					
 		LDA	byte_6B3
 		BNE	loc_A8C6
@@ -7537,29 +7568,35 @@ sub_A8C0:
 
 loc_A8C6:				
 		LDA	#0
-		STA	byte_6A8
-		PHA
+		STA	byte_6A8 ;line isn't too long
+		PHA              ;
 
 loc_A8CC:				
-		JSR	rstrip_and_cr_terminate_detokenized_line
+		JSR	rstrip_and_cr_terminate_line
 		CLC
-		TXA
-		ADC	#4
+		TXA             ;$401,X = CR
+		ADC	#4      ;
 		STA	unk_503
 		LDA	#$D
-		STA	unk_500
+		STA	unk_500 ;??
 		LDA	current_line_no_lsb
 		STA	unk_501
 		LDA	current_line_no_msb
 		STA	unk_502
-		LDA	#1
+
+                ; copy from $401
+		LDA	#<unk_401
 		STA	byte_C
-		LDA	#4
+		LDA	#>unk_401
 		STA	byte_D
+
+                ; copy to $504 (unk_503+1, presumably??)
 		LDA	#4
 		STA	byte_E
 		LDA	#5
 		STA	byte_F
+
+                ; copy 252 bytes - TODO fix
 		LDX	#0
 		LDY	#$FC
 		JSR	memmove		; move (maybe overlapping) memory regions.
@@ -7573,13 +7610,13 @@ loc_A8CC:
 
 loc_A8FF:				
 		LDA	#0
-		STA	byte_6A8
+		STA	byte_6A8 ;line isn't too long
 		PHA
 
 loc_A905:				
-		LDA	#0
+		LDA	#<unk_500
 		STA	byte_2B
-		LDA	#5
+		LDA	#>unk_500
 		STA	byte_2C
 		JSR	detokenize_line	; detokenize line and store result.
 					;
@@ -7590,11 +7627,11 @@ loc_A905:
 					; $400 = line length
 					; $401... = line text
 					; unk_6A8 incremented if line too long
-		LDA	byte_6A8
-		BEQ	loc_A928
-		LDA	byte_6A7
-		BNE	loc_A91F
-		LDA	#$25 ; '%'      ; "Updates would make line too long"
+		LDA	byte_6A8        ;was there an overflow?
+		BEQ	loc_A928        ;taken if not
+		LDA	byte_6A7        ;erm...
+		BNE	loc_A91F        ;erm...
+		LDA	#$25    ; "Updates would make line too long"
 		JMP	loc_859D
 
 loc_A91F:				
@@ -7620,14 +7657,17 @@ loc_A929:
 					;
 					; Exit:
 					; (byte_2B) points to most suitable line
+
+                                        
 		LDY	#1
-		LDA	($2B),Y
-		CMP	current_line_no_lsb
-		BNE	loc_A943
-		INY
-		LDA	($2B),Y
-		CMP	current_line_no_msb
-		BEQ	loc_A947
+		LDA	($2B),Y             ;get line # LSB
+		CMP	current_line_no_lsb ;is it the current line?
+		BNE	loc_A943            ;no - going to have to
+                                            ;insert
+		INY                         ;
+		LDA	($2B),Y             ;get line # MSB
+		CMP	current_line_no_msb ;is it the current line?
+		BEQ	loc_A947            ;yes, update in place
 
 loc_A943:				
 		LDX	#-1
@@ -7650,7 +7690,7 @@ loc_A958:
 		SBC	#0
 		STA	byte_28
 		JSR	find_program
-		JSR	sub_9FF2
+		JSR	check_for_room
 		LDX	current_line_no_msb
 		LDY	current_line_no_lsb
 		INX
@@ -7668,10 +7708,14 @@ loc_A96E:
 					;
 					; Exit:
 					; (byte_2B) points to most suitable line
+
+                ; source = line
 		LDA	byte_2C
 		STA	byte_D
 		LDA	byte_2B
 		STA	byte_C
+
+                ; dest = 
 		CLC
 		ADC	byte_27
 		STA	byte_E
@@ -7765,9 +7809,7 @@ loc_A9F3:
 
 locret_AA05:				
 		RTS
-; End of function sub_A8C0
-
-
+                .pend
 
 
 sub_AA06:				
@@ -7791,17 +7833,17 @@ sub_AA06:
 
 
 sub_AA17:				
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		PHA
-		LDA	unk_9
+		LDA	screen_chars_in_line+1
 		PHA
 		JSR	sub_A069
 		PLA
 		TAX
 		PLA
-		CPX	unk_9
+		CPX	screen_chars_in_line+1
 		BNE	loc_AA2E
-		CMP	unk_8
+		CMP	screen_chars_in_line+0
 		BNE	loc_AA2E
 		JMP	sub_9F00
 
@@ -7900,7 +7942,7 @@ sub_AA77:
 
 
 delete_key_command:			
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BNE	loc_AA97
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
 		DEX
@@ -7941,7 +7983,7 @@ loc_AAB7:
 
 loc_AAC8:				
 					
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BEQ	loc_AACD
 
 locret_AACC:				
@@ -7969,7 +8011,7 @@ loc_AADC:
 		BNE	loc_AAA6
 
 delete_to_end_of_line_edit_mode_command: .proc
-		LDA	unk_11
+		LDA	cursor_offset_msb
 		BNE	locret_AACC
                 
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
@@ -8035,9 +8077,9 @@ delete_loop:
                 .pend
 
 sub_AB1E:				
-		LDA	unk_9
+		LDA	screen_chars_in_line+1
 		BNE	locret_AB2D
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		CMP	cursor_offset	; offset of cursor in detokenized buffer
 		BEQ	loc_AB3C
 		CMP	byte_400
@@ -8060,7 +8102,7 @@ loc_AB3C:
 		LDA	#7
 		STA	byte_F
 		JSR	sub_ABDB
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		PHA
 		LDA	current_line_no_lsb
 		PHA
@@ -8091,14 +8133,14 @@ loc_AB6A:
                 LDA	#6
                 jsr print_n_spaces
 		CLC
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		ADC	code_area_width
 		TAX
 		LDA	#0
 		ADC	#0
 		TAY
 		CLC
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		ADC	#1
 		JSR	sub_A0B1
 		PLA
@@ -8140,11 +8182,11 @@ loc_ABB0:
 		CLC
 		PLA
 		ADC	code_area_width
-		STA	unk_8
+		STA	screen_chars_in_line+0
 		TAX
 		LDA	#0
 		ADC	#0
-		STA	unk_9
+		STA	screen_chars_in_line+1
 		TAY
 		JSR	get_line_dimensions ; work out dimensions of line.
 					;
@@ -8180,7 +8222,7 @@ sub_ABDB:
 
 
 
-rstrip_and_cr_terminate_detokenized_line: 
+rstrip_and_cr_terminate_line: 
 		LDX	byte_400	; check	line length
 		BEQ	at_end		; taken	if line	empty
 
@@ -8204,7 +8246,7 @@ find_cr:
 		CMP	#$D
 		BNE	find_cr
 		RTS
-; End of function rstrip_and_cr_terminate_detokenized_line
+; End of function rstrip_and_cr_terminate_line
 
 
 loc_AC08:				
@@ -8527,7 +8569,7 @@ loc_AD87:
 		STA	byte_46
 		TYA
 		PHA
-		JSR	sub_9FF2
+		JSR	check_for_room
 		STA	unk_34
 		STX	unk_33
 		JSR	sub_AE78
@@ -8980,13 +9022,13 @@ loc_AFE9:
 		JSR	detokenize_one_line
 
 loc_B00D:				
-		LDA	scroll_status	; 1=scroll, 0=noscroll
+		LDA	is_scroll_on	; 1=scroll, 0=noscroll
 		PHA
 		LDA	#1
-		STA	scroll_status	; 1=scroll, 0=noscroll
+		STA	is_scroll_on	; 1=scroll, 0=noscroll
 		JSR	ctrl_cursor_right_edit_mode_command
 		PLA
-		STA	scroll_status	; 1=scroll, 0=noscroll
+		STA	is_scroll_on	; 1=scroll, 0=noscroll
 		RTS
 
 loc_B01B:				
@@ -9869,7 +9911,7 @@ loc_B3F9:
 					; X is MSB of size
 					; Y is LSB of size
 		LDX	#0
-		STX	unk_11
+		STX	cursor_offset_msb
 		STX	unk_37
 		STX	byte_36
 		STX	byte_6B3
@@ -9998,7 +10040,7 @@ sub_B4A7:
 		PHA
 		LDA	byte_2C
 		PHA
-		JSR	loc_A8FF
+		JSR	sub_a8c0.loc_A8FF
 		PLA
 		STA	byte_2C
 		PLA
@@ -10327,7 +10369,7 @@ loc_B675:
 					; Y is LSB of size
 		LDY	#0
 		STY	unk_37
-		STY	unk_11
+		STY	cursor_offset_msb
 		INY
 		STY	cursor_offset	; offset of cursor in detokenized buffer
 		LDA	#4
@@ -10541,9 +10583,9 @@ loc_B78E:
 loc_B79E:				
 		JMP	loc_B689
 
+;-------------------------------------------------------------------------
 
-
-sub_B7A1:				
+sub_B7A1: .proc;move_cursor_to_next_line???
 					
 		JSR	is_line_empty	; determines whether current line is empty.
 					;
@@ -10553,12 +10595,12 @@ sub_B7A1:
 					; Exit:
 					; C set	if line	empty.
 		BCC	loc_B7AB
-		LDA	scroll_status	; 1=scroll, 0=noscroll
+		LDA	is_scroll_on	; 1=scroll, 0=noscroll
 		BNE	loc_B7B7
 		RTS
 
 loc_B7AB:				
-		LDA	scroll_status	; 1=scroll, 0=noscroll
+		LDA	is_scroll_on	; 1=scroll, 0=noscroll
 		BNE	loc_B7B2
 		JMP	loc_B89A
 
@@ -10624,7 +10666,7 @@ loc_B7DD:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JSR	detokenize_one_line
-		JSR	sub_A01E
+		JSR	calculate_screen_chars_in_line
 		CLC
 		LDA	byte_2D
 		ADC	unk_37
@@ -10666,7 +10708,9 @@ loc_B832:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JSR	detokenize_one_line
 		LDX	unk_34
-		JSR	loc_A021
+		JSR	calculate_screen_chars_in_line.loc_A021 ;just
+                                                                ;scale
+                                                                ;by X
 		JSR	sub_AA17
 		JMP	loc_B89D
 
@@ -10760,9 +10804,7 @@ loc_B8AE:
 loc_B8BA:				
 					
 		JMP	sub_A069
-; End of function sub_B7A1
-
-
+                .pend
 
 
 sub_B8BD:				
@@ -11000,7 +11042,7 @@ loc_B9E5:
 					; (byte_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
-		JSR	sub_A01E
+		JSR	calculate_screen_chars_in_line
 		CLC
 		LDA	byte_3B
 		ADC	byte_2D
@@ -11065,7 +11107,7 @@ loc_BA65:
 
 
 
-sub_BA69:				
+sub_BA69: .proc
 					
 		LDA	screen_height
 		ASL
@@ -11092,7 +11134,7 @@ loc_BA83:
 		BEQ	loc_BA71
 		BCC	loc_BA71
 		RTS
-; End of function sub_BA69
+                .pend
 
 
 
@@ -11348,7 +11390,7 @@ print_scroll_status:
                 jsr print_next_string
                 .text "Scroll: ",255
 
-                lda scroll_status ;1=scroll 0=noscroll
+                lda is_scroll_on ;1=scroll 0=noscroll
                 jsr print_on_off
                 
                 jsr osnewl
@@ -11811,7 +11853,7 @@ find_mode_getch:
 
 
 
-sub_BE98:				
+move_cursor_to_previous_line: .proc ;scroll up??
 		JSR	is_line_empty	; determines whether current line is empty.
 					;
 					; Entry:
@@ -11819,26 +11861,27 @@ sub_BE98:
 					;
 					; Exit:
 					; C set	if line	empty.
-		BCC	loc_BEA2
-		LDA	scroll_status	; 1=scroll, 0=noscroll
-		BNE	loc_BEB2
+		BCC	line_empty
+		LDA	is_scroll_on	; 1=scroll, 0=noscroll
+		BNE	loc_BEB2        ;taken if scroll on
 		RTS
 
-loc_BEA2:				
-		LDA	scroll_status	; 1=scroll, 0=noscroll
-		BNE	loc_BEA9
+line_empty:    
+		LDA	is_scroll_on	; 1=scroll, 0=noscroll
+		BNE	loc_BEA9        ;taken if scroll on
 
 loc_BEA6:				
 		JMP	loc_BFBB
 
 loc_BEA9:				
 		LDA	byte_3B
-		BNE	loc_BEA6
+		BNE	loc_BEA6         ;taken if Y!=0 - i.e.,
+                                         ;scrolling is unnecessary
 		JSR	is_program_empty ; sets	C if no	program
-		BCC	loc_BEB5
+		BCC	loc_BEB5         ;taken if program is valid
 
 loc_BEB2:				
-		JMP	edit_mode_loop
+		JMP	edit_mode_loop ;
 
 loc_BEB5:				
 		JSR	find_current_line_by_number ; finds current line by number.
@@ -11850,7 +11893,7 @@ loc_BEB5:
 					; Exit:
 					; (byte_2B) points to line found
 		LDA	unk_30
-		BEQ	loc_BEB2
+		BEQ	loc_BEB2 ;clearly bad if zero
 		JSR	make_cursor_invisible
 		LDA	byte_2D
 		STA	byte_35
@@ -11866,9 +11909,9 @@ loc_BEB5:
 		SEC
 		SBC	byte_35
 		STA	byte_35
-		LDA	unk_8
+		LDA	screen_chars_in_line+0
 		PHA
-		LDA	unk_9
+		LDA	screen_chars_in_line+1
 		PHA
 		JSR	find_current_line_by_number ; finds current line by number.
 					;
@@ -11887,13 +11930,18 @@ loc_BEB5:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JSR	detokenize_one_line
-		JSR	sub_A01E
+		JSR	calculate_screen_chars_in_line ;also sets
+                                                       ;byte_2d to
+                                                       ;line height
 		LDX	#0
 		LDY	#0
 		JSR	gotoxy
 		LDA	#19
 		STA	byte_6AB
-		JSR	OSBYTE
+		JSR	OSBYTE  ;this is actually worth doing in Mode
+                                ;7...
+
+                ; scroll screen up enough to fit new line
 		LDY	byte_2D
 		LDA	#11
 
@@ -11901,24 +11949,31 @@ loc_BEF7:
 		JSR	OSWRCH
 		DEY
 		BNE	loc_BEF7
+
+                ; 
 		LDA	byte_35
 		BEQ	loc_BF04
+                
 		JMP	loc_BF5B
 
-loc_BF04:				
+loc_BF04:
+
+                ; ?byte_36 = (screen_height - line_height) + 1
 		SEC
 		LDA	screen_height
-		SBC	byte_2D
+		SBC	byte_2D      
 		STA	byte_36
 		INC	byte_36
 
+
+                ; erase any partial line at the bottom of the screen?
 loc_BF0E:				
 		LDA	byte_36
-		ASL
-		TAX
-		TAY
-		INX
-		LDA	$6C0,X
+		ASL            
+		TAX            
+		TAY            
+		INX            
+		LDA	$6C0,X 
 		BEQ	loc_BF5B
 		DEY
 		CMP	$6C0,Y
@@ -11932,15 +11987,19 @@ loc_BF0E:
 		STA	$6C0,X
 		STA	$6C1,X
 		DEC	byte_36
+
+                ; gotoxy (0,y)
 		CLC
 		LDA	byte_36
 		ADC	byte_2D
 		TAY
 		LDX	#0
 		JSR	gotoxy
+
+                ; fill with spaces
 		CLC
 		LDA	code_area_width
-		ADC	#6
+		ADC	#6      ;account for line number area
 		TAY
 		LDA	#$20 ; ' '
 
@@ -11948,7 +12007,7 @@ loc_BF47:
 		JSR	OSWRCH
 		DEY
 		BNE	loc_BF47
-		BEQ	loc_BF0E
+		BEQ	loc_BF0E ;JMP, in effect
 
 loc_BF4F:				
 		LDA	byte_36
@@ -11965,7 +12024,7 @@ loc_BF5B:
 		LDA	#6
 		STA	byte_D
 		STA	byte_F
-		LDA	#-$40 ;	'À'
+		LDA	#$C0;-$40 ;	'À'
 		STA	byte_C
 		CLC
 		ADC	byte_E
@@ -12011,9 +12070,9 @@ loc_BF73:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		PLA
-		STA	unk_9
+		STA	screen_chars_in_line+1
 		PLA
-		STA	unk_8
+		STA	screen_chars_in_line+0
 		LDA	byte_6B3
 		BNE	loc_BFB5
 		LDA	byte_35
@@ -12058,8 +12117,7 @@ loc_BFCB:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JMP	sub_A069
-; End of function sub_BE98
-
+                .pend
 
 
 ; finds	current	line by	number.

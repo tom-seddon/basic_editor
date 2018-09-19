@@ -10,11 +10,11 @@ unk_1:
                 .fill 1 
 HIMEM:
                 .fill 1
-                .fill 1 
-unk_8:
-                .fill 1 
-unk_9:
-                .fill 1 
+                .fill 1
+
+; number of screen rows in line * ?code_area_width
+screen_chars_in_line:
+                .fill 2
 background_colour:
                 .fill 1 
 foreground_colour:
@@ -28,9 +28,15 @@ byte_E:
 byte_F:
                 .fill 1	
 cursor_offset:
-                .fill 1	
-unk_11:
-                .fill 1 
+                .fill 1
+
+; The offset MSB is mainly an issue for cursor movement. The
+; detokenized line can never exceed 252 bytes, but the line's area on
+; screen can be greater than that, and the cursor's offset in this
+; larger region needs to be tracked, if only to block edits.
+cursor_offset_msb:
+                .fill 1
+                
 TOP:
                 .fill 1
                 .fill 1		
@@ -115,7 +121,7 @@ byte_3B:
                 .fill 1	
 is_insert_mode:
                 .fill 1 
-scroll_status:
+is_scroll_on:
                 .fill 1	
 byte_3E:
                 .fill 1	
