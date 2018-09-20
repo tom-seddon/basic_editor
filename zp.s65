@@ -193,6 +193,15 @@ language_entry_mode:
 program_name_ptr:
                 .fill 2
 
+                .if ENABLE_DEBUG_VALUES
+debug_counter:
+                .fill 2
+debug_flag:
+                .fill 1
+debug_ptr:
+                .fill 2
+                .endif
+                
                 ; language zero page runs up to $8f, but it would be
                 ; nice to leave $70...$8f free as BASIC reserves that
                 ; for user stuff. Then you can go BASIC->BE->BASIC

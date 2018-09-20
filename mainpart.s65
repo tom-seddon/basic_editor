@@ -56,7 +56,11 @@ KEEP_DELETE_LINE_MEMSET = false
 KEEP_CLEAR_5B1_TO_600_MEMSET = false
 KEEP_DETOKENIZE_ONE_LINE_MEMSET = false
 KEEP_9E1D_MEMSET = false
+                
+KEEP_B8DB_MEMMOVE = false
+KEEP_BF73_MEMMOVE = false
 
+ENABLE_DEBUG_VALUES = true
 
 ;-------------------------------------------------------------------------
 
@@ -411,6 +415,10 @@ language_entry: .proc
                 RTS
 
 language_start:
+                .if ENABLE_DEBUG_VALUES
+                jsr reset_debug_values
+                .endif
+                
                 JSR     init_brkv_and_oshwm
                 JSR     clear_line_commands
                 JSR     sub_B358
@@ -2035,6 +2043,7 @@ osbyte_with_y0:.proc
 
 ;                 .pend
 
+;-------------------------------------------------------------------------
 ; move (maybe overlapping) memory regions.
 ;
 ; Entry:
@@ -2043,7 +2052,34 @@ osbyte_with_y0:.proc
 ; X is MSB of size
 ; Y is LSB of size
 
-memmove: .proc			
+
+memmove_8bit:
+                .if ENABLE_DEBUG_VALUES
+                cpx #0
+                beq memmove
+
+                ; This is fine, sort of, in that it will copy the
+                ; right number of bytes. But it wants noting, because
+                ; obviously I've got something wrong...
+                stx debug_flag
+                
+                .endif
+                
+memmove: .block
+                .if ENABLE_DEBUG_VALUES
+                
+                jsr inc_debug_counter
+
+                pla
+                sta debug_ptr+1
+                pla
+                sta debug_ptr+0
+                pha
+                lda debug_ptr+1
+                pha
+                
+                .endif
+                
 		LDA	byte_D		; get src MSB
 		CMP	byte_F		; compare to dest MSB
 		BCC	copy_down	; taken	if src<dest
@@ -2124,11 +2160,10 @@ copy_down_page_loop:
 
 memmove_done:					
 		RTS
-; End of function memmove
+                .bend
 
+;-------------------------------------------------------------------------
 
-
-.pend
 gotoxy .proc					
 					
 		LDA	#31		; set cursor location
@@ -4217,7 +4252,7 @@ loc_98DB:
 		INY
 		STY	unk_700
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -4249,7 +4284,7 @@ loc_98DB:
 		LDY	unk_700
 		INY
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -7558,9 +7593,9 @@ loc_A8AF:
 ; End of function position_edit_mode_cursor
 
 
+;-------------------------------------------------------------------------
 
-
-sub_A8C0: .proc
+sub_A8C0: .proc ;happens when tokenizing an altered line?
 					
 		LDA	byte_6B3
 		BNE	loc_A8C6
@@ -7795,7 +7830,7 @@ loc_A9F3:
 					
 		LDX	#0
 		LDY	unk_503
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -7811,6 +7846,7 @@ locret_AA05:
 		RTS
                 .pend
 
+;-------------------------------------------------------------------------
 
 sub_AA06:				
 		LDA	byte_6B3
@@ -10033,9 +10069,9 @@ sub_B4A0:
 ; End of function sub_B4A0
 
 
+;-------------------------------------------------------------------------
 
-
-sub_B4A7:				
+sub_B4A7: .block
 		LDA	byte_2B
 		PHA
 		LDA	byte_2C
@@ -10046,10 +10082,11 @@ sub_B4A7:
 		PLA
 		STA	byte_2B
 		RTS
-; End of function sub_B4A7
+                .bend
 
+;-------------------------------------------------------------------------
 
-loc_B4B7:				
+loc_B4B7: .proc
 		LDA	unk_1F
 		STA	byte_C
 		LDA	byte_20
@@ -10173,12 +10210,12 @@ loc_B53E:
 		STA	byte_E
 		SEC
 		LDA	unk_503
-		SBC	cursor_offset	; offset of cursor in detokenized buffer
+		SBC	cursor_offset	
 		SEC
 		SBC	#6
 		TAY
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10227,6 +10264,10 @@ loc_B5A3:
 
 loc_B5B0:				
 		JMP	loc_B4CF
+
+                .pend
+
+;-------------------------------------------------------------------------
 
 label_command:				
 		LDA	current_line_no_lsb
@@ -10284,24 +10325,33 @@ loc_B5EC:
 locret_B5FB:				
 		RTS
 
-label_edit_mode_command:		
+;-------------------------------------------------------------------------
+
+label_edit_mode_command: .proc
 		LDA	#$13
 		PHA
-		LDA	#<label_command ; $B3 ; -$4D ;	'³'
+		LDA	#<label_command
 		STA	unk_6B1
-		LDA	#>label_command ; $B5 ; -$4B ;	'µ'
+		LDA	#>label_command
 		STA	unk_6B2
-		BNE	loc_B618
+		BNE	loc_B618 ;JMP, in effect
+                .pend
 
-number_edit_mode_command:		
+;-------------------------------------------------------------------------
+
+number_edit_mode_command: .proc
 		LDA	#$F
 		PHA
-		LDA	#<number_command ; $AB ; -$55 ;	'«'
+		LDA	#<number_command
 		STA	unk_6B1
-		LDA	#>number_command ; $B3 ; -$4D ;	'³'
+		LDA	#>number_command
 		STA	unk_6B2
+                ; fall through
+                .pend
 
-loc_B618:				
+;-------------------------------------------------------------------------
+                
+loc_B618: .block 
 		JSR	is_program_empty ; sets	C if no	program
 		PLA
 		BCC	loc_B621
@@ -10342,7 +10392,11 @@ loc_B621:
 		STA	byte_6C1
 		JMP	loc_967A
 
-loc_B65A:				
+                .bend
+
+;-------------------------------------------------------------------------
+
+loc_B65A: .proc
 		LDA	byte_2B
 		STA	byte_C
 		LDA	byte_2C
@@ -10472,7 +10526,7 @@ loc_B6F9:
 		JMP	loc_B6F9
 
 loc_B703:				
-		CMP	#$f4 ; -$C ; 'ô'
+		CMP	#$f4 ; REM???
 		BNE	loc_B6DA
 		INY
 
@@ -10536,7 +10590,7 @@ loc_B745:
 		SBC	#2
 		TAY
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10553,7 +10607,7 @@ loc_B745:
 		STA	byte_F
 		LDY	byte_36
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10582,6 +10636,7 @@ loc_B78E:
 
 loc_B79E:				
 		JMP	loc_B689
+                .pend
 
 ;-------------------------------------------------------------------------
 
@@ -10807,7 +10862,7 @@ loc_B8BA:
                 .pend
 
 
-sub_B8BD:				
+sub_B8BD: .proc
 		SEC
 		LDA	unk_37
 		SBC	#1
@@ -10827,38 +10882,62 @@ loc_B8C5:
 		INC	unk_37
 		BNE	loc_B8C5
 
-loc_B8DB:				
+loc_B8DB:
+
+                ; copy from $6c0+Y to $6c0 - ok to copy up
 		CLC
 		TYA
-		ADC	#-$40 ;	'À'
-		STA	byte_C
+		ADC	#$c0
+		STA	byte_C  ;src LSB
 		LDA	#6
-		STA	byte_F
+		STA	byte_F  ;dest MSB
 		ADC	#0
-		STA	byte_D
-		LDA	#-$40 ;	'À'
-		STA	byte_E
+		STA	byte_D  ;src MSB
+		LDA	#$c0
+		STA	byte_E  ;dest LSB
+
+                ; copy (screen_height+1-unk_37)*2
 		CLC
 		LDA	screen_height
 		ADC	#1
 		SEC
 		SBC	unk_37
 		ASL
+                
+                .if KEEP_B8DB_MEMMOVE
+                
 		TAY
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+                ; called when scrolling down
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
 					; (byte_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
+
+                .else
+
+                tax
+                beq copy_rows_table_done
+                ldy #0
+copy_rows_table_loop:
+                lda (byte_C),y
+                sta (byte_E),y
+                iny
+                dex
+                bne copy_rows_table_loop
+copy_rows_table_done:
+                
+                .endif
+                                        
 		JSR	make_cursor_invisible
 		LDX	#0
 		LDY	screen_height
 		STY	byte_6AB
 		JSR	gotoxy
-		LDA	#$13
+		LDA	#19
 		JSR	OSBYTE
 		LDY	unk_37
 		LDA	#$A
@@ -10872,7 +10951,7 @@ loc_B914:
 		SBC	unk_37
 		STA	byte_3B
 		RTS
-; End of function sub_B8BD
+                .pend
 
 
 join_statements_edit_mode_command:	
@@ -10938,7 +11017,7 @@ loc_B977:
 		STA	byte_F
 		LDX	#0
 		LDY	unk_700
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -10999,7 +11078,7 @@ loc_B9C4:
 		STA	byte_D
 		LDX	#0
 		LDY	unk_700
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
@@ -11369,7 +11448,7 @@ info_command:
                 ; jsr oswrch
 
                 lda unk_16
-                bne print_scroll_status
+                bne print_status
 
                 ldx top
                 sec
@@ -11386,7 +11465,26 @@ info_command:
                 jsr print_next_string
                 .text " free",13,10,255
 
-print_scroll_status:
+print_status:
+                .if ENABLE_DEBUG_VALUES
+
+                jsr print_next_string
+                .text "DBG: ",255
+
+                lda debug_flag
+                jsr print_on_off
+
+                lda #' '
+                jsr oswrch
+
+                ldx debug_counter+0
+                ldy debug_counter+1
+                jsr itoa
+                jsr print_itoa_result
+                jsr osnewl
+                
+                .endif
+                
                 jsr print_next_string
                 .text "Scroll: ",255
 
@@ -12017,18 +12115,20 @@ loc_BF4F:
 		STA	$6C0,X
 		STA	$6C1,X
 
-loc_BF5B:				
-		LDA	byte_2D
-		ASL
+loc_BF5B:
+		LDA	byte_2D ;Y coord
+		ASL             ;*2
 		STA	byte_E
+
+                ; copy from $6c0 to $6c0+y - must copy down
 		LDA	#6
-		STA	byte_D
-		STA	byte_F
-		LDA	#$C0;-$40 ;	'À'
-		STA	byte_C
+		STA	byte_D  ;src MSB
+		STA	byte_F  ;dest MSB
+		LDA	#$C0
+		STA	byte_C  ;src LSB
 		CLC
-		ADC	byte_E
-		STA	byte_E
+		ADC	byte_E  ;dest LSB
+		STA	byte_E  ;dest LSB
 		BCC	loc_BF73
 		INC	byte_F
 
@@ -12039,15 +12139,36 @@ loc_BF73:
 		SEC
 		SBC	byte_2D
 		ASL
+
+                .if KEEP_BF73_MEMMOVE
+
 		TAY
 		LDX	#0
-		JSR	memmove;8-bit   ; move (maybe overlapping) memory regions.
+                ;
+                ; called when scrolling up
+		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
 					; (byte_C) points to src
 					; (byte_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
+                                        
+                .else
+
+                tay
+                beq copy_rows_table_done
+                dey              ;Y is offset
+copy_rows_table_loop:
+                lda (byte_C),y
+                sta (byte_E),y
+                dey
+                cpy #$ff
+                bne copy_rows_table_loop
+copy_rows_table_done:
+
+                .endif
+
 		LDA	byte_2B
 		STA	byte_6C0
 		LDA	byte_2C
@@ -12237,20 +12358,26 @@ skipspaces
                 cmp #32
                 beq skipspaces
                 rts
+                .pend
 
-.pend
+;-------------------------------------------------------------------------
+
 case_command .proc
                 lda #0
                 sta case_insensitive_search
                 rts
-.pend
-                
+                .pend
+
+;-------------------------------------------------------------------------
+
 nocase_command .proc
                 lda #$80
                 sta case_insensitive_search
 return:
                 rts
-.pend
+                .pend
+
+;-------------------------------------------------------------------------
 
 maybe_verbose_exit_on_error: .proc
                 bit language_entry_mode
@@ -12259,7 +12386,33 @@ maybe_verbose_exit_on_error: .proc
                 jsr display_error_message
                 jmp exit_and_OLD
                 
-.pend
+                .pend
+
+;-------------------------------------------------------------------------
+
+                .if ENABLE_DEBUG_VALUES
+reset_debug_values: .proc
+                lda #0
+                sta debug_counter+0
+                sta debug_counter+1
+                sta debug_flag
+                rts
+                .pend
+                .endif
+
+;-------------------------------------------------------------------------
+
+                .if ENABLE_DEBUG_VALUES
+inc_debug_counter: .proc
+                inc debug_counter+0
+                bne done
+                inc debug_counter+1
+done:
+                rts
+                .pend
+                .endif
+                
+;-------------------------------------------------------------------------
 
 .here
 ; end of 'seg002'
