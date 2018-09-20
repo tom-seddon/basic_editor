@@ -1466,107 +1466,49 @@ bye:
                 
 ; End of function do_command_line
                 .pend
-                
-command_table
-                .text "APPEND",0
-		.byte	 9 ;
-		.byte CMD_APPEND
-                .text "BACK",0
-                .byte  $21 ; !
-                .byte CMD_BACK
-                .text "CHANGE",0
-                .byte  $15 ;
-                .byte CMD_CHANGE
-                .text "CASE",0,0,CMD_CASE
-                .text "END",0
-                .byte	 0 ;
-                .byte CMD_END
-                .text "EDIT",0
-                .byte	 5 ;
-                .byte CMD_EDIT
-                .text "EXIT",0
-                .byte	 0 ;
-                .byte CMD_EXIT
-                .text "FIND",0
-                .byte	 5 ;
-                .byte CMD_FIND
-                .text "FORE",0
-                .byte  $21 ; !
-                .byte CMD_FORE
-                .text "GOTO",0
-                .byte	 0 ;
-                .byte CMD_GOTO
-                .text "HELP",0
-                .byte	 0 ;
-                .byte CMD_HELP
-                .text "IE",0
-                .byte	 0 ;
-                .byte CMD_IE
-                .text "INFO",0
-                .byte	 0 ;
-                .byte CMD_INFO
-                .text "INSERT",0
-                .byte	 0 ;
-                .byte CMD_INSERT
-                .text "IT",0
-                .byte	 0 ;
-                .byte CMD_IT
-                .text "LOAD",0
-                .byte	 9 ;
-                .byte CMD_LOAD
-                .text "LABEL",0
-                .byte	 0 ;
-                .byte CMD_LABEL
-                .text "MODE",0
-                .byte	 3 ;
-                .byte CMD_MODE
-                .text "NEW",0
-                .byte	 0 ;
-                .byte CMD_NEW
-                .text "NOSCROLL",0
-                .byte	 0 ;
-                .byte CMD_NOSCROLL
-                .text "NUMBER",0
-                .byte	 0 ;
-                .byte CMD_NUMBER
-                .text "NOCASE",0,0,CMD_NOCASE
-                .text "OLD",0
-                .byte	 0 ;
-                .byte CMD_OLD
-                .text "OVERTYPE",0
-                .byte	 0 ;
-                .byte CMD_OVERTYPE
-                .text "QCHANGE",0
-                .byte  $15 ;
-                .byte CMD_QCHANGE
-                .text "RUN",0
-                .byte	 0 ;
-                .byte CMD_RUN
-                .text "RENUMBER",0
-                .byte  $45 ; E
-                .byte CMD_RENUMBER
-                .text "SAVE",0
-                .byte	 9 ;
-                .byte CMD_SAVE
-                .text "SCROLL",0
-                .byte	 0 ;
-                .byte CMD_SCROLL
-                .text "TOP",0
-                .byte	 0 ;
-                .byte CMD_TOP
-                .text "TAB",0
-                .byte	 3 ;
-                .byte CMD_TAB
 
-                .text "ZSAVE",0
-                .byte 0
-                .byte CMD_ZAUTOSAVE
+command: .macro text,flags,id
+                .text \text,0
+                .byte \flags
+                .byte \id
+                .endm
                 
-                .text "ZRUN",0
-                .byte 0
-                .byte CMD_ZRUN
+command_table:
+                .command "APPEND",9,CMD_APPEND
+                .command "BACK",$21,CMD_BACK
+                .command "CHANGE",$15,CMD_CHANGE
+                .command "CASE",0,CMD_CASE
+                .command "END",0,CMD_END
+                .command "EDIT",5,CMD_EDIT
+                .command "EXIT",0,CMD_EXIT
+                .command "FIND",5,CMD_FIND
+                .command "FORE",$21,CMD_FORE
+                .command "GOTO",0,CMD_GOTO
+                .command "HELP",0,CMD_HELP
+                .command "IE",0,CMD_IE
+                .command "INFO",0,CMD_INFO
+                .command "INSERT",0,CMD_INSERT
+                .command "IT",0,CMD_IT
+                .command "LOAD",9,CMD_LOAD
+                .command "LABEL",0,CMD_LABEL
+                .command "MODE",3,CMD_MODE
+                .command "NEW",0,CMD_NEW
+                .command "NOSCROLL",0,CMD_NOSCROLL
+                .command "NUMBER",0,CMD_NUMBER
+                .command "NOCASE",0,CMD_NOCASE
+                .command "OLD",0,CMD_OLD
+                .command "OVERTYPE",0,CMD_OVERTYPE
+                .command "QCHANGE",$15,CMD_QCHANGE
+                .command "RUN",0,CMD_RUN
+                .command "RENUMBER",$45,CMD_RENUMBER
+                .command "SAVE",9,CMD_SAVE
+                .command "SCROLL",0,CMD_SCROLL
+                .command "TOP",0,CMD_TOP
+                .command "TAB",3,CMD_TAB
+                .command "ZSAVE",0,CMD_ZAUTOSAVE
+                .command "ZRUN",0,CMD_ZRUN
 
-		.byte  $FF ;
+		.byte  $FF
 byte_8C95:	.byte $A		
 					
 byte_8C96:	.byte 9			
@@ -3544,98 +3486,98 @@ clear_escape_condition:
 		RTS
 
 
-command: .macro unk,id,addr
+command_jump: .macro unk,id,addr
                 .byte \unk
                 .byte \id
                 .word \addr
                 .endm
                 
 command_jump_table:
-                .command $20,CMD_return_key,return_key_command
-                .command $24,CMD_IE,ie_cmd
-                .command $24,CMD_IT,it_cmd
-                .command 8,$1B,language_entry.command_loop
-                .command 0,CMD_toggle_insert_overtype,toggle_insert_overtype_command
-                .command $19,$A2,top_edit_mode_command
-                .command $19,CMD_f2_key,end_edit_mode_command
-                .command $19,CMD_f4_key,renumber_edit_mode_command
-                .command $A,CMD_EXIT,run_or_exit_command
-                .command 2,CMD_NEW,new_command
-                .command 1,CMD_OLD,old_command
-                .command 0,CMD_shift_f2_key,undo_edit_mode_command
-                .command 0,CMD_shift_f4_key,extend_statement_edit_mode_command
-                .command 0,CMD_shift_f3_key,swap_case_edit_mode_command
-                .command $19,$A7,top_of_screen_edit_mode_command
-                .command 0,$A0,execute_edit_mode_command
-                .command 0,$C7,background_edit_mode_command
-                .command 0,$C8,foreground_edit_mode_command
-                .command 0,$A6,delete_to_end_of_line_edit_mode_command
-                .command 1,CMD_delete_key,delete_key_command
-                .command 1,CMD_shift_delete_key,loc_AAC8
-                .command 0,$AC,cursor_left_edit_mode_command
-                .command 0,$AD,cursor_right_edit_mode_command
-                .command 0,$AE,cursor_down_edit_mode_command
-                .command 0,$AF,cursor_up_edit_mode_command
-                .command 0,$BC,shift_cursor_left_edit_mode_command
-                .command 0,$BD,shift_cursor_right_edit_mode_command
-                .command $18,$BE,shift_cursor_down_edit_mode_command
-                .command $18,$BF,shift_cursor_up_edit_mode_command
-                .command 0,$CC,move_to_top_of_screen_edit_mode_command
-                .command 0,$CD,move_to_bottom_of_screen_edit_mode_command
-                .command $10,$CE,move_to_next_line_edit_mode_command
-                .command $10,$CF,move_to_prev_line_edit_mode_command
-                .command 2,CMD_LOAD,load_command
-                .command 0,CMD_APPEND,append_command
-                .command 0,CMD_SAVE,save_command
-                .command 0,CMD_FIND,find_command
-                .command $40,CMD_CHANGE,change_or_qchange_command
-                .command $40,CMD_QCHANGE,change_or_qchange_command
-                .command 2,CMD_star,run_star_command
-                .command 0,3,set_primary_line_command
-                .command 0,4,set_primary_line_command
-                .command 0,$D,set_primary_line_command
-                .command 1,1,loc_A245
-                .command 1,2,loc_A245
-                .command 1,5,loc_A245
-                .command 1,$14,loc_A245
-                .command 1,$12,loc_A258
-                .command 0,$63,loc_AD39
-                .command 0,$64,loc_AEB9
-                .command 0,$6D,loc_AD39
-                .command 0,$AB,copy_key_edit_mode_command
-                .command 0,CMD_tab_key,tab_key_command
-                .command 0,CMD_RUN,run_or_exit_command
-                .command 0,CMD_MODE,mode_command
-                .command 0,$C0,mark_edit_mode_command
-                .command $1D,$C1,goto_edit_mode_command
-                .command $40,CMD_NUMBER,number_command
-                .command $40,CMD_LABEL,label_command
-                .command 0,$C2,split_statement_edit_mode_command
-                .command 1,$C3,join_statements_edit_mode_command
-                .command $21,$C4,repeat_edit_mode_command
-                .command 0,CMD_SCROLL,scroll_command
-                .command 0,CMD_NOSCROLL,noscroll_command
-                .command 2,CMD_HELP,help_command
-                .command 0,CMD_FORE,fore_command
-                .command 0,CMD_BACK,back_command
-                .command 0,CMD_INSERT,insert_command
-                .command 0,CMD_OVERTYPE,overtype_command
-                .command 2,CMD_INFO,info_command
-                .command $49,CMD_shift_f6_key,label_edit_mode_command
-                .command $49,CMD_shift_f7_key,number_edit_mode_command
-                .command $14,CMD_goto_line,goto_line_command
-                .command 0,CMD_RENUMBER,renumber_command
-                .command 0,CMD_TAB,tab_command
-                .command 0,CMD_GOTO,goto_command
-                .command 8,$A5,continue_edit_mode_command
-                .command 0,CMD_EDIT,find_command
-                .command $14,CMD_TOP,top_command
-                .command $14,CMD_END,end_command
-                .command 0,CMD_shift_tab_key,loc_9783
-                .command 0,CMD_ZAUTOSAVE,zsave_command
-                .command 0,CMD_CASE,case_command
-                .command 0,CMD_NOCASE,nocase_command
-                .command 0,CMD_ZRUN,zrun_command
+                .command_jump $20,CMD_return_key,return_key_command
+                .command_jump $24,CMD_IE,ie_cmd
+                .command_jump $24,CMD_IT,it_cmd
+                .command_jump 8,$1B,language_entry.command_loop
+                .command_jump 0,CMD_toggle_insert_overtype,toggle_insert_overtype_command
+                .command_jump $19,$A2,top_edit_mode_command
+                .command_jump $19,CMD_f2_key,end_edit_mode_command
+                .command_jump $19,CMD_f4_key,renumber_edit_mode_command
+                .command_jump $A,CMD_EXIT,run_or_exit_command
+                .command_jump 2,CMD_NEW,new_command
+                .command_jump 1,CMD_OLD,old_command
+                .command_jump 0,CMD_shift_f2_key,undo_edit_mode_command
+                .command_jump 0,CMD_shift_f4_key,extend_statement_edit_mode_command
+                .command_jump 0,CMD_shift_f3_key,swap_case_edit_mode_command
+                .command_jump $19,$A7,top_of_screen_edit_mode_command
+                .command_jump 0,$A0,execute_edit_mode_command
+                .command_jump 0,$C7,background_edit_mode_command
+                .command_jump 0,$C8,foreground_edit_mode_command
+                .command_jump 0,$A6,delete_to_end_of_line_edit_mode_command
+                .command_jump 1,CMD_delete_key,delete_key_command
+                .command_jump 1,CMD_shift_delete_key,loc_AAC8
+                .command_jump 0,$AC,cursor_left_edit_mode_command
+                .command_jump 0,$AD,cursor_right_edit_mode_command
+                .command_jump 0,$AE,cursor_down_edit_mode_command
+                .command_jump 0,$AF,cursor_up_edit_mode_command
+                .command_jump 0,$BC,shift_cursor_left_edit_mode_command
+                .command_jump 0,$BD,shift_cursor_right_edit_mode_command
+                .command_jump $18,$BE,shift_cursor_down_edit_mode_command
+                .command_jump $18,$BF,shift_cursor_up_edit_mode_command
+                .command_jump 0,$CC,move_to_top_of_screen_edit_mode_command
+                .command_jump 0,$CD,move_to_bottom_of_screen_edit_mode_command
+                .command_jump $10,$CE,move_to_next_line_edit_mode_command
+                .command_jump $10,$CF,move_to_prev_line_edit_mode_command
+                .command_jump 2,CMD_LOAD,load_command
+                .command_jump 0,CMD_APPEND,append_command
+                .command_jump 0,CMD_SAVE,save_command
+                .command_jump 0,CMD_FIND,find_command
+                .command_jump $40,CMD_CHANGE,change_or_qchange_command
+                .command_jump $40,CMD_QCHANGE,change_or_qchange_command
+                .command_jump 2,CMD_star,run_star_command
+                .command_jump 0,3,set_primary_line_command
+                .command_jump 0,4,set_primary_line_command
+                .command_jump 0,$D,set_primary_line_command
+                .command_jump 1,1,loc_A245
+                .command_jump 1,2,loc_A245
+                .command_jump 1,5,loc_A245
+                .command_jump 1,$14,loc_A245
+                .command_jump 1,$12,loc_A258
+                .command_jump 0,$63,loc_AD39
+                .command_jump 0,$64,loc_AEB9
+                .command_jump 0,$6D,loc_AD39
+                .command_jump 0,$AB,copy_key_edit_mode_command
+                .command_jump 0,CMD_tab_key,tab_key_command
+                .command_jump 0,CMD_RUN,run_or_exit_command
+                .command_jump 0,CMD_MODE,mode_command
+                .command_jump 0,$C0,mark_edit_mode_command
+                .command_jump $1D,$C1,goto_edit_mode_command
+                .command_jump $40,CMD_NUMBER,number_command
+                .command_jump $40,CMD_LABEL,label_command
+                .command_jump 0,$C2,split_statement_edit_mode_command
+                .command_jump 1,$C3,join_statements_edit_mode_command
+                .command_jump $21,$C4,repeat_edit_mode_command
+                .command_jump 0,CMD_SCROLL,scroll_command
+                .command_jump 0,CMD_NOSCROLL,noscroll_command
+                .command_jump 2,CMD_HELP,help_command
+                .command_jump 0,CMD_FORE,fore_command
+                .command_jump 0,CMD_BACK,back_command
+                .command_jump 0,CMD_INSERT,insert_command
+                .command_jump 0,CMD_OVERTYPE,overtype_command
+                .command_jump 2,CMD_INFO,info_command
+                .command_jump $49,CMD_shift_f6_key,label_edit_mode_command
+                .command_jump $49,CMD_shift_f7_key,number_edit_mode_command
+                .command_jump $14,CMD_goto_line,goto_line_command
+                .command_jump 0,CMD_RENUMBER,renumber_command
+                .command_jump 0,CMD_TAB,tab_command
+                .command_jump 0,CMD_GOTO,goto_command
+                .command_jump 8,$A5,continue_edit_mode_command
+                .command_jump 0,CMD_EDIT,find_command
+                .command_jump $14,CMD_TOP,top_command
+                .command_jump $14,CMD_END,end_command
+                .command_jump 0,CMD_shift_tab_key,loc_9783
+                .command_jump 0,CMD_ZAUTOSAVE,zsave_command
+                .command_jump 0,CMD_CASE,case_command
+                .command_jump 0,CMD_NOCASE,nocase_command
+                .command_jump 0,CMD_ZRUN,zrun_command
 		.byte $FF
 
 loc_967A:				
