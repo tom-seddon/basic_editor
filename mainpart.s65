@@ -5610,7 +5610,7 @@ loc_9F26:
 
 ; treats command ID as ASCII char and puts that	char into the current line as appropriate.
 
-execute_key_command:			
+execute_key_command: .proc
 		LDA	cursor_offset_msb
 		BNE	beep
 		JSR	sub_AB1E
@@ -5647,17 +5647,16 @@ loc_9F5C:
 
 loc_9F65:				
 					
-		CPX	#$FC
+		CPX	#LINE_LENGTH_LIMIT
 		BCC	sub_9F6F
-; End of function execute_key_command
+                ; fall through
+                .pend
 
-
-
-
-beep:					
+beep: .block
 					
 		LDA	#7
 		JMP	OSWRCH
+                .bend
 ; End of function beep
 
 
@@ -7348,9 +7347,28 @@ shift_cursor_left_edit_mode_command: .proc
 ;-------------------------------------------------------------------------
 
 shift_cursor_right_edit_mode_command: .proc
-                
-		JSR	cursor_right_edit_mode_command
-		JMP	cursor_right_edit_mode_command
+                ; If line is more than 256 chars on screen, no need to
+                ; extend, because no line can be that long.
+                lda screen_chars_in_line+1
+                bne extended_appropriately
+
+                lda byte_400
+                cmp screen_chars_in_line+0
+                bne extended_appropriately
+
+                jsr loc_ab3c
+
+extended_appropriately:
+                ; Put the cursor one byte past the end of the line. No
+                ; problem if this is past the limit.
+                ldx byte_400
+                inx
+                stx cursor_offset
+
+                lda #0
+                sta cursor_offset_msb
+
+                beq start_of_line.loc_a7a2 ;JMP, in effect
                 .pend
 
 ;-------------------------------------------------------------------------
@@ -8166,7 +8184,7 @@ loc_AB2E:
 		CMP	#$20 ; ' '
 		BEQ	locret_AB2D
 
-loc_AB3C:				
+loc_AB3C: ;nuts and bolts of the Extend Statement command??
 		LDA	#4
 		STA	byte_D
 		LDA	#7

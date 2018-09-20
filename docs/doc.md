@@ -2,42 +2,25 @@
 
 There's a nice OCR'd copy of the original manual available from stardot: https://stardot.org.uk/forums/viewtopic.php?f=2&t=4785#p49280
 
-# Changes in this version
+# Command mode changes
 
-## Command prompt changes
+## Command prompt
 
 The command prompt HUD is gone. The command line shows the number of
 bytes free.
 
 The information previously shown in the HUD can be seen with `INFO`.
 
-## Help text changes
+## Help text
 
 The `HELP` output is a bit shorter and not as nicely formatted.
 
-## Insert mode
+## `RUN` abbrevation
 
-Insert mode is now the default.
+`RUN` can now be spelled `R`, which was previously the abbreviation
+for `RENUMBER`.
 
-## Default colour scheme
-
-The default colour scheme is now white on black instead of white on
-blue.
-
-## COPY key
-
-In edit mode, the COPY key deletes forward, like SHIFT+DELETE.
-
-## No MODE restrictions
-
-You can use any screen mode to edit, making shadow RAM modes
-available. (And modes 2 and 5, if you're so inclined.)
-
-## `RUN` is abbreviated `R`
-
-`R` was previously the abbreviation for `RENUMBER`.
-
-## `REM>`, `ZSAVE`, `ZRUN`
+## `ZSAVE` and `ZRUN`
 
 The first line in the program may be a `REM` in the BASIC V style that
 names the program:
@@ -52,6 +35,10 @@ You can save the program to this file using the new `ZSAVE` command
 (abbrevation `Z`), or save it to this file and then run it using the
 new `ZRUN` command (abbrevation `ZR`).
 
+## Shift+ESCAPE
+
+You can press Shift+ESCAPE at the command prompt to get back to BASIC.
+
 ## Case-insensitive search
 
 The `FIND`, `CHANGE` and `QCHANGE` commands can now search
@@ -63,11 +50,32 @@ default); the new command `NOCASE` makes them case-insensitive.
 
 The case sensitivity status can be seen using the `INFO` command.
 
-## Shift+ESCAPE
+# Edit mode
 
-You can press Shift+ESCAPE at the command prompt to get back to BASIC.
+## Insert mode ##
 
-## `*BZ` and `*BR`
+Insert mode is now the default.
+
+## Default colour scheme
+
+The default colour scheme is now white on black instead of white on
+blue.
+
+## COPY key
+
+The COPY key deletes forward, like SHIFT+DELETE.
+
+## No MODE restrictions
+
+You can use any screen mode to edit, making shadow RAM modes
+available. (And modes 2 and 5, if you're so inclined.)
+
+## Shift and left/right arrow keys
+
+Use Shift+left arrow to move the cursor to the beginning of the line,
+and Shift+right arrow to move it to the end.
+
+# `*BZ` and `*BR` #
 
 If the first line is a `REM>`, you can use `*BZ` to do a `ZSAVE` from
 inside BASIC, and use `*BR` to do a `ZRUN`.
