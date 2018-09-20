@@ -75,6 +75,9 @@ available. (And modes 2 and 5, if you're so inclined.)
 Use Shift+left arrow to move the cursor to the beginning of the line,
 and Shift+right arrow to move it to the end.
 
+The previous functionality (move left/right two columns at a time) is
+no longer available.
+
 # `*BZ` and `*BR` #
 
 If the first line is a `REM>`, you can use `*BZ` to do a `ZSAVE` from

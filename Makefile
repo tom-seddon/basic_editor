@@ -17,7 +17,7 @@ build:
 	$(TASS) -D BUILD_TYPE=0 -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/basiced.lst -o$(DEST)/basiced.rom
 	$(TASS) -D BUILD_TYPE=1 -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/hibasiced.lst -o$(DEST)/hibasiced.rom
 
-	@python tools/checksize.py $(DEST)/basiced.rom $(DEST)/hibasiced.rom
+	@python tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom
 #	python checksize.py $(DEST)/rbasiced_b800.rom
 
 	@test -d $(BOOTVOL) && cp -v $(DEST)/basiced.rom $(BOOTVOL)/R.BETOM && touch $(BOOTVOL)/R.BETOM.inf && cp -v $(DEST)/hibasiced.rom $(BOOTVOL)/RHBETOM && touch $(BOOTVOL)/RHBETOM.inf

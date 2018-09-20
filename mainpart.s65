@@ -7271,16 +7271,16 @@ cursor_left_edit_mode_command: .proc
 		STA	cursor_offset_msb
 		LDA	screen_chars_in_line+0
 		STA	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	start_of_line.loc_A7A2
+		BNE	start_of_line.position_cursor
 
 loc_A768:				
 		SEC
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		SBC	#1
 		STA	cursor_offset	; offset of cursor in detokenized buffer
-		BCS	start_of_line.loc_A7A2
+		BCS	start_of_line.position_cursor
 		DEC	cursor_offset_msb
-                BEQ     start_of_line.loc_A7A2
+                BEQ     start_of_line.position_cursor
                 ; fall through?
                 .pend
 
@@ -7308,35 +7308,43 @@ locret_A783:
 cursor_right_edit_mode_command: .proc
 		LDA	cursor_offset ; offset of cursor in detokenized buffer
 		CMP	screen_chars_in_line+0
-		BNE	start_of_line.loc_A79C ;taken if not past end of line
+		BNE	move_cursor_right_within_line
 
 		LDA	cursor_offset_msb   ;
 		CMP	screen_chars_in_line+1
-		BNE	start_of_line.loc_A79C
+		BNE	move_cursor_right_within_line
 		JSR	sub_B7A1
                 ; fall through
                 .pend
 
 ;-------------------------------------------------------------------------
 
-start_of_line: .block
-					
-		LDX	#0
-		STX	cursor_offset_msb
-		INX
-		STX	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_A7A2        ;JMP, in effect
-                
-loc_A79C:				
-					
-		INC	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_A7A2
-		INC	cursor_offset_msb
-
-loc_A7A2:				
-					
-		JMP	position_edit_mode_cursor
+move_cursor_to_start_of_line: .block
+                ldx #0
+                stx cursor_offset_msb
+                inx
+                stx cursor_offset
+                rts
                 .bend
+
+;-------------------------------------------------------------------------
+
+start_of_line: .proc
+                jsr move_cursor_to_start_of_line
+position_cursor:
+                jmp position_edit_mode_cursor
+                .pend
+
+;-------------------------------------------------------------------------
+
+move_cursor_right_within_line: .proc
+					
+		INC	cursor_offset
+		BNE	+
+		INC	cursor_offset_msb
++					
+		JMP	position_edit_mode_cursor
+                .pend
 
 ;-------------------------------------------------------------------------
 
@@ -7368,26 +7376,26 @@ extended_appropriately:
                 lda #0
                 sta cursor_offset_msb
 
-                beq start_of_line.loc_a7a2 ;JMP, in effect
+                beq start_of_line.position_cursor ;JMP, in effect
                 .pend
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_left_edit_mode_command: .proc
-		JSR	move_cursor_left
-		JMP	start_of_line
+ctrl_cursor_up_edit_mode_command: .proc
+                jsr move_cursor_to_start_of_line
+                jsr move_cursor_left
+                jmp start_of_line
                 .pend
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_right_edit_mode_command:	
+ctrl_cursor_down_edit_mode_command: .proc	
 					
 		JSR	sub_B7A1
 		JMP	start_of_line
-; End of function ctrl_cursor_right_edit_mode_command
+                .pend
 
-
-
+;-------------------------------------------------------------------------
 
 move_cursor_down_on_screen: .proc
 		CLC
@@ -7516,7 +7524,9 @@ offset_cursor_by_screen_chars_in_line: .block
 		JMP	position_edit_mode_cursor
                 .bend
 
-ctrl_cursor_up_edit_mode_command:	
+;-------------------------------------------------------------------------
+
+ctrl_cursor_left_edit_mode_command: .proc
 		JSR	sub_AA06
 		LDA	byte_6C0
 		STA	byte_2B
@@ -7531,8 +7541,11 @@ ctrl_cursor_up_edit_mode_command:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JSR	sub_A069
 		JMP	start_of_line
+                .pend
 
-ctrl_cursor_down_edit_mode_command:	
+;-------------------------------------------------------------------------
+
+ctrl_cursor_right_edit_mode_command: .proc
 		JSR	sub_AA06
 		LDA	#0
 		STA	byte_2B
@@ -7560,8 +7573,11 @@ ctrl_cursor_down_edit_mode_command:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JMP	sub_9FD8
+                .pend
 
-shift_cursor_up_edit_mode_command:	
+;-------------------------------------------------------------------------
+
+shift_cursor_up_edit_mode_command: .proc
 		LDX	byte_6C0
 		LDY	byte_6C1
 		CPX	#0
@@ -7574,6 +7590,9 @@ loc_A88E:
 		STX	byte_2B
 		STY	byte_2C
 		JMP	loc_AA41
+                .pend
+
+;-------------------------------------------------------------------------
 
 shift_cursor_down_edit_mode_command:	
 		LDA	#0
@@ -7598,9 +7617,9 @@ shift_cursor_down_edit_mode_command:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JMP	loc_9DA8
 
+;-------------------------------------------------------------------------
 
-
-position_edit_mode_cursor:		
+position_edit_mode_cursor: .proc
 					
 		LDY	cursor_offset_msb
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
@@ -7627,8 +7646,7 @@ loc_A8AF:
 		ADC	byte_3B
 		TAY
 		JMP	gotoxy
-; End of function position_edit_mode_cursor
-
+                .pend
 
 ;-------------------------------------------------------------------------
 
