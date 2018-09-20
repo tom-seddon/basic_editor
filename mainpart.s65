@@ -6368,392 +6368,141 @@ loc_A2B1:
 ; GOTO, LIST, RENUMBER, RESTORE, THEN, TRACE]
 ;
 ; bit 5 set if tokenizing should stop [DATA, REM]
-                
-token_table:	.text "AND"
-		.byte  $80 ; Ä
-		.byte	 0 ;
-aAbs:		.text "ABS"
-		.byte  $94 ; î
-		.byte	 0 ;
-aAcs:		.text "ACS"
-		.byte  $95 ; ï
-		.byte	 0 ;
-aAdval:		.text "ADVAL"
-		.byte  $96 ; ñ
-		.byte	 0 ;
-aAsc:		.text "ASC"
-		.byte  $97 ; ó
-		.byte	 0 ;
-aAsn:		.text "ASN"
-		.byte  $98 ; ò
-		.byte	 0 ;
-aAtn:		.text "ATN"
-		.byte  $99 ; ô
-		.byte	 0 ;
-aAuto:		.text "AUTO"
-		.byte  $C6 ; ∆
-		.byte  $10 ;
-aBget:		.text "BGET"
-		.byte  $9A ; ö
-		.byte	 1 ;
-aBput:		.text "BPUT"
-		.byte  $D5 ; ’
-		.byte	 3 ;
-aColour:	.text "COLOUR"
-		.byte  $FB ; ˚
-		.byte	 2 ;
-aColor:		.text "COLOR"
-		.byte  $FB ; ˚
-		.byte	 2 ;
-aCall:		.text "CALL"
-		.byte  $D6 ; ÷
-		.byte	 2 ;
-aChain:		.text "CHAIN"
-		.byte  $D7 ; ◊
-		.byte	 2 ;
-aChr:		.text "CHR$"
-		.byte  $BD ; Ω
-		.byte	 0 ;
-aClear:		.text "CLEAR"
-		.byte  $D8 ; ÿ
-		.byte	 1 ;
-aClose:		.text "CLOSE"
-		.byte  $D9 ; Ÿ
-		.byte	 3 ;
-aClg:		.text "CLG"
-		.byte  $DA ; ⁄
-		.byte	 1 ;
-aCls:		.text "CLS"
-		.byte  $DB ; €
-		.byte	 1 ;
-aCos:		.text "COS"
-		.byte  $9B ; õ
-		.byte	 0 ;
-aCount:		.text "COUNT"
-		.byte  $9C ; ú
-		.byte	 1 ;
-aData:		.text "DATA"
-		.byte  $DC ; ‹
-		.byte  $20 ;
-aDeg:		.text "DEG"
-		.byte  $9D ; ù
-		.byte	 0 ;
-aDef:		.text "DEF"
-		.byte  $DD ; ›
-		.byte	 0 ;
-aDelete:	.text "DELETE"
-		.byte  $C7 ; «
-		.byte  $10 ;
-aDiv:		.text "DIV"
-		.byte  $81 ; Å
-		.byte	 0 ;
-aDim:		.text "DIM"
-		.byte  $DE ; ﬁ
-		.byte	 2 ;
-aDraw:		.text "DRAW"
-		.byte  $DF ; ﬂ
-		.byte	 2 ;
-aEndproc:	.text "ENDPROC"
-		.byte  $E1 ; ·
-		.byte	 1 ;
-aEnd_0:		.text "END"
-		.byte  $E0 ; ‡
-		.byte	 1 ;
-aEnvelope:	.text "ENVELOPE"
-		.byte  $E2 ; ‚
-		.byte	 2 ;
-aElse:		.text "ELSE"
-		.byte  $8B ; ã
-		.byte  $14 ;
-aEval:		.text "EVAL"
-		.byte  $A0 ; †
-		.byte	 0 ;
-aErl:		.text "ERL"
-		.byte  $9E ; û
-		.byte	 1 ;
-aError:		.text "ERROR"
-		.byte  $85 ; Ö
-		.byte	 4 ;
-aEof:		.text "EOF"
-		.byte  $C5 ; ≈
-		.byte	 1 ;
-aEor:		.text "EOR"
-		.byte  $82 ; Ç
-		.byte	 0 ;
-aErr:		.text "ERR"
-		.byte  $9F ; ü
-		.byte	 1 ;
-aExp:		.text "EXP"
-		.byte  $A1 ; °
-		.byte	 0 ;
-aExt:		.text "EXT"
-		.byte  $A2 ; ¢
-		.byte	 1 ;
-aFor:		.text "FOR"
-		.byte  $E3 ; „
-		.byte	 2 ;
-aFalse:		.text "FALSE"
-		.byte  $A3 ; £
-		.byte	 1 ;
-aFn:		.text "FN"
-		.byte  $A4 ; §
-		.byte	 8 ;
-aGoto_0:	.text "GOTO"
-		.byte  $E5 ; Â
-		.byte  $12 ;
-aGet_0:		.text "GET$"
-		.byte  $BE ; æ
-		.byte	 0 ;
-aGet:		.text "GET"
-		.byte  $A5 ; •
-		.byte	 0 ;
-aGosub:		.text "GOSUB"
-		.byte  $E4 ; ‰
-		.byte  $12 ;
-aGcol:		.text "GCOL"
-		.byte  $E6 ; Ê
-		.byte	 2 ;
-aHimem_0:	.text "HIMEM"
-		.byte  $93 ; ì
-		.byte  $43 ; C
-aInput:		.text "INPUT"
-		.byte  $E8 ; Ë
-		.byte	 2 ;
-aIf:		.text "IF"
-		.byte  $E7 ; Á
-		.byte	 2 ;
-aInkey_0:	.text "INKEY$"
-		.byte  $BF ; ø
-		.byte	 0 ;
-aInkey:		.text "INKEY"
-		.byte  $A6 ; ¶
-		.byte	 0 ;
-aInt:		.text "INT"
-		.byte  $A8 ; ®
-		.byte	 0 ;
-aInstr:		.text "INSTR("
-		.byte  $A7 ; ß
-		.byte	 0 ;
-aList:		.text "LIST"
-		.byte  $C9 ; …
-		.byte  $10 ;
-aLine:		.text "LINE"
-		.byte  $86 ; Ü
-		.byte	 0 ;
-aLoad_0:	.text "LOAD"
-		.byte  $C8 ; »
-		.byte	 2 ;
-aLomem_0:	.text "LOMEM"
-		.byte  $92 ; í
-		.byte  $43 ; C
-aLocal:		.text "LOCAL"
-		.byte  $EA ; Í
-		.byte	 2 ;
-aLeft:		.text "LEFT$("
-		.byte  $C0 ; ¿
-		.byte	 0 ;
-aLen:		.text "LEN"
-		.byte  $A9 ; ©
-		.byte	 0 ;
-aLet:		.text "LET"
-		.byte  $E9 ; È
-		.byte	 4 ;
-aLog:		.text "LOG"
-		.byte  $AB ; ´
-		.byte	 0 ;
-aLn:		.text "LN"
-		.byte  $AA ; ™
-		.byte	 0 ;
-aMid:		.text "MID$("
-		.byte  $C1 ; ¡
-		.byte	 0 ;
-aMode_0:	.text "MODE"
-		.byte  $EB ; Î
-		.byte	 2 ;
-aMod:		.text "MOD"
-		.byte  $83 ; É
-		.byte	 0 ;
-aMove:		.text "MOVE"
-		.byte  $EC ; Ï
-		.byte	 2 ;
-aNext:		.text "NEXT"
-		.byte  $ED ; Ì
-		.byte	 2 ;
-aNew_0:		.text "NEW"
-		.byte  $CA ;  
-		.byte	 1 ;
-aNot:		.text "NOT"
-		.byte  $AC ; ¨
-		.byte	 0 ;
-aOld_0:		.text "OLD"
-		.byte  $CB ; À
-		.byte	 1 ;
-aOn_0:		.text "ON"
-		.byte  $EE ; Ó
-		.byte	 2 ;
-aOff:		.text "OFF"
-		.byte  $87 ; á
-		.byte	 0 ;
-aOr:		.text "OR"
-		.byte  $84 ; Ñ
-		.byte	 0 ;
-aOpenin:	.text "OPENIN"
-		.byte  $8E ; é
-		.byte	 0 ;
-aOpenout:	.text "OPENOUT"
-		.byte  $AE ; Æ
-		.byte	 0 ;
-aOpenup:	.text "OPENUP"
-		.byte  $AD ; ≠
-		.byte	 0 ;
-aOscli:		.text "OSCLI"
-		.byte  $FF ;
-		.byte	 2 ;
-aPrint:		.text "PRINT"
-		.byte  $F1 ; Ò
-		.byte	 2 ;
-aPage_0:	.text "PAGE"
-		.byte  $90 ; ê
-		.byte  $43 ; C
-aPtr_0:		.text "PTR"
-		.byte  $8F ; è
-		.byte  $43 ; C
-aPi:		.text "PI"
-		.byte  $AF ; Ø
-		.byte	 1 ;
-aPlot:		.text "PLOT"
-		.byte  $F0 ; 
-		.byte	 2 ;
-aPoint:		.text "POINT("
-		.byte  $B0 ; ∞
-		.byte	 0 ;
-aProc:		.text "PROC"
-		.byte  $F2 ; Ú
-		.byte	$A ;
-aPos:		.text "POS"
-		.byte  $B1 ; ±
-		.byte	 1 ;
-aReturn:	.text "RETURN"
-		.byte  $F8 ; ¯
-		.byte	 1 ;
-aRepeat:	.text "REPEAT"
-		.byte  $F5 ; ı
-		.byte	 0 ;
-aReport:	.text "REPORT"
-		.byte  $F6 ; ˆ
-		.byte	 1 ;
-aRead:		.text "READ"
-		.byte  $F3 ; Û
-		.byte	 2 ;
-aRem:		.text "REM"
-		.byte  $F4 ; Ù
-		.byte  $20 ;
-aRun_0:		.text "RUN"
-		.byte  $F9 ; ˘
-		.byte	 1 ;
-aRad:		.text "RAD"
-		.byte  $B2 ; ≤
-		.byte	 0 ;
-aRestore:	.text "RESTORE"
-		.byte  $F7 ; ˜
-		.byte  $12 ;
-aRight:		.text "RIGHT$("
-		.byte  $C2 ; ¬
-		.byte	 0 ;
-aRnd:		.text "RND"
-		.byte  $B3 ; ≥
-		.byte	 1 ;
-aRenumber_0:	.text "RENUMBER"
-		.byte  $CC ; Ã
-		.byte  $10 ;
-aStep:		.text "STEP"
-		.byte  $88 ; à
-		.byte	 0 ;
-aSave_0:	.text "SAVE"
-		.byte  $CD ; Õ
-		.byte	 2 ;
-aSgn:		.text "SGN"
-		.byte  $B4 ; ¥
-		.byte	 0 ;
-aSin:		.text "SIN"
-		.byte  $B5 ; µ
-		.byte	 0 ;
-aSqr:		.text "SQR"
-		.byte  $B6 ; ∂
-		.byte	 0 ;
-aSpc:		.text "SPC"
-		.byte  $89 ; â
-		.byte	 0 ;
-aStr:		.text "STR$"
-		.byte  $C3 ; √
-		.byte	 0 ;
-aString:	.text "STRING$("
-		.byte  $C4 ; ƒ
-		.byte	 0 ;
-aSound:		.text "SOUND"
-		.byte  $D4 ; ‘
-		.byte	 2 ;
-aStop:		.text "STOP"
-		.byte  $FA ; ˙
-		.byte	 1 ;
-aTan:		.text "TAN"
-		.byte  $B7 ; ∑
-		.byte	 0 ;
-aThen:		.text "THEN"
-		.byte  $8C ; å
-		.byte  $14 ;
-aTo:		.text "TO"
-		.byte  $B8 ; ∏
-		.byte	 0 ;
-aTab_0:		.text "TAB("
-		.byte  $8A ; ä
-		.byte	 0 ;
-aTrace:		.text "TRACE"
-		.byte  $FC ; ¸
-		.byte  $12 ;
-aTime_0:	.text "TIME"
-		.byte  $91 ; ë
-		.byte  $43 ; C
-aTrue:		.text "TRUE"
-		.byte  $B9 ; π
-		.byte	 1 ;
-aUntil:		.text "UNTIL"
-		.byte  $FD ; ˝
-		.byte	 2 ;
-aUsr:		.text "USR"
-		.byte  $BA ; ∫
-		.byte	 0 ;
-aVdu:		.text "VDU"
-		.byte  $EF ; Ô
-		.byte	 2 ;
-aVal:		.text "VAL"
-		.byte  $BB ; ª
-		.byte	 0 ;
-aVpos:		.text "VPOS"
-		.byte  $BC ; º
-		.byte	 1 ;
-aWidth:		.text "WIDTH"
-		.byte  $FE ; ˛
-		.byte	 2 ;
-                
-                ; LHS forms.
-aPage:		.text "PAGE"
-		.byte  $D0 ; –
-		.byte	 0 ;
-aPtr:		.text "PTR"
-		.byte  $CF ; œ
-		.byte	 0 ;
-aTime:		.text "TIME"
-		.byte  $D1 ; —
-		.byte	 0 ;
-aLomem:		.text "LOMEM"
-		.byte  $D2 ; “
-		.byte	 0 ;
-aHimem:		.text "HIMEM"
-		.byte  $D3 ; ”
-		.byte	 0 ;
 
+basic_token: .macro text,token,flags
+                .text \text
+                .byte \token
+                .byte \flags
+                .endm
 
+token_table:	.basic_token "AND",$80,0 
+		.basic_token "ABS",$94,0 
+		.basic_token "ACS",$95,0 
+		.basic_token "ADVAL",$96,0 
+		.basic_token "ASC",$97,0 
+		.basic_token "ASN",$98,0 
+		.basic_token "ATN",$99,0 
+		.basic_token "AUTO",$C6,$10 
+		.basic_token "BGET",$9A,1 
+		.basic_token "BPUT",$D5,3 
+                .basic_token "COLOUR",$FB,2 
+		.basic_token "COLOR",$FB,2 
+		.basic_token "CALL",$D6,2 
+		.basic_token "CHAIN",$D7,2 
+		.basic_token "CHR$",$BD,0 
+		.basic_token "CLEAR",$D8,1 
+		.basic_token "CLOSE",$D9,3 
+		.basic_token "CLG",$DA,1 
+		.basic_token "CLS",$DB,1 
+		.basic_token "COS",$9B,0 
+		.basic_token "COUNT",$9C,1 
+		.basic_token "DATA",$DC,$20 
+		.basic_token "DEG",$9D,0 
+		.basic_token "DEF",$DD,0 
+                .basic_token "DELETE",$C7,$10 
+		.basic_token "DIV",$81,0 
+		.basic_token "DIM",$DE,2 
+		.basic_token "DRAW",$DF,2 
+                .basic_token "ENDPROC",$E1,1 
+		.basic_token "END",$E0,1 
+                .basic_token "ENVELOPE",$E2,2 
+		.basic_token "ELSE",$8B,$14 
+		.basic_token "EVAL",$A0,0 
+		.basic_token "ERL",$9E,1 
+		.basic_token "ERROR",$85,4 
+		.basic_token "EOF",$C5,1 
+		.basic_token "EOR",$82,0 
+		.basic_token "ERR",$9F,1 
+		.basic_token "EXP",$A1,0 
+		.basic_token "EXT",$A2,1 
+		.basic_token "FOR",$E3,2 
+		.basic_token "FALSE",$A3,1 
+		.basic_token "FN",$A4,8 
+                .basic_token "GOTO",$E5,$12 
+		.basic_token "GET$",$BE,0 
+		.basic_token "GET",$A5,0 
+		.basic_token "GOSUB",$E4,$12 
+		.basic_token "GCOL",$E6,2 
+                .basic_token "HIMEM",$93,$43 
+		.basic_token "INPUT",$E8,2 
+		.basic_token "IF",$E7,2 
+                .basic_token "INKEY$",$BF,0 
+		.basic_token "INKEY",$A6,0 
+		.basic_token "INT",$A8,0 
+		.basic_token "INSTR(",$A7,0 
+		.basic_token "LIST",$C9,$10 
+		.basic_token "LINE",$86,0 
+                .basic_token "LOAD",$C8,2 
+                .basic_token "LOMEM",$92,$43 
+		.basic_token "LOCAL",$EA,2 
+		.basic_token "LEFT$(",$C0,0 
+		.basic_token "LEN",$A9,0 
+		.basic_token "LET",$E9,4 
+		.basic_token "LOG",$AB,0 
+		.basic_token "LN",$AA,0 
+		.basic_token "MID$(",$C1,0 
+                .basic_token "MODE",$EB,2 
+		.basic_token "MOD",$83,0 
+		.basic_token "MOVE",$EC,2 
+		.basic_token "NEXT",$ED,2 
+		.basic_token "NEW",$CA,1 
+		.basic_token "NOT",$AC,0 
+		.basic_token "OLD",$CB,1 
+		.basic_token "ON",$EE,2 
+		.basic_token "OFF",$87,0 
+		.basic_token "OR",$84,0 
+                .basic_token "OPENIN",$8E,0 
+                .basic_token "OPENOUT",$AE,0 
+                .basic_token "OPENUP",$AD,0 
+		.basic_token "OSCLI",$FF,2 
+		.basic_token "PRINT",$F1,2 
+                .basic_token "PAGE",$90,$43 
+		.basic_token "PTR",$8F,$43 
+		.basic_token "PI",$AF,1 
+		.basic_token "PLOT",$F0,2 
+		.basic_token "POINT(",$B0,0 
+		.basic_token "PROC",$F2,$A 
+		.basic_token "POS",$B1,1 
+                .basic_token "RETURN",$F8,1 
+                .basic_token "REPEAT",$F5,0 
+                .basic_token "REPORT",$F6,1 
+		.basic_token "READ",$F3,2 
+		.basic_token "REM",$F4,$20 
+		.basic_token "RUN",$F9,1 
+		.basic_token "RAD",$B2,0 
+                .basic_token "RESTORE",$F7,$12 
+		.basic_token "RIGHT$(",$C2,0 
+		.basic_token "RND",$B3,1 
+                .basic_token "RENUMBER",$CC,$10 
+		.basic_token "STEP",$88,0 
+                .basic_token "SAVE",$CD,2 
+		.basic_token "SGN",$B4,0 
+		.basic_token "SIN",$B5,0 
+		.basic_token "SQR",$B6,0 
+		.basic_token "SPC",$89,0 
+		.basic_token "STR$",$C3,0 
+                .basic_token "STRING$(",$C4,0 
+		.basic_token "SOUND",$D4,2 
+		.basic_token "STOP",$FA,1 
+		.basic_token "TAN",$B7,0 
+		.basic_token "THEN",$8C,$14 
+		.basic_token "TO",$B8,0 
+		.basic_token "TAB(",$8A,0 
+		.basic_token "TRACE",$FC,$12 
+                .basic_token "TIME",$91,$43 
+		.basic_token "TRUE",$B9,1 
+		.basic_token "UNTIL",$FD,2 
+		.basic_token "USR",$BA,0 
+		.basic_token "VDU",$EF,2 
+		.basic_token "VAL",$BB,0 
+		.basic_token "VPOS",$BC,1 
+		.basic_token "WIDTH",$FE,2 
+                
+		.basic_token "PAGE",$D0,0 
+		.basic_token "PTR",$CF,0 
+		.basic_token "TIME",$D1,0 
+		.basic_token "LOMEM",$D2,0 
+		.basic_token "HIMEM",$D3,0 
 
 toggle_insert_overtype_command:		
 		LDX	#0
