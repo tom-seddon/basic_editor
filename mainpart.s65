@@ -56,15 +56,23 @@ KEEP_DELETE_LINE_MEMSET = false
 KEEP_CLEAR_5B1_TO_600_MEMSET = false
 KEEP_DETOKENIZE_ONE_LINE_MEMSET = false
 KEEP_9E1D_MEMSET = false
-                
+
+; I strip out the memmove calls one at a time...
 KEEP_B8DB_MEMMOVE = false
 KEEP_BF73_MEMMOVE = false
+KEEP_A8C0_MEMMOVE = false
+
+;-------------------------------------------------------------------------
 
 ENABLE_DEBUG_VALUES = true
 
 ;-------------------------------------------------------------------------
 
 LINE_NUMBER_TOKEN=$8d
+REM_TOKEN=$f4
+
+; max length of text of line, +1.
+LINE_LENGTH_LIMIT=$fc           
                 
 ;-------------------------------------------------------------------------
 
@@ -74,7 +82,6 @@ LINE_NUMBER_TOKEN=$8d
 LANGUAGE_MODE_NORMAL=1
 LANGUAGE_MODE_ZSAVE=$80
 LANGUAGE_MODE_ZRUN=$81
-
 
 ;-------------------------------------------------------------------------
 ; SLRE---1-
@@ -5116,7 +5123,7 @@ advance:
 		CLC
 		ADC	byte_400	; add to current length
 		BCS	overflow	; branch taken if line too long...
-		CMP	#$FC
+		CMP	#LINE_LENGTH_LIMIT
 		BCS	overflow	; branch taken if line too long...
 		STA	byte_400	; store	new current length
 		DEY			; Y = index of last char of token
@@ -7258,31 +7265,29 @@ top_of_screen_edit_mode_command:
 
 
 
-cursor_left_edit_mode_command:		
+cursor_left_edit_mode_command: .proc
 		JSR	move_cursor_left
 		BCC	loc_A768
 		LDA	screen_chars_in_line+1
 		STA	cursor_offset_msb
 		LDA	screen_chars_in_line+0
 		STA	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_A7A2
+		BNE	start_of_line.loc_A7A2
 
 loc_A768:				
 		SEC
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		SBC	#1
 		STA	cursor_offset	; offset of cursor in detokenized buffer
-		BCS	loc_A7A2
+		BCS	start_of_line.loc_A7A2
 		DEC	cursor_offset_msb
-                BEQ	loc_A7A2
-; End of function cursor_left_edit_mode_command
-
-
-
+                BEQ     start_of_line.loc_A7A2
+                ; fall through?
+                .pend
 
 ; returns C=0 if moved within line, or C=1 if potentially moved
 ; outside line.
-move_cursor_left: .proc
+move_cursor_left: .block
 					
 		CLC
 		LDX	cursor_offset ;get cursor offset
@@ -7297,19 +7302,25 @@ move_cursor_left: .proc
 
 locret_A783:				
                 RTS
-.pend
+                .bend
 
-cursor_right_edit_mode_command:		
+;-------------------------------------------------------------------------
+
+cursor_right_edit_mode_command: .proc
 		LDA	cursor_offset ; offset of cursor in detokenized buffer
 		CMP	screen_chars_in_line+0
-		BNE	loc_A79C ;taken if not past end of line
+		BNE	start_of_line.loc_A79C ;taken if not past end of line
 
 		LDA	cursor_offset_msb   ;
 		CMP	screen_chars_in_line+1
-		BNE	loc_A79C
+		BNE	start_of_line.loc_A79C
 		JSR	sub_B7A1
+                ; fall through
+                .pend
 
-start_of_line:
+;-------------------------------------------------------------------------
+
+start_of_line: .block
 					
 		LDX	#0
 		STX	cursor_offset_msb
@@ -7326,22 +7337,30 @@ loc_A79C:
 loc_A7A2:				
 					
 		JMP	position_edit_mode_cursor
-; End of function cursor_right_edit_mode_command
+                .bend
 
+;-------------------------------------------------------------------------
 
-shift_cursor_left_edit_mode_command:	
-		JSR	cursor_left_edit_mode_command
-		JMP	cursor_left_edit_mode_command
+shift_cursor_left_edit_mode_command: .proc
+                JMP start_of_line
+                .pend
 
-shift_cursor_right_edit_mode_command:	
+;-------------------------------------------------------------------------
+
+shift_cursor_right_edit_mode_command: .proc
+                
 		JSR	cursor_right_edit_mode_command
 		JMP	cursor_right_edit_mode_command
+                .pend
 
-ctrl_cursor_left_edit_mode_command:	
+;-------------------------------------------------------------------------
+
+ctrl_cursor_left_edit_mode_command: .proc
 		JSR	move_cursor_left
 		JMP	start_of_line
+                .pend
 
-
+;-------------------------------------------------------------------------
 
 ctrl_cursor_right_edit_mode_command:	
 					
@@ -7456,7 +7475,7 @@ cursor_up_edit_mode_command: .proc
 loc_A823:
 		JSR	is_cursor_offset_negative_or_zero
 		BCS	loc_A82B ;taken if offset is negative or zero
-		JMP	loc_A7A2
+		JMP	position_edit_mode_cursor
 
 loc_A82B:				
 		JSR	move_cursor_down_on_screen ;undo the movement
@@ -7619,6 +7638,8 @@ loc_A8CC:
 		LDA	current_line_no_msb
 		STA	unk_502
 
+                .if KEEP_A8C0_MEMMOVE
+
                 ; copy from $401
 		LDA	#<unk_401
 		STA	byte_C
@@ -7633,7 +7654,7 @@ loc_A8CC:
 
                 ; copy 252 bytes - TODO fix
 		LDX	#0
-		LDY	#$FC
+		LDY	#LINE_LENGTH_LIMIT
 		JSR	memmove;constant; move (maybe overlapping) memory regions.
 					;
 					; Entry:
@@ -7641,6 +7662,19 @@ loc_A8CC:
 					; (byte_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
+
+                .else
+
+                ldx #0
+copy_loop:
+                lda unk_401,x
+                sta unk_503+1,x
+                inx
+                cpx #LINE_LENGTH_LIMIT
+                bne copy_loop
+
+                .endif
+                                        
 		JMP	loc_A905
 
 loc_A8FF:				
@@ -11056,7 +11090,7 @@ loc_B9AD:
 		JMP	loc_859D
 
 loc_B9B2:				
-		CMP	#$FC ; -4 ; 'ü'
+		CMP	#LINE_LENGTH_LIMIT
 		BCS	loc_B9AD
 		STA	unk_37
 		LDA	#$3A ; ':'
@@ -12324,7 +12358,7 @@ find_program_name: .proc
                 ldy #3
                 ; look for REM
                 jsr skipspaces
-                cmp #$F4        ;REM
+                cmp #REM_TOKEN
                 bne no
 
                 ; look for >
