@@ -1264,87 +1264,52 @@ loc_85E0:
 		LDY	byte_C
 		RTS
 ; End of function sub_85D8
-                ; 0
-error_messages_table:.byte  $C2	; Â
-aAdProgram:	.text "ad program" ;1
-		.byte  $D5 ; Õ
-aNknownErrorMessage:.text "nknown error" ;2
-		.byte  $CE ; Î
-aORoomModeReset:.text "o room - Mode reset" ;3
-		.byte  $CC ; Ì
-aIneTooLong:	.text "ine too long" ;4
-		.byte  $CE ; Î
-aORoom:		.text "o room"   ;5
-		.byte  $CD ; Í
-aIssingLineCommand:.text "issing line command" ;6
-		.byte  $D4 ; Ô
-aArgetNotFound:	.text "arget not found" ;7
-		.byte  $D3 ; Ó
-aTringNotFound:	.text "tring not found" ;8
-		.byte  $C2 ; É
-aNvalidCommand:	.text "ad command" ;9
-		.byte  $C2 ; É
-aNvalidArgument:.text "ad argument" ;10
-		.byte  $C2 ; Â
-aAdNumber:	.text "ad number" ;11
-		.byte  $D4 ; Ô
-aOoManyArguments:.text "oo many arguments" ;12
-		.byte  $C2 ; Ï
-aNlyModes013467AreValid:.text "ad mode" ;13
-		.byte  $CE ; Î
-aORoomForThisMode:.text	"o room for this mode" ;14
-		.byte  $CE ; Î
-aOReferencesToLabelsWereFound:.text "o references to labels were found" ;15
-		.byte  $D5 ; Õ
-aNresolvedLabelsPleaseCheck:.text "nresolved labels - please check" ;16
-		.byte  $CC ; Ì
-aIneTooLongToBeNumbered:.text "ine too long to be numbered" ;17
-		.byte  $CC ; Ì
-aIneTooLongToContainLabel:.text	"ine too long to contain label" ;18
-		.byte  $CE ; Î
-aOLabelsReinstated:.text "o labels reinstated" ;19
-		.byte  $CC ; Ì
-aInesTooLongToBeJoined:.text "ines too long to be joined" ;20
-		.byte  $CF ; Ï
-aNlyColoursNRGYBMCWAreValid:.text "nly [NRGYBMCW] are valid" ;21
-		.byte  $C2 ; É
-aNvalidLineNumber:.text	"ad line number" ;22
-		.byte  $D2 ; Ò
-aEplaceStringMissing:.text "eplace string missing" ;23
-		.byte  $CF ; Ï
-aNlyTwoStringsAllowed:.text "nly two strings allowed" ;24
-		.byte  $D3 ; Ó
-aTartLineIncrementTooBig:.text "tart line/Increment too big" ;25
-		.byte  $D4 ; Ô
-aOoManyLineCommands:.text "oo many line commands" ;26
-		.byte  $C9 ; É
-aNcompatibleLineCommands:.text "ncompatible line commands" ;27
-		.byte  $C2 ; É
-aNvalidDeleteCommand:.text "ad delete command" ;28
-		.byte  $C2 ; É
-aNvalidDestination:.text "ad destination" ;29
-		.byte  $C4 ; Ä
-aEstinationMissing:.text "estination missing" ;30
-		.byte  $C9 ; É
-aNcompleteLineCommand:.text "ncomplete line command" ;31
-		.byte  $C1 ; Á
-aRgumentMissing:.text "rgument missing" ;32
-		.byte  $D4 ; Ô
-aAbStopMustBeInRange080:.text "ab stop must be 0-80" ;33
-		.byte  $CE ; Î
-aOMarkedLine:	.text "o marked line" ;34
-		.byte  $CE ; Î
-aOSearchStringSetUp:.text "o search string set up" ;35
-		.byte  $CC ; Ì
-aIneHasBeenTruncated:.text "ine has been truncated" ;36
-		.byte  $D5 ; Õ
-aPdatesWouldMakeLineTooLong:.text "pdates would make line too long" ;37
-		.byte  $C9 ; É
-aNcrementMustBeInRange1255:.text "ncrement must be 1-255" ;38
-                .text $CE;39
-aOName:
-                .text "o REM>"                                 
-aONameEnd:
+; 0
+
+error_message: .macro text
+                .text \text[0]|$80,\text[1:]
+                .endm
+                
+error_messages_table:
+                .error_message "Bad program" ;1
+                .error_message "Unknown error" ;2
+                .error_message "No room - Mode reset" ;3
+                .error_message "Line too long" ;4
+		.error_message "No room"   ;5
+                .error_message "Missing line command" ;6
+                .error_message "Target not found" ;7
+                .error_message "String not found" ;8
+                .error_message "Bad command" ;9
+                .error_message "Bad argument" ;10
+                .error_message "Bad number" ;11
+                .error_message "Too many arguments" ;12
+                .error_message "Bad mode" ;13
+                .error_message	"No room for this mode" ;14
+                .error_message "No references to labels were found" ;15
+                .error_message "Unresolved labels - please check" ;16
+                .error_message "Line too long to be numbered" ;17
+                .error_message	"Line too long to contain label" ;18
+                .error_message "No labels reinstated" ;19
+                .error_message "Lines too long to be joined" ;20
+                .error_message "Only [NRGYBMCW] are valid" ;21
+                .error_message	"Bad line number" ;22
+                .error_message "Replace string missing" ;23
+                .error_message "Only two strings allowed" ;24
+                .error_message "Start line/Increment too big" ;25
+                .error_message "Too many line commands" ;26
+                .error_message "Incompatible line commands" ;27
+                .error_message "Bad delete command" ;28
+                .error_message "Bad destination" ;29
+                .error_message "Destination missing" ;30
+                .error_message "Incomplete line command" ;31
+                .error_message "Argument missing" ;32
+                .error_message "Tab stop must be 0-80" ;33
+                .error_message "No marked line" ;34
+                .error_message "No search string set up" ;35
+                .error_message "Line has been truncated" ;36
+                .error_message "Updates would make line too long" ;37
+                .error_message "Increment must be 1-255" ;38
+                .error_message "No REM>"                                 
                 .byte  $FF ;
                 
 empty_program_string:.byte  $1F	;
