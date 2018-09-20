@@ -193,7 +193,7 @@ language_entry_mode:
 program_name_ptr:
                 .fill 2
 
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
 debug_counter:
                 .fill 2
 debug_flag:

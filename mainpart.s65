@@ -64,7 +64,7 @@ KEEP_A8C0_MEMMOVE = false
 
 ;-------------------------------------------------------------------------
 
-ENABLE_DEBUG_VALUES = true
+ENABLE_DEBUG = true
 
 ;-------------------------------------------------------------------------
 
@@ -422,7 +422,7 @@ language_entry: .proc
                 RTS
 
 language_start:
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
                 jsr reset_debug_values
                 .endif
                 
@@ -1761,6 +1761,12 @@ next_digit:
                 dey             
                 bpl input_loop
 
+                ; if 0 digits produced, it was 0, so actually 1 digit.
+                txa
+                bne +
+                inx
++
+                
                 ; save output digit count.
                 stx 0           
                 rts
@@ -1968,7 +1974,7 @@ osbyte_with_y0:.proc
 
 
 memmove_8bit:
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
                 cpx #0
                 beq memmove
 
@@ -1980,7 +1986,7 @@ memmove_8bit:
                 .endif
                 
 memmove: .block
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
                 
                 jsr inc_debug_counter
 
@@ -3450,6 +3456,7 @@ clear_escape_condition:
 
 		RTS
 
+;-------------------------------------------------------------------------
 
 command_jump: .macro unk,id,addr
                 .byte \unk
@@ -3487,8 +3494,8 @@ command_jump_table:
                 .command_jump 0,$BD,shift_cursor_right_edit_mode_command
                 .command_jump $18,$BE,shift_cursor_down_edit_mode_command
                 .command_jump $18,$BF,shift_cursor_up_edit_mode_command
-                .command_jump 0,$CC,move_to_top_of_screen_edit_mode_command
-                .command_jump 0,$CD,move_to_bottom_of_screen_edit_mode_command
+                .command_jump 0,$CC,move_to_prev_stmt_edit_mode_command
+                .command_jump 0,$CD,move_to_next_stmt_edit_mode_command
                 .command_jump $10,$CE,move_to_next_line_edit_mode_command
                 .command_jump $10,$CF,move_to_prev_line_edit_mode_command
                 .command_jump 2,CMD_LOAD,load_command
@@ -3543,7 +3550,12 @@ command_jump_table:
                 .command_jump 0,CMD_CASE,case_command
                 .command_jump 0,CMD_NOCASE,nocase_command
                 .command_jump 0,CMD_ZRUN,zrun_command
+                .if ENABLE_DEBUG
+                .command_jump 8,CMD_shift_f5_key,print_debug_stuff_edit_mode_command
+                .endif
 		.byte $FF
+
+;-------------------------------------------------------------------------
 
 loc_967A:				
 		JSR	sub_9698
@@ -6848,29 +6860,45 @@ shift_cursor_left_edit_mode_command: .proc
 
 ;-------------------------------------------------------------------------
 
-shift_cursor_right_edit_mode_command: .proc
+extend_line_if_necessary: .proc
                 ; If line is more than 256 chars on screen, no need to
                 ; extend, because no line can be that long.
                 lda screen_chars_in_line+1
-                bne extended_appropriately
+                bne done
 
-                lda byte_400
+                lda cursor_offset
                 cmp screen_chars_in_line+0
-                bne extended_appropriately
+                bcc done
+                beq done
 
                 jsr loc_ab3c
+                
+done:
+                rts
+                
+                .pend
 
-extended_appropriately:
-                ; Put the cursor one byte past the end of the line. No
-                ; problem if this is past the limit.
-                ldx byte_400
-                inx
+;-------------------------------------------------------------------------
+
+set_8bit_cursor_offset: .proc
                 stx cursor_offset
 
                 lda #0
                 sta cursor_offset_msb
 
-                beq start_of_line.position_cursor ;JMP, in effect
+                jsr extend_line_if_necessary
+
+                jmp position_edit_mode_cursor
+                .pend
+                
+;-------------------------------------------------------------------------
+                
+shift_cursor_right_edit_mode_command: .proc
+                ; Put the cursor one byte past the end of the line. No
+                ; problem if this is past the limit.
+                ldx byte_400
+                inx
+                jmp set_8bit_cursor_offset
                 .pend
 
 ;-------------------------------------------------------------------------
@@ -7019,55 +7047,195 @@ offset_cursor_by_screen_chars_in_line: .block
                 .bend
 
 ;-------------------------------------------------------------------------
+;
+; Return some indication of how far the cursor is from the end of
+; line.
+;
+; (len: $b)
+; Line:   PRINT"FRED"
+; Offset: 123456789abcdef
+; Result: 000000000012333 (etc.)
+;
+; 0 = within line
+; 1 = on last char
+; 2 = one past last char
+; 3 = outside line
+;
+; exit: A = distance as above
+get_distance_from_eol: .proc
+                lda cursor_offset_msb
+                bne much_past_end
 
-move_to_top_of_screen_edit_mode_command: .proc
-		JSR	sub_AA06
-		LDA	byte_6C0
-		STA	byte_2B
-		LDA	byte_6C1
-		STA	byte_2C
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JSR	sub_A069
-		JMP	start_of_line
+                lda cursor_offset
+                sec
+                sbc byte_400
+                bmi within_line
+                beq at_end
+                cmp #1
+                beq past_end
+                
+much_past_end:
+                lda #3
+                rts
+
+past_end:
+                lda #2
+                rts
+                
+at_end:
+                lda #1
+                rts
+                
+within_line:
+                lda #0
+                rts
+
+
                 .pend
 
 ;-------------------------------------------------------------------------
 
-move_to_bottom_of_screen_edit_mode_command: .proc
-		JSR	sub_AA06
-		LDA	#0
-		STA	byte_2B
-		STA	byte_2C
-		JSR	sub_BA69
-		LDA	$6BF,X
-		STA	byte_2C
-		LDA	$6BE,X
-		STA	byte_2B
-		JSR	sub_BA69
-		INX
-		JSR	get_line_ptr	; gets pointer to line visible on screen.
-					;
-					; Entry:
-					; X = screen line number * 2 + 1
-					;
-					; Exit:
-					; (byte_2B) points to BASIC line
-					; X decremented
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JMP	sub_9FD8
+                .if ENABLE_DEBUG
+print_debug_stuff_edit_mode_command: .proc
+                lda #160        ;read VDU variable value (AUG 179)
+                ldx #$0a        ;right hand column (AUG 275)
+                jsr osbyte
+
+                dex
+                dex
+                dex
+                txa
+                pha
+
+                ; print distance from EOL
+                ldy #0
+                jsr gotoxy
+
+                jsr get_distance_from_eol
+
+                tax
+                ldy #0
+                jsr itoa
+                jsr print_itoa_result
+
+                ; print cursor offset
+                pla
+                pha
+                tax
+                ldy #1
+                jsr gotoxy
+
+                ldx cursor_offset
+                ldy #0
+                jsr itoa
+                jsr print_itoa_result
+
+                ; print line length
+                pla
+                pha
+                tax
+                ldy #2
+                jsr gotoxy
+
+                ldx byte_400
+                ldy #0
+                jsr itoa
+                jsr print_itoa_result
+
+                pla
+
+                jmp position_edit_mode_cursor
                 .pend
+                .endif
+                
+;-------------------------------------------------------------------------
+
+move_to_prev_stmt_edit_mode_command: .proc
+                rts
+                .pend
+
+;-------------------------------------------------------------------------
+
+move_to_next_stmt_edit_mode_command: .proc
+                jsr get_distance_from_eol
+
+                ; If at or past end of line, go to next line.
+                cmp #2
+                bcs go_to_next_line
+
+                ; If right at end of line, go to end of line.
+                cmp #1
+                beq go_to_eol
+                
+                ldx cursor_offset
+loop:
+                lda byte_400,x
+                cmp #":"
+                beq found_stmt
+                inx
+                cpx byte_400
+                bne loop
+go_to_eol:
+                jmp shift_cursor_right_edit_mode_command
+
+go_to_next_line:
+                jmp move_to_next_line_edit_mode_command
+
+found_stmt:
+                inx             ;skip the ':' itself
+                jmp set_8bit_cursor_offset
+                .pend
+                
+;-------------------------------------------------------------------------
+
+; move_to_top_of_screen_edit_mode_command: .proc
+; 		JSR	sub_AA06
+; 		LDA	byte_6C0
+; 		STA	byte_2B
+; 		LDA	byte_6C1
+; 		STA	byte_2C
+; 		JSR	save_line_number ; saves line number from program.
+; 					;
+; 					; Entry:
+; 					; (byte_2b) points to current line
+; 					;
+; 					; Exit:
+; 					; current_line_no_lsb, current_line_no_msb = the line number
+; 		JSR	sub_A069
+; 		JMP	start_of_line
+;                 .pend
+
+;-------------------------------------------------------------------------
+
+; move_to_bottom_of_screen_edit_mode_command: .proc
+; 		JSR	sub_AA06
+; 		LDA	#0
+; 		STA	byte_2B
+; 		STA	byte_2C
+; 		JSR	sub_BA69
+; 		LDA	$6BF,X
+; 		STA	byte_2C
+; 		LDA	$6BE,X
+; 		STA	byte_2B
+; 		JSR	sub_BA69
+; 		INX
+; 		JSR	get_line_ptr	; gets pointer to line visible on screen.
+; 					;
+; 					; Entry:
+; 					; X = screen line number * 2 + 1
+; 					;
+; 					; Exit:
+; 					; (byte_2B) points to BASIC line
+; 					; X decremented
+; 		JSR	save_line_number ; saves line number from program.
+; 					;
+; 					; Entry:
+; 					; (byte_2b) points to current line
+; 					;
+; 					; Exit:
+; 					; current_line_no_lsb, current_line_no_msb = the line number
+; 		JMP	sub_9FD8
+;                 .pend
 
 ;-------------------------------------------------------------------------
 
@@ -7822,7 +7990,7 @@ sub_ABDB:
 
 
 
-rstrip_and_cr_terminate_line: 
+rstrip_and_cr_terminate_line:  .proc
 		LDX	byte_400	; check	line length
 		BEQ	at_end		; taken	if line	empty
 
@@ -7846,7 +8014,7 @@ find_cr:
 		CMP	#$D
 		BNE	find_cr
 		RTS
-; End of function rstrip_and_cr_terminate_line
+                .pend
 
 
 loc_AC08:				
@@ -11030,7 +11198,7 @@ info_command:
                 .text " free",13,10,255
 
 print_status:
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
 
                 jsr print_next_string
                 .text "DBG: ",255
@@ -11954,7 +12122,7 @@ maybe_verbose_exit_on_error: .proc
 
 ;-------------------------------------------------------------------------
 
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
 reset_debug_values: .proc
                 lda #0
                 sta debug_counter+0
@@ -11966,7 +12134,7 @@ reset_debug_values: .proc
 
 ;-------------------------------------------------------------------------
 
-                .if ENABLE_DEBUG_VALUES
+                .if ENABLE_DEBUG
 inc_debug_counter: .proc
                 inc debug_counter+0
                 bne done
