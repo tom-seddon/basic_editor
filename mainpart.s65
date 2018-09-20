@@ -3542,263 +3542,101 @@ clear_escape_condition:
 ; End of function clear_escape_condition
 
 		RTS
-command_jump_table:.byte $20		   ; unknown
-		.byte CMD_return_key	; command_id
-		.word return_key_command; address
-		.byte $24		; unknown
-		.byte CMD_IE		; command_id
-		.word ie_cmd		; address
-		.byte $24		; unknown
-		.byte CMD_IT		; command_id
-		.word it_cmd		; address
-		.byte 8			; unknown
-		.byte $1B		; command_id
-		.word language_entry.command_loop        ; address
-		.byte 0			; unknown
-		.byte CMD_toggle_insert_overtype; command_id
-		.word toggle_insert_overtype_command; address
-		.byte $19		; unknown
-		.byte $A2		; command_id
-		.word top_edit_mode_command; address
-		.byte $19		; unknown
-		.byte CMD_f2_key	; command_id
-		.word end_edit_mode_command; address
-		.byte $19		; unknown
-		.byte CMD_f4_key	; command_id
-		.word renumber_edit_mode_command; address
-		.byte $A		; unknown
-		.byte CMD_EXIT		; command_id
-		.word run_or_exit_command; address
-		.byte 2			; unknown
-		.byte CMD_NEW		; command_id
-		.word new_command	; address
-		.byte 1			; unknown
-		.byte CMD_OLD		; command_id
-		.word old_command	; address
-		.byte 0			; unknown
-		.byte CMD_shift_f2_key	; command_id
-		.word undo_edit_mode_command; address
-		.byte 0			; unknown
-		.byte CMD_shift_f4_key	; command_id
-		.word extend_statement_edit_mode_command; address
-		.byte	 0 ;
-		.byte CMD_shift_f3_key
-		.word swap_case_edit_mode_command
-		.byte $19		; unknown
-		.byte $A7		; command_id
-		.word top_of_screen_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $A0		; command_id
-		.word execute_edit_mode_command; address
-		; .byte 8			; unknown
-		; .byte CMD_shift_f5_key	; command_id
-		; .word mode_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $C7		; command_id
-		.word background_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $C8		; command_id
-		.word foreground_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $A6		; command_id
-		.word delete_to_end_of_line_edit_mode_command; address
-		.byte 1			; unknown
-		.byte CMD_delete_key	; command_id
-		.word delete_key_command; address
-		.byte 1			; unknown
-		.byte CMD_shift_delete_key; command_id
-		.word loc_AAC8		; address
-		.byte 0			; unknown
-		.byte $AC		; command_id
-		.word cursor_left_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $AD		; command_id
-		.word cursor_right_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $AE		; command_id
-		.word cursor_down_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $AF		; command_id
-		.word cursor_up_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $BC		; command_id
-		.word shift_cursor_left_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $BD		; command_id
-		.word shift_cursor_right_edit_mode_command; address
-		.byte $18		; unknown
-		.byte $BE		; command_id
-		.word shift_cursor_down_edit_mode_command; address
-		.byte $18		; unknown
-		.byte $BF		; command_id
-		.word shift_cursor_up_edit_mode_command; address
-		.byte 0			; unknown
-		.byte $CC		; command_id
-		.word move_to_top_of_screen_edit_mode_command
-		.byte 0			; unknown
-		.byte $CD		; command_id
-		.word move_to_bottom_of_screen_edit_mode_command; address
-		.byte $10		; unknown
-		.byte $CE		; command_id
-		.word move_to_next_line_edit_mode_command; address
-		.byte $10		; unknown
-		.byte $CF		; command_id
-		.word move_to_prev_line_edit_mode_command;	address
-		.byte 2			; unknown
-		.byte CMD_LOAD		; command_id
-		.word load_command	; address
-		.byte 0			; unknown
-		.byte CMD_APPEND	; command_id
-		.word append_command	; address
-		.byte 0			; unknown
-		.byte CMD_SAVE		; command_id
-		.word save_command	; address
-		.byte 0			; unknown
-		.byte CMD_FIND		; command_id
-		.word find_command	; address
-		.byte $40		; unknown
-		.byte CMD_CHANGE	; command_id
-		.word change_or_qchange_command; address
-		.byte $40		; unknown
-		.byte CMD_QCHANGE	; command_id
-		.word change_or_qchange_command; address
-		.byte 2			; unknown
-		.byte CMD_star		; command_id
-		.word run_star_command	; address
-		.byte 0			; unknown
-		.byte 3			; command_id
-		.word set_primary_line_command;	address
-		.byte 0			; unknown
-		.byte 4			; command_id
-		.word set_primary_line_command;	address
-		.byte 0			; unknown
-		.byte $D		; command_id
-		.word set_primary_line_command;	address
-		.byte 1			; unknown
-		.byte 1			; command_id
-		.word loc_A245		; address
-		.byte 1			; unknown
-		.byte 2			; command_id
-		.word loc_A245		; address
-		.byte 1			; unknown
-		.byte 5			; command_id
-		.word loc_A245		; address
-		.byte 1			; unknown
-		.byte $14		; command_id
-		.word loc_A245		; address
-		.byte 1			; unknown
-		.byte $12		; command_id
-		.word loc_A258		; address
-		.byte 0			; unknown
-		.byte $63		; command_id
-		.word loc_AD39		; address
-		.byte 0			; unknown
-		.byte $64		; command_id
-		.word loc_AEB9		; address
-		.byte 0			; unknown
-		.byte $6D		; command_id
-		.word loc_AD39		; address
-		.byte 0			; unknown
-		.byte $AB		; command_id
-		.word copy_key_edit_mode_command; address
-		.byte 0			; unknown
-		.byte CMD_tab_key	; command_id
-		.word tab_key_command	; address
-		.byte 0			; unknown
-		.byte CMD_RUN		; command_id
-		.word run_or_exit_command; address
-		.byte 0			; unknown
-		.byte CMD_MODE		; command_id
-		.word mode_command	; address
-		.byte 0			; unknown
-		.byte $C0		; command_id
-		.word mark_edit_mode_command; address
-		.byte $1D		; unknown
-		.byte $C1		; command_id
-		.word goto_edit_mode_command; address
-		.byte $40		; unknown
-		.byte CMD_NUMBER	; command_id
-		.word number_command	; address
-		.byte $40		; unknown
-		.byte CMD_LABEL		; command_id
-		.word label_command	; address
-		.byte 0			; unknown
-		.byte $C2		; command_id
-		.word split_statement_edit_mode_command; address
-		.byte 1			; unknown
-		.byte $C3		; command_id
-		.word join_statements_edit_mode_command; address
-		.byte $21		; unknown
-		.byte $C4		; command_id
-		.word repeat_edit_mode_command;	address
-		.byte 0			; unknown
-		.byte CMD_SCROLL	; command_id
-		.word scroll_command	; address
-		.byte 0			; unknown
-		.byte CMD_NOSCROLL	; command_id
-		.word noscroll_command	; address
-		.byte 2			; unknown
-		.byte CMD_HELP		; command_id
-		.word help_command	; address
-		.byte 0			; unknown
-		.byte CMD_FORE		; command_id
-		.word fore_command	; address
-		.byte 0			; unknown
-		.byte CMD_BACK		; command_id
-		.word back_command	; address
-		.byte 0			; unknown
-		.byte CMD_INSERT	; command_id
-		.word insert_command	; address
-		.byte 0			; unknown
-		.byte CMD_OVERTYPE	; command_id
-		.word overtype_command	; address
-		.byte 2			; unknown
-		.byte CMD_INFO		; command_id
-		.word info_command	; address
-		.byte $49		; unknown
-		.byte CMD_shift_f6_key	; command_id
-		.word label_edit_mode_command; address
-		.byte $49		; unknown
-		.byte CMD_shift_f7_key	; command_id
-		.word number_edit_mode_command;	address
-		.byte $14		; unknown
-		.byte CMD_goto_line	; command_id
-		.word goto_line_command		; address
-		.byte 0			; unknown
-		.byte CMD_RENUMBER	; command_id
-		.word renumber_command	; address
-		.byte 0			; unknown
-		.byte CMD_TAB		; command_id
-		.word tab_command	; address
-		.byte 0			; unknown
-		.byte CMD_GOTO		; command_id
-		.word goto_command	; address
-		.byte 8			; unknown
-		.byte $A5		; command_id
-		.word continue_edit_mode_command; address
-		.byte 0			; unknown
-		.byte CMD_EDIT		; command_id
-		.word find_command	; address
-		.byte $14		; unknown
-		.byte CMD_TOP		; command_id
-		.word top_command	; address
-		.byte $14		; unknown
-		.byte CMD_END		; command_id
-		.word end_command	; address
-		.byte 0			; unknown
-		.byte CMD_shift_tab_key	; command_id
-                .word loc_9783		; address
-                .byte 0                  ; unknown
-                .byte CMD_ZAUTOSAVE      ; command_id
-                .word zsave_command          ; address
-                .byte 0,CMD_CASE
-                .word case_command
-                .byte 0,CMD_NOCASE
-                .word nocase_command
-                .byte 0,CMD_ZRUN
-                .word zrun_command
+
+
+command: .macro unk,id,addr
+                .byte \unk
+                .byte \id
+                .word \addr
+                .endm
                 
-		.byte  $FF ;
+command_jump_table:
+                .command $20,CMD_return_key,return_key_command
+                .command $24,CMD_IE,ie_cmd
+                .command $24,CMD_IT,it_cmd
+                .command 8,$1B,language_entry.command_loop
+                .command 0,CMD_toggle_insert_overtype,toggle_insert_overtype_command
+                .command $19,$A2,top_edit_mode_command
+                .command $19,CMD_f2_key,end_edit_mode_command
+                .command $19,CMD_f4_key,renumber_edit_mode_command
+                .command $A,CMD_EXIT,run_or_exit_command
+                .command 2,CMD_NEW,new_command
+                .command 1,CMD_OLD,old_command
+                .command 0,CMD_shift_f2_key,undo_edit_mode_command
+                .command 0,CMD_shift_f4_key,extend_statement_edit_mode_command
+                .command 0,CMD_shift_f3_key,swap_case_edit_mode_command
+                .command $19,$A7,top_of_screen_edit_mode_command
+                .command 0,$A0,execute_edit_mode_command
+                .command 0,$C7,background_edit_mode_command
+                .command 0,$C8,foreground_edit_mode_command
+                .command 0,$A6,delete_to_end_of_line_edit_mode_command
+                .command 1,CMD_delete_key,delete_key_command
+                .command 1,CMD_shift_delete_key,loc_AAC8
+                .command 0,$AC,cursor_left_edit_mode_command
+                .command 0,$AD,cursor_right_edit_mode_command
+                .command 0,$AE,cursor_down_edit_mode_command
+                .command 0,$AF,cursor_up_edit_mode_command
+                .command 0,$BC,shift_cursor_left_edit_mode_command
+                .command 0,$BD,shift_cursor_right_edit_mode_command
+                .command $18,$BE,shift_cursor_down_edit_mode_command
+                .command $18,$BF,shift_cursor_up_edit_mode_command
+                .command 0,$CC,move_to_top_of_screen_edit_mode_command
+                .command 0,$CD,move_to_bottom_of_screen_edit_mode_command
+                .command $10,$CE,move_to_next_line_edit_mode_command
+                .command $10,$CF,move_to_prev_line_edit_mode_command
+                .command 2,CMD_LOAD,load_command
+                .command 0,CMD_APPEND,append_command
+                .command 0,CMD_SAVE,save_command
+                .command 0,CMD_FIND,find_command
+                .command $40,CMD_CHANGE,change_or_qchange_command
+                .command $40,CMD_QCHANGE,change_or_qchange_command
+                .command 2,CMD_star,run_star_command
+                .command 0,3,set_primary_line_command
+                .command 0,4,set_primary_line_command
+                .command 0,$D,set_primary_line_command
+                .command 1,1,loc_A245
+                .command 1,2,loc_A245
+                .command 1,5,loc_A245
+                .command 1,$14,loc_A245
+                .command 1,$12,loc_A258
+                .command 0,$63,loc_AD39
+                .command 0,$64,loc_AEB9
+                .command 0,$6D,loc_AD39
+                .command 0,$AB,copy_key_edit_mode_command
+                .command 0,CMD_tab_key,tab_key_command
+                .command 0,CMD_RUN,run_or_exit_command
+                .command 0,CMD_MODE,mode_command
+                .command 0,$C0,mark_edit_mode_command
+                .command $1D,$C1,goto_edit_mode_command
+                .command $40,CMD_NUMBER,number_command
+                .command $40,CMD_LABEL,label_command
+                .command 0,$C2,split_statement_edit_mode_command
+                .command 1,$C3,join_statements_edit_mode_command
+                .command $21,$C4,repeat_edit_mode_command
+                .command 0,CMD_SCROLL,scroll_command
+                .command 0,CMD_NOSCROLL,noscroll_command
+                .command 2,CMD_HELP,help_command
+                .command 0,CMD_FORE,fore_command
+                .command 0,CMD_BACK,back_command
+                .command 0,CMD_INSERT,insert_command
+                .command 0,CMD_OVERTYPE,overtype_command
+                .command 2,CMD_INFO,info_command
+                .command $49,CMD_shift_f6_key,label_edit_mode_command
+                .command $49,CMD_shift_f7_key,number_edit_mode_command
+                .command $14,CMD_goto_line,goto_line_command
+                .command 0,CMD_RENUMBER,renumber_command
+                .command 0,CMD_TAB,tab_command
+                .command 0,CMD_GOTO,goto_command
+                .command 8,$A5,continue_edit_mode_command
+                .command 0,CMD_EDIT,find_command
+                .command $14,CMD_TOP,top_command
+                .command $14,CMD_END,end_command
+                .command 0,CMD_shift_tab_key,loc_9783
+                .command 0,CMD_ZAUTOSAVE,zsave_command
+                .command 0,CMD_CASE,case_command
+                .command 0,CMD_NOCASE,nocase_command
+                .command 0,CMD_ZRUN,zrun_command
+		.byte $FF
 
 loc_967A:				
 		JSR	sub_9698
