@@ -7319,6 +7319,14 @@ cursor_right_edit_mode_command: .proc
 
 ;-------------------------------------------------------------------------
 
+start_of_line: .block
+                jsr move_cursor_to_start_of_line
+position_cursor:
+                jmp position_edit_mode_cursor
+                .bend
+
+;-------------------------------------------------------------------------
+
 move_cursor_to_start_of_line: .block
                 ldx #0
                 stx cursor_offset_msb
@@ -7326,14 +7334,6 @@ move_cursor_to_start_of_line: .block
                 stx cursor_offset
                 rts
                 .bend
-
-;-------------------------------------------------------------------------
-
-start_of_line: .proc
-                jsr move_cursor_to_start_of_line
-position_cursor:
-                jmp position_edit_mode_cursor
-                .pend
 
 ;-------------------------------------------------------------------------
 
