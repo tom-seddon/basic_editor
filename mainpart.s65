@@ -3634,16 +3634,16 @@ command_jump_table:.byte $20		   ; unknown
 		.word shift_cursor_up_edit_mode_command; address
 		.byte 0			; unknown
 		.byte $CC		; command_id
-		.word ctrl_cursor_left_edit_mode_command; address
+		.word move_to_top_of_screen_edit_mode_command
 		.byte 0			; unknown
 		.byte $CD		; command_id
-		.word ctrl_cursor_right_edit_mode_command; address
+		.word move_to_bottom_of_screen_edit_mode_command; address
 		.byte $10		; unknown
 		.byte $CE		; command_id
-		.word ctrl_cursor_down_edit_mode_command; address
+		.word move_to_next_line_edit_mode_command; address
 		.byte $10		; unknown
 		.byte $CF		; command_id
-		.word ctrl_cursor_up_edit_mode_command;	address
+		.word move_to_prev_line_edit_mode_command;	address
 		.byte 2			; unknown
 		.byte CMD_LOAD		; command_id
 		.word load_command	; address
@@ -7381,7 +7381,7 @@ extended_appropriately:
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_up_edit_mode_command: .proc
+move_to_prev_line_edit_mode_command: .proc
                 jsr move_cursor_to_start_of_line
                 jsr move_cursor_left
                 jmp start_of_line
@@ -7389,7 +7389,7 @@ ctrl_cursor_up_edit_mode_command: .proc
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_down_edit_mode_command: .proc	
+move_to_next_line_edit_mode_command: .proc	
 					
 		JSR	sub_B7A1
 		JMP	start_of_line
@@ -7526,7 +7526,7 @@ offset_cursor_by_screen_chars_in_line: .block
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_left_edit_mode_command: .proc
+move_to_top_of_screen_edit_mode_command: .proc
 		JSR	sub_AA06
 		LDA	byte_6C0
 		STA	byte_2B
@@ -7545,7 +7545,7 @@ ctrl_cursor_left_edit_mode_command: .proc
 
 ;-------------------------------------------------------------------------
 
-ctrl_cursor_right_edit_mode_command: .proc
+move_to_bottom_of_screen_edit_mode_command: .proc
 		JSR	sub_AA06
 		LDA	#0
 		STA	byte_2B
@@ -9132,7 +9132,7 @@ loc_B00D:
 		PHA
 		LDA	#1
 		STA	is_scroll_on	; 1=scroll, 0=noscroll
-		JSR	ctrl_cursor_right_edit_mode_command
+		JSR	move_to_next_line_edit_mode_command
 		PLA
 		STA	is_scroll_on	; 1=scroll, 0=noscroll
 		RTS
