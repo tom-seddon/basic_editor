@@ -64,7 +64,7 @@ KEEP_A8C0_MEMMOVE = false
 
 ;-------------------------------------------------------------------------
 
-ENABLE_DEBUG = true
+ENABLE_DEBUG = false
                 
 ;-------------------------------------------------------------------------
 
@@ -466,22 +466,17 @@ language_start_good_program:
                 LDA     #$D2
                 JSR     osbyte_with_x0_y0 ;suppress sound
                 
-                ; The char printing control chars if editor_mode_id
-                ; isn't 1. And since aResetOSWRCH is entirely control
-                ; chars...
-                lda #1
-                sta editor_mode_id
-
                 jsr print_next_string
-                .byte 3          ;printer off
-                .byte 6          ;enable VDU drivers
-                .byte 4          ;use text cursor
-                .byte 26         ;restore default windows
-                .byte 12         ;CLS
-                .byte 15         ;disable paged mode
-                .byte 20         ;reset VDU19 stuff
-                .byte 17,7       ;COLOUR7
-                .byte 17,128     ;COLOUR128
+                .byte 254       ;allow control chars
+                .byte 3         ;printer off
+                .byte 6         ;enable VDU drivers
+                .byte 4         ;use text cursor
+                .byte 26        ;restore default windows
+                .byte 12        ;CLS
+                .byte 15        ;disable paged mode
+                .byte 20        ;reset VDU19 stuff
+                .byte 17,7      ;COLOUR7
+                .byte 17,128    ;COLOUR128
                 .byte 255
                 
 command_prompt_loop:
@@ -2174,7 +2169,7 @@ done:
 
 print_next_string: .proc
                 jsr prepare_for_print_1_char
-                
+
                 pla
                 sta byte_C
                 pla
@@ -2183,6 +2178,23 @@ print_next_string: .proc
                 ldy #0
                 ldx #byte_C
                 jsr incz
+
+                lda editor_mode_id
+                pha
+
+                ; If the first byte of the string is 254, temporarily
+                ; replace editor_mode_id with 1,
+                ; allowing printing of control chars.
+                lda (0,x)
+                cmp #254
+                bne +
+
+                lda #1
+                sta editor_mode_id
+                
+                jsr incz
++
+                
 loop:
                 lda (byte_C),Y
                 jsr incz
@@ -2192,6 +2204,9 @@ loop:
                 jmp loop
 
 done:
+                pla
+                sta editor_mode_id
+                
                 jmp (byte_C)
                 .pend
 
@@ -6539,6 +6554,7 @@ run_or_exit_command: .proc
 		STA	cursor_size
                 JSR	reset_cursor_shape
                 jsr print_next_string
+                .byte 254       ; allow control chars
                 .byte 26        ; reset text and graphics windows
                 .byte 12        ; CLS (run_or_exit_command)
                 .byte 255
@@ -11143,27 +11159,24 @@ onechar
 
 s1s2:
                 jsr print_next_string
-.text " s1 s2",255
+                .text " s1 s2",255
                 jmp next_help
 
 n1n2:
                 jsr print_next_string
-.text " n1 n2",255
+                .text " n1 n2",255
                 jmp next_help           
 
 done
 print_help_footer:
                 jsr print_next_string
-.text "n",$D,$A
-.byte $A
-.text "Where p is a program; s, s1, s2 are strings; n, n1, n2 are numbers; c is a colour [NRGYBMCW].",$D,$A
-.byte 255
+                .text "n",$D,$A
+                .byte $A
+                .text "Where p is a program; s, s1, s2 are strings; n, n1, n2 are numbers; c is a colour [NRGYBMCW].",$D,$A
+                .byte 255
                 rts
-                ; LDX	#<help_footer_begin
-		; LDY	#>help_footer_begin
-		; LDA	#help_footer_end-help_footer_begin
-		; JMP	print_n_chars	; Print	"Where:	p is a program;" (etc.)
-.pend
+                .pend
+                
 ;-------------------------------------------------------------------------
 
 goto_line_command .proc				
@@ -11386,7 +11399,7 @@ loc_BC9C:
 
 loc_BCA4:				
                 jsr print_next_string
-.text "First line  : ",255
+                .text "First line  : ",255
                 
 		JSR	sub_BD8D
 		JSR	sub_BD83

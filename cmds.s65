@@ -3,6 +3,7 @@ CMD_f2_key: = $A3
 CMD_f4_key: = $A4
 CMD_IE: = $A8
 CMD_EXIT: = $A9
+                
 CMD_NEW: = $B0
 CMD_OLD: = $B1
 CMD_shift_f2_key: = $B2
@@ -13,6 +14,8 @@ CMD_shift_f6_key: = $B6
 CMD_shift_f7_key: = $B7
 CMD_IT: = $B8
 CMD_shift_f9_key: = $B9
+
+                
 CMD_SCROLL: = $C5
 CMD_NOSCROLL: = $C6
 CMD_RUN: = $D0
