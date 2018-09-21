@@ -2109,9 +2109,8 @@ gotoxy .proc
 .pend
 
 prepare_for_print_1_char: .proc
-                lda #$87
-                jsr osbyte      ;get mode in Y
-                tya
+                jsr get_current_mode_in_x
+                txa
                 and #7
                 cmp #7
                 ror a
@@ -4631,20 +4630,15 @@ loc_9BE9:
 		JMP	write_crtc
 ; End of function reset_cursor_shape
 
+;-------------------------------------------------------------------------
 
+get_current_mode_in_x: .proc
+                lda #160        ;read VDU variables (AUG 179)
+                ldx #$55        ;current MODE (AUG 277)
+                jmp osbyte
+                .pend
 
-
-get_current_mode_in_x:			
-					
-		LDA	#135
-		JSR	OSBYTE
-		TYA
-		TAX
-		RTS
-; End of function get_current_mode_in_x
-
-
-
+;-------------------------------------------------------------------------
 
 kbflush:				
 					
