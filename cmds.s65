@@ -1,3 +1,25 @@
+; Commands are bound to keys by giving them IDs in the following
+; ranges:
+;
+; $Ax - key
+; $Bx - shift + key
+; $Cx - ctrl + key
+;
+; Where x is one of the following key codes:
+;
+; $0...$9 - f0 ... f9
+; $a - (unused?)
+; $b - copy key
+; $c - cursor left
+; $d - cursor right
+; $e - cursor down
+; $f - cursor up
+;
+; More cases can be added in edit_mode_loop - see check_return_key,
+; check_tab_key, check_delete_key, etc.
+;
+; 
+
 CMD_toggle_insert_overtype: = $A1
 CMD_f2_key: = $A3
 CMD_f4_key: = $A4
@@ -13,9 +35,6 @@ CMD_shift_f5_key: = $B5
 CMD_shift_f6_key: = $B6
 CMD_shift_f7_key: = $B7
 CMD_IT: = $B8
-CMD_shift_f9_key: = $B9
-
-                
 CMD_SCROLL: = $C5
 CMD_NOSCROLL: = $C6
 CMD_RUN: = $D0
@@ -47,8 +66,8 @@ CMD_EDIT: = $E9
 CMD_TOP: = $EA
 CMD_END: = $EB
 CMD_shift_tab_key: = $EC
-CMD_ZAUTOSAVE: = $ED
+CMD_ZSAVE: = $b9
 CMD_NOCASE: = $EF
 CMD_CASE: = $F0
-CMD_ZRUN: = $F1
+CMD_ZRUN: = $c9
                 

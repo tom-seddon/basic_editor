@@ -102,6 +102,12 @@ Use CTRL+up/down to move the cursor to the previous or next line.
 (The previous CTRL+up/down functionality - move cursor to top or
 bottom of screen - is gone.)
 
+## SHIFT+f9, CTRL+f9
+
+If the program has a `REM>` (see above), press SHIFT+f9 to save it
+from edit mode, like `ZSAVE`, or CTRL+f9 to save it and run it, like
+`ZRUN`.
+
 # `*BZ` and `*BR` #
 
 If the first line is a `REM>`, you can use `*BZ` to do a `ZSAVE` from

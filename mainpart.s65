@@ -64,7 +64,7 @@ KEEP_A8C0_MEMMOVE = false
 
 ;-------------------------------------------------------------------------
 
-ENABLE_DEBUG = false
+ENABLE_DEBUG = true
                 
 ;-------------------------------------------------------------------------
 
@@ -1475,7 +1475,7 @@ command_table:
                 .command "SCROLL",0,CMD_SCROLL
                 .command "TOP",0,CMD_TOP
                 .command "TAB",3,CMD_TAB
-                .command "ZSAVE",0,CMD_ZAUTOSAVE
+                .command "ZSAVE",0,CMD_ZSAVE
                 .command "ZRUN",0,CMD_ZRUN
 
 		.byte  $FF
@@ -3510,6 +3510,7 @@ command_jump_table:
                 .command_jump 0,$A6,delete_to_end_of_line_edit_mode_command
                 .command_jump 1,CMD_delete_key,delete_key_command
                 .command_jump 1,CMD_shift_delete_key,loc_AAC8
+                .command_jump 1,$ab,loc_AAC8
                 .command_jump 0,$AC,cursor_left_edit_mode_command
                 .command_jump 0,$AD,cursor_right_edit_mode_command
                 .command_jump 0,$AE,cursor_down_edit_mode_command
@@ -3570,13 +3571,14 @@ command_jump_table:
                 .command_jump $14,CMD_TOP,top_command
                 .command_jump $14,CMD_END,end_command
                 .command_jump 0,CMD_shift_tab_key,loc_9783
-                .command_jump 0,CMD_ZAUTOSAVE,zsave_command
+                .command_jump 0,CMD_ZSAVE,zsave_command
                 .command_jump 0,CMD_CASE,case_command
                 .command_jump 0,CMD_NOCASE,nocase_command
                 .command_jump 0,CMD_ZRUN,zrun_command
                 .if ENABLE_DEBUG
                 .command_jump 8,CMD_shift_f5_key,print_debug_stuff_edit_mode_command
                 .endif
+                ; .command_jump 0,$b9,zsave_command
 		.byte $FF
 
 ;-------------------------------------------------------------------------
@@ -4443,14 +4445,13 @@ check_tab_key:
 
 check_delete_key:			
 		CMP	#$7F ; ''
-		bne check_copy_key
+		bne run_command
                 LDA	#CMD_delete_key
-                bne run_command
 
-check_copy_key:
-                cmp #$ab
-                bne run_command
-                lda #CMD_shift_delete_key
+; check_copy_key:
+;                 cmp #$ab
+;                 bne run_command
+;                 lda #CMD_shift_delete_key
                 
 run_command:				
 					
