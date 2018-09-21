@@ -1,3 +1,13 @@
+# New in 1.42-beta
+
+**1.42-beta is beta** - there may be issues, though hopefully only
+minor, as some of the changes were rather invasive
+
+- New edit mode keyboard shortcuts: move to start/end of line; move to
+  previous/next statement; `ZSAVE`; `ZRUN`
+- Minor tweaks that may improve the speed a bit
+- Clear screen when doing `EXIT`
+
 # New in 1.41-beta
 
 **1.41-beta is beta** - there may be issues, though hopefully only
