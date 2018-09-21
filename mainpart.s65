@@ -64,8 +64,8 @@ KEEP_A8C0_MEMMOVE = false
 
 ;-------------------------------------------------------------------------
 
-ENABLE_DEBUG = false
-
+ENABLE_DEBUG = true
+                
 ;-------------------------------------------------------------------------
 
 LINE_NUMBER_TOKEN=$8d
@@ -234,7 +234,11 @@ aTheBasicEditor_0:
                 .if HI
                 .text "HI"
                 .endif
-                .text "BASIC Editor",0
+                .text "BASIC Editor"
+                .if ENABLE_DEBUG
+                .text " (DEBUG)"
+                .endif
+                .text 0
                 .text VER
 .if RELOCATABLE
                 .text "r"
@@ -630,7 +634,13 @@ loc_82CB:
                 jsr print_bytes_free
                 
                 jsr print_next_string
-                .text ' >',255
+                .text ' '
+
+                .if ENABLE_DEBUG
+                .text 'D'
+                .endif
+                
+                .text '>',255
                 
                 LDA     is_insert_mode  ; 0=overtype 1=insert
                 PHA

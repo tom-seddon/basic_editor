@@ -4,32 +4,43 @@ RELEASES:=./releases
 ##########################################################################
 ##########################################################################
 
-TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg
-BOOTVOL:=../../beeb/beeb-files/stuff/65boot/0
-BEVOL:=../../beeb/beeb-files/stuff/basic_editor/0
+TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q
+BOOTDRIVE:=../../beeb/beeb-files/stuff/65boot/0
+BEDRIVE:=../../beeb/beeb-files/stuff/basic_editor/0
 
 .PHONY:build
 build: VER?=$(shell date '+%Y-%m-%d %H:%M:%S')
 build:
 	mkdir -p $(DEST)
-	$(TASS) -D BUILD_TYPE=0 -D "VER=\"_\"" basiced.s65 -L$(DEST)/basiced_.lst -o$(DEST)/basiced_.rom
-	$(TASS) -D BUILD_TYPE=4 -D "VER=\"xxxx\"" basiced.s65 -L$(DEST)/basiced_type4.lst -o$(DEST)/basiced_type4.rom
-	$(TASS) -D BUILD_TYPE=0 -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/basiced.lst -o$(DEST)/basiced.rom
-	$(TASS) -D BUILD_TYPE=1 -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/hibasiced.lst -o$(DEST)/hibasiced.rom
+
+	@$(MAKE) _assemble BUILD_TYPE=0 VER=_ STEM=basiced_
+	@$(MAKE) _assemble BUILD_TYPE=4 VER=_ STEM=basiced_type4
+	@$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
+	@$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
+
+	@$(MAKE) _copy STEM=basiced DRIVE=$(BOOTDRIVE) BBC=R.BETOM
+	@$(MAKE) _copy STEM=hibasiced DRIVE=$(BOOTDRIVE) BBC=R.HBETOM
+	@$(MAKE) _copy STEM=basiced DRIVE=$(BEDRIVE) BBC=R.BETOM
+	@$(MAKE) _copy STEM=hibasiced DRIVE=$(BEDRIVE) BBC=R.HBETOM
+	@$(MAKE) _copy STEM=basiced_type4 DRIVE=$(BEDRIVE) BBC=R.BE4TOM
 
 	@python tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom
-#	python checksize.py $(DEST)/rbasiced_b800.rom
-
-	@test -d $(BOOTVOL) && cp -v $(DEST)/basiced.rom $(BOOTVOL)/R.BETOM && touch $(BOOTVOL)/R.BETOM.inf && cp -v $(DEST)/hibasiced.rom $(BOOTVOL)/RHBETOM && touch $(BOOTVOL)/RHBETOM.inf
-	@test -d $(BEVOL) && cp -v $(DEST)/basiced.rom $(BEVOL)/R.BETOM && touch $(BEVOL)/R.BETOM.inf && cp -v $(DEST)/hibasiced.rom $(BEVOL)/R.HBETOM && touch $(BEVOL)/R.HBETOM.inf && cp -v $(DEST)/basiced_type4.rom $(BEVOL)/R.BE4TOM && touch $(BEVOL)/R.BE4TOM.inf
 
 	@sha1sum $(DEST)/basiced_.rom
-	@sha1sum $(DEST)/basiced.rom
-	@test -f lkg/basiced.rom && sha1sum lkg/basiced.rom || true
-	@sha1sum $(DEST)/hibasiced.rom 
-	@test -f lkg/hibasiced.rom && sha1sum lkg/hibasiced.rom || true
-#
-#	python tools/make_reloc.py --not-emacs $(DEST)/rbasiced_8000.rom $(DEST)/rbasiced_b800.rom
+
+##########################################################################
+##########################################################################
+
+.PHONY:_copy
+_copy:
+	@test -d $(DRIVE) && cp -v $(DEST)/$(STEM).rom $(DRIVE)/$(BBC) && touch $(DRIVE)/$(BBC).inf
+
+##########################################################################
+##########################################################################
+
+.PHONY:_assemble
+_assemble:
+	$(TASS) -D BUILD_TYPE=$(BUILD_TYPE) -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/$(STEM).lst -o$(DEST)/$(STEM).rom -l$(DEST)/$(STEM).sym
 
 ##########################################################################
 ##########################################################################
@@ -45,3 +56,7 @@ release:
 
 ##########################################################################
 ##########################################################################
+
+.PHONY:clean
+clean:
+	rm -Rf $(DEST)
