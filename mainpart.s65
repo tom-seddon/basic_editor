@@ -64,7 +64,7 @@ KEEP_A8C0_MEMMOVE = false
 
 ;-------------------------------------------------------------------------
 
-ENABLE_DEBUG = true
+ENABLE_DEBUG = false
 
 ;-------------------------------------------------------------------------
 
@@ -7061,7 +7061,10 @@ offset_cursor_by_screen_chars_in_line: .block
 ; 2 = one past last char
 ; 3 = outside line
 ;
+; When A<3, cursor_offset_msb is 0.
+;
 ; exit: A = distance as above
+;       Z = set as per value of A
 get_distance_from_eol: .proc
                 lda cursor_offset_msb
                 bne much_past_end
@@ -7096,62 +7099,97 @@ within_line:
 ;-------------------------------------------------------------------------
 
                 .if ENABLE_DEBUG
-print_debug_stuff_edit_mode_command: .proc
+print_debug_stuff_value: .proc
+                pha             ;save value
+                
+                tya
+                pha             ;save Y coordinate
+
                 lda #160        ;read VDU variable value (AUG 179)
                 ldx #$0a        ;right hand column (AUG 275)
                 jsr osbyte
 
+                ; make space for max 3 digits
                 dex
                 dex
                 dex
-                txa
-                pha
+
+                pla
+                tay             ;Y coordinate
+                jsr gotoxy
+
+                lda #32
+                jsr oswrch_x3
+                lda #8
+                jsr oswrch_x3
+
+                pla
+                tax
+                ldy #0
+                jsr itoa
+                jmp print_itoa_result
+                
+oswrch_x3:
+                jsr oswrch
+                jsr oswrch
+                jmp oswrch
+                .pend
+                .endif
+                
+                .if ENABLE_DEBUG
+print_debug_stuff_edit_mode_command: .proc
 
                 ; print distance from EOL
-                ldy #0
-                jsr gotoxy
-
                 jsr get_distance_from_eol
-
-                tax
                 ldy #0
-                jsr itoa
-                jsr print_itoa_result
+                jsr print_debug_stuff_value
 
                 ; print cursor offset
-                pla
-                pha
-                tax
+                lda cursor_offset
                 ldy #1
-                jsr gotoxy
-
-                ldx cursor_offset
-                ldy #0
-                jsr itoa
-                jsr print_itoa_result
+                jsr print_debug_stuff_value
 
                 ; print line length
-                pla
-                pha
-                tax
+                lda byte_400
                 ldy #2
-                jsr gotoxy
-
-                ldx byte_400
-                ldy #0
-                jsr itoa
-                jsr print_itoa_result
-
-                pla
+                jsr print_debug_stuff_value
 
                 jmp position_edit_mode_cursor
+
                 .pend
                 .endif
                 
 ;-------------------------------------------------------------------------
 
 move_to_prev_stmt_edit_mode_command: .proc
-                rts
+                jsr get_distance_from_eol
+
+                ; If past end of line, go to end of line.
+                cmp #3
+                beq move_to_next_stmt_edit_mode_command.go_to_eol
+
+                ; If at start of line, go to end of previous line.
+                ldx cursor_offset
+                cpx #2
+                bcc go_to_previous_eol
+
+                ; Otherwise, look for previous ':' and pop the cursor
+                ; after it.
+                dex
+loop:
+                dex
+                beq go_to_bol
+                lda byte_400,x
+                cmp #":"
+                beq move_to_next_stmt_edit_mode_command.found_stmt
+                bne loop        ;(jmp)
+go_to_bol:
+                jmp shift_cursor_left_edit_mode_command
+
+go_to_previous_eol:
+                jsr move_cursor_to_start_of_line
+                jsr move_cursor_left
+                jmp shift_cursor_right_edit_mode_command
                 .pend
 
 ;-------------------------------------------------------------------------

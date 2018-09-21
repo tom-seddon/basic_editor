@@ -2,14 +2,18 @@
 
 There's a nice OCR'd copy of the original manual available from stardot: https://stardot.org.uk/forums/viewtopic.php?f=2&t=4785#p49280
 
-# Command mode changes
+The vast majority of the manual still applies. Differences are noted
+below.
+
+# Command mode
 
 ## Command prompt
 
 The command prompt HUD is gone. The command line shows the number of
 bytes free.
 
-The information previously shown in the HUD can be seen with `INFO`.
+The other information previously shown in the HUD can be seen with
+`INFO`.
 
 ## Help text
 
@@ -20,10 +24,10 @@ The `HELP` output is a bit shorter and not as nicely formatted.
 `RUN` can now be spelled `R`, which was previously the abbreviation
 for `RENUMBER`.
 
-## `ZSAVE` and `ZRUN`
+## `REM>`, `ZSAVE` and `ZRUN`
 
 The first line in the program may be a `REM` in the BASIC V style that
-names the program:
+specifies the file the program should be saved to:
 
     10 REM > Filename
 
@@ -70,18 +74,44 @@ The COPY key deletes forward, like SHIFT+DELETE.
 You can use any screen mode to edit, making shadow RAM modes
 available. (And modes 2 and 5, if you're so inclined.)
 
-## Shift and left/right arrow keys
+## SHIFT+left/right ##
 
-Use Shift+left arrow to move the cursor to the beginning of the line,
-and Shift+right arrow to move it to the end.
+Use SHIFT+left arrow to move the cursor to the beginning of the line,
+and SHIFT+right arrow to move it to just past the end.
 
-The previous functionality (move left/right two columns at a time) is
-no longer available.
+(The previous SHIFT+left/right functionality - move cursor left/right
+two spaces - is gone.)
+
+## CTRL+left/right
+
+Use CTRL+left/right arrow to move the cursor between places where you
+can (probably) add a new statement. The cursor stops at the beginning
+of a line, after a `:`, or just after the end of a line.
+
+(The search is not intelligent. If there's a `:` in the line, it will
+be found, even if it's in a string or a comment.)
+
+(The previous CTRL+left/right functionality - move cursor between
+lines - is replaced by the new CTRL+up/down shortcut. Not exactly the
+same, just very similar.)
+
+## CTRL+up/down
+
+Use CTRL+up/down to move the cursor to the previous or next line.
+
+(The previous CTRL+up/down functionality - move cursor to top or
+bottom of screen - is gone.)
 
 # `*BZ` and `*BR` #
 
 If the first line is a `REM>`, you can use `*BZ` to do a `ZSAVE` from
 inside BASIC, and use `*BR` to do a `ZRUN`.
+
+# Zero page promise
+
+The BASIC Editor now explicitly promises to preserve memory between
+&70 and &8F inclusive, the zero page region allocated by BASIC for
+user routines.
 
 # The HIBASIC Editor
 
