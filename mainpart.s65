@@ -2465,10 +2465,10 @@ check_bit_3:
 					
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#2		; edit mode?
-		BNE	check_bit_6
-		LDA	byte_49
-		AND	#8
-		BEQ	check_bit_4
+		BNE	check_bit_6     ;taken if command mode
+		LDA	byte_49         ;get control byte
+		AND	#8              ;test bit 3
+		BEQ	check_bit_4     ;taken if bit 3 reset
 		JSR	is_line_empty	; determines whether current line is empty.
 					;
 					; Entry:
@@ -3481,9 +3481,15 @@ clear_escape_condition:
 		RTS
 
 ;-------------------------------------------------------------------------
+;
+; command flag masks: (a work in progress...)
+;
+; $04 - enter edit mode
+; $08 - if in edit mode, tokenize line before executing
+; $10 - program must be non-empty
 
-command_jump: .macro unk,id,addr
-                .byte \unk
+command_jump: .macro flags,id,addr
+                .byte \flags
                 .byte \id
                 .word \addr
                 .endm
@@ -3571,10 +3577,10 @@ command_jump_table:
                 .command_jump $14,CMD_TOP,top_command
                 .command_jump $14,CMD_END,end_command
                 .command_jump 0,CMD_shift_tab_key,loc_9783
-                .command_jump 0,CMD_ZSAVE,zsave_command
+                .command_jump 8,CMD_ZSAVE,zsave_command
                 .command_jump 0,CMD_CASE,case_command
                 .command_jump 0,CMD_NOCASE,nocase_command
-                .command_jump 0,CMD_ZRUN,zrun_command
+                .command_jump 8,CMD_ZRUN,zrun_command
                 .if ENABLE_DEBUG
                 .command_jump 8,CMD_shift_f5_key,print_debug_stuff_edit_mode_command
                 .endif
