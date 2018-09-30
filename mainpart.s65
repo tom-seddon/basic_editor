@@ -12059,6 +12059,7 @@ find_current_line_by_number:
                                         ; (byte_2B) points to most suitable line
 
 zsave_command: .proc
+                jsr find_program
                 jsr find_program_name
                 bcc no_program_name
 

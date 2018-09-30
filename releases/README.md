@@ -1,7 +1,14 @@
+# New in 1.43-beta
+
+**1.43-beta is beta** - there may be issues, though hopefully only
+minor, as some of the changes were rather invasive
+
+- Fix`ZSAVE` and `ZRUN` in edit mode
+
 # New in 1.42-beta
 
-**1.42-beta is beta** - there may be issues, though hopefully only
-minor, as some of the changes were rather invasive
+**1.42-beta is no longer available** - it was no good. `ZSAVE` and `ZRUN`
+could create bad programs when invoked from edit mode
 
 - New edit mode keyboard shortcuts: move to start/end of line; move to
   previous/next statement; `ZSAVE`; `ZRUN`
