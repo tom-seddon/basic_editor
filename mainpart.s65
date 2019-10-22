@@ -1,56 +1,4 @@
 ;-------------------------------------------------------------------------
-                
-; BUILD_TYPE==0: standard
-; BUILD_TYPE==1: HI
-; BUILD_TYPE==2: Relocatable ($8000 version)
-; BUILD_TYPE==3: Relocatable ($b800 version)
-; BUILD_TYPE==4: assembled at $3800, for testing routines from BASIC
-
-; Only build types 0 and 1 are valid ROMs!
-
-HI_ADDRESS = $b800
-
-                .if BUILD_TYPE==0
-                
-RELOCATABLE: = false
-HI: = false
-SVC_BASE: = $8000
-LANG_BASE: = $8000
-
-                .elsif BUILD_TYPE==1
-                
-RELOCATABLE: = false
-HI: = true
-SVC_BASE: = $8000
-LANG_BASE: = HI_ADDRESS
-                
-                .elsif BUILD_TYPE==2
-                
-RELOCATABLE: = true
-HI: = false
-SVC_BASE: = $8000
-LANG_BASE: = $8000
-
-                .elsif BUILD_TYPE==3
-                
-RELOCATABLE: = true
-HI: = false
-SVC_BASE: = $8000
-LANG_BASE: = HI_ADDRESS
-
-                .elsif BUILD_TYPE==4
-
-RELOCATABLE: = false
-HI: = false
-
-; the ROM ought to fit (at least, in Mode 7...) starting from $3c00,
-; but the TOC and/or extra debug junk might push the size past 16K.
-SVC_BASE: = $3800
-LANG_BASE:= $3800   
-                
-                .endif
-
-;-------------------------------------------------------------------------
 
 KEEP_DELETE_LINE_MEMSET = false
 KEEP_CLEAR_5B1_TO_600_MEMSET = false
@@ -73,6 +21,11 @@ REM_TOKEN=$f4
 
 ; max length of text of line, +1.
 LINE_LENGTH_LIMIT=$fc           
+
+; if true, CTRL+up/down = move cursor to first/last line of screen.
+;
+; if false, CTRL+up/down = move cursor between program lines
+ORIGINAL_CTRL_UP_DOWN=true
                 
 ;-------------------------------------------------------------------------
 
@@ -98,8 +51,8 @@ ROM_FLAGS = %11000010
                 
 ;-------------------------------------------------------------------------
                 
-                .dsection code
-* = SVC_BASE
+                .section service
+                .block
 
                 .if BUILD_TYPE==4
 
@@ -366,11 +319,14 @@ done:
                 ldx $f4
                 pla
                 rts
-.pend
+                .pend
 
+                .bend
+                .send service
 ;-------------------------------------------------------------------------
 
-.logical LANG_BASE+(*-SVC_BASE)
+                .section language
+; .logical LANG_BASE+(*-SVC_BASE)
 
 init_language_entry_mode: .proc
                 ; read the user flag that was set by the service call
@@ -12211,6 +12167,4 @@ done:
                 
 ;-------------------------------------------------------------------------
 
-.here
-; end of 'seg002'
-
+                .send language

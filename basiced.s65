@@ -6,9 +6,83 @@ osbyte = $fff4
 osword = $fff1
 osfile = $ffdd
 
-                .dsection bss
+;-------------------------------------------------------------------------
+                
+; BUILD_TYPE==0: standard
+; BUILD_TYPE==1: HI
+; BUILD_TYPE==2: Relocatable ($8000 version)
+; BUILD_TYPE==3: Relocatable ($b800 version)
+; BUILD_TYPE==4: assembled at $3800, for testing routines from BASIC
+
+; Only build types 0 and 1 are valid ROMs!
+
+HI_ADDRESS = $b800
+
+                .if BUILD_TYPE==0
+                
+RELOCATABLE: = false
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = $8000
+
+                .elsif BUILD_TYPE==1
+                
+RELOCATABLE: = false
+HI: = true
+SVC_BASE: = $8000
+LANG_BASE: = HI_ADDRESS
+                
+                .elsif BUILD_TYPE==2
+                
+RELOCATABLE: = true
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = $8000
+
+                .elsif BUILD_TYPE==3
+                
+RELOCATABLE: = true
+HI: = false
+SVC_BASE: = $8000
+LANG_BASE: = HI_ADDRESS
+
+                .elsif BUILD_TYPE==4
+
+RELOCATABLE: = false
+HI: = false
+
+; the ROM ought to fit (at least, in Mode 7...) starting from $3c00,
+; but the TOC and/or extra debug junk might push the size past 16K.
+SVC_BASE: = $3800
+LANG_BASE:= $3800   
+                
+                .endif
+
+;-------------------------------------------------------------------------
+
                 .include "zp.s65"
                 .include "workspace.s65"
                 .include "cmds.s65"
 
                 .include "mainpart.s65"
+
+*=0
+                .dsection zp
+                ; language zero page runs up to $8f, but it would be
+                ; nice to leave $70...$8f free as BASIC reserves that
+                ; for user stuff. Then you can go BASIC->BE->BASIC
+                ; safe in the knowledge that this region will be
+                ; preserved.
+                ;
+                ; (if this error is ever hit, there are options...)
+                .cerror *>=$70,"too much zero page use"
+
+*=SVC_BASE
+                .dsection service
+
+                .logical LANG_BASE+*-SVC_BASE
+
+                .dsection language
+
+                .here
+                

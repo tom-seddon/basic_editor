@@ -1,5 +1,5 @@
-                * = 0
 
+                .section zp
 byte_0:
                 .fill 1	
 unk_1:
@@ -202,12 +202,4 @@ debug_ptr:
                 .fill 2
                 .endif
                 
-                ; language zero page runs up to $8f, but it would be
-                ; nice to leave $70...$8f free as BASIC reserves that
-                ; for user stuff. Then you can go BASIC->BE->BASIC
-                ; safe in the knowledge that this region will be
-                ; preserved.
-                ;
-                ; (if this error is ever hit, there are options...)
-                .cerror *>=$70,"too much zero page use"
-                
+                .send zp
