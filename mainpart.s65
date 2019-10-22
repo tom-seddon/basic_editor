@@ -1330,6 +1330,12 @@ nur_dlo_string:	.byte	$D
 		.byte  $44 ; D
 		.byte  $4C ; L
 		.byte  $4F ; O
+six_spaces_string:.byte	 $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+.byte  $20 ;
 CRTC_cursor_start_values:
                 .byte 7, 7, 7, 7, 7, 7,	7, $12 
 CRTC_cursor_end_values_overtype:
@@ -2218,16 +2224,12 @@ print_5_spaces: .proc
 .pend
 
 print_n_spaces: .proc
+					
+                LDX     #<six_spaces_string
+                LDY     #>six_spaces_string
 
-                tax
-                lda #$20
-
-loop:
-                jsr oswrch
-                dex
-                bne loop
-                rts
-                .pend
+                ; fall through
+.pend
 
 print_n_chars: .proc
                 pha
