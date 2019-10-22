@@ -1,6 +1,9 @@
 # Original manual
 
-There's a nice OCR'd copy of the original manual available from stardot: https://stardot.org.uk/forums/viewtopic.php?f=2&t=4785#p49280
+Thanks to
+[Yrrah2 from stardot](https://stardot.org.uk/forums/memberlist.php?mode=viewprofile&u=838),
+there's an OCR'd copy of the manual in the repo:
+[BASIC_Editor_Manual.pdf](./BASIC_Editor_Manual.pdf).
 
 The vast majority of the manual still applies. Differences are noted
 below.
