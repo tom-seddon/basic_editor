@@ -730,9 +730,18 @@ line_start_ok:
                 CMP     TOP
                 BCS     TOP_in_bounds
 
-force_mode_7:                           
+force_mode_7:
+                ; Switch to mode 135, in an attempt to get as much
+                ; room as possible. Worst case, you just get Mode 7.
+                
+                jsr print_next_string
+                .text 254
+                .text 22,135
+                .text 255
+                
                 LDX     #$ff
                 JSR     get_HIMEM_for_mode_X
+                
                 LDA     #3        ;"No room - Mode reset"
                 JSR     get_error       ; A = error code
 
