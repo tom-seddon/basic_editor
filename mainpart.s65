@@ -437,15 +437,6 @@ language_start_good_program:
                 
 command_prompt_loop:
 
-                ; If coming from edit mode, clear the screen.
-
-                lda editor_mode_id
-                cmp #1
-                beq +
-                lda #12
-                jsr oswrch
-+
-                                        
                 LDX     #$FF
                 TXS
                 JSR     initialise
@@ -577,6 +568,14 @@ get_HIMEM:
 
 .pend
 print_command_prompt: .proc
+                bit should_cls_before_command_prompt
+                bpl +
+                lsr should_cls_before_command_prompt
+                lda #12
+                jsr oswrch
++
+
+
                 LDA     byte_15
                 BEQ     loc_82CB
                 jsr display_error_message
@@ -703,7 +702,7 @@ bad_program:
                 PLA
                 PLA
                 INC     unk_16
-                LDA     #1
+                LDA     #1        ;"Bad program"
                 JSR     get_error       ; A = error code
                 SEC                     ; bad program
                 RTS
@@ -731,7 +730,7 @@ line_start_ok:
 force_mode_7:                           
                 LDX     #$ff
                 JSR     get_HIMEM_for_mode_X
-                LDA     #3
+                LDA     #3        ;"No room - Mode reset"
                 JSR     get_error       ; A = error code
 
 TOP_in_bounds:                          
@@ -932,12 +931,12 @@ loc_8483:
 		BNE	loc_848F
 
 loc_848A:				
-		LDA	#2
+		LDA	#2        ;"Unknown error"
 		JSR	get_error	; A = error code
 
 loc_848F:
                 jsr maybe_verbose_exit_on_error
-                JMP	language_entry.command_loop;???
+                JMP	language_entry.command_loop
 
 .pend
                 
@@ -1141,7 +1140,7 @@ loc_858C:
 		BPL	loc_858C
 		LDA	unk_33
 		BEQ	locret_85BE
-		LDA	#7
+		LDA	#7      ;"Target not found"
 
 loc_859D:				
 					
@@ -3112,7 +3111,7 @@ loc_9369:
 		STA	current_line_no_msb
 		PLA
 		STA	current_line_no_lsb
-		LDA	#8
+		LDA	#8        ;"String not found"
 		JSR	get_error	; A = error code
 
 loc_937B:				
@@ -4959,6 +4958,8 @@ loc_9D3F:
 		JSR	set_palette
 		LDA	#2
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
+                lda #$80
+                sta should_cls_before_command_prompt
 		LDA	#13
 		JSR	OSWRCH
 		LDX	#9		; VDU variable 9 - text	window coordinates, bottom (X) + right (Y) (AUG	p275)
@@ -9672,7 +9673,7 @@ loc_B3CF:
 loc_B3D2:				
 		LDA	unk_1E
 		BNE	locret_B3DA
-		LDA	#$F
+		LDA	#$F     ;"No references to labels were found"?
 		BNE	loc_B3CF
 
 locret_B3DA:				
@@ -10104,7 +10105,7 @@ label_edit_mode_command: .proc
 ;-------------------------------------------------------------------------
 
 number_edit_mode_command: .proc
-		LDA	#$F
+		LDA	#$f     ;"No references to labels were found"
 		PHA
 		LDA	#<number_command
 		STA	unk_6B1

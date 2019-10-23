@@ -193,6 +193,14 @@ language_entry_mode:
 program_name_ptr:
                 .fill 2
 
+                ; if bit 7 set, clear screen before entering command
+                ; mode. Some commands pretend to be in command mode
+                ; when invoked from edit mode - this is how command
+                ; knows whether to clear the screen if they cause an
+                ; error.
+should_cls_before_command_prompt:
+                .fill 1
+
                 .if ENABLE_DEBUG
 debug_counter:
                 .fill 2
