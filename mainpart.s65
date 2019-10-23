@@ -11286,28 +11286,12 @@ print_status:
 		LDA	#$87		; get MODE in Y
 		JSR	OSBYTE		; get MODE in Y
 		CPY	#7		; MODE 7?
-		BNE	print_colours
-		LDA	background_colour
-		PHA
-		LDA	foreground_colour
-		PHA
-		LDA	#7
-		STA	foreground_colour ; foreground is white
-		LDA	#0
-		STA	background_colour ; background is black
-		JSR	print_colour_scheme
-		PLA
-		STA	foreground_colour
-		PLA
-		STA	background_colour
-		BPL	loc_BC0B
-
-print_colours:				
+                beq loc_BC0B
 					
 		JSR	print_colour_scheme
+		JSR	OSNEWL
 
 loc_BC0B:				
-		JSR	OSNEWL
 		JSR	OSNEWL
 		; LDX	#<aProgramName
 		; LDY	#>aProgramName
