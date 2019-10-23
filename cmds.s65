@@ -67,7 +67,8 @@ CMD_TOP: = $EA
 CMD_END: = $EB
 CMD_shift_tab_key: = $EC
 CMD_ZSAVE: = $b9
-CMD_NOCASE: = $EF
-CMD_CASE: = $F0
+CMD_IFIND: = $EF
+CMD_ICHANGE: = $F0
+CMD_QICHANGE: = $F1
 CMD_ZRUN: = $c9
                 

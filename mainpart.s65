@@ -1424,7 +1424,6 @@ command_table:
                 .command "APPEND",9,CMD_APPEND
                 .command "BACK",$21,CMD_BACK
                 .command "CHANGE",$15,CMD_CHANGE
-                .command "CASE",0,CMD_CASE
                 .command "END",0,CMD_END
                 .command "EDIT",5,CMD_EDIT
                 .command "EXIT",0,CMD_EXIT
@@ -1432,7 +1431,9 @@ command_table:
                 .command "FORE",$21,CMD_FORE
                 .command "GOTO",0,CMD_GOTO
                 .command "HELP",0,CMD_HELP
+                .command "ICHANGE",$15,CMD_ICHANGE
                 .command "IE",0,CMD_IE
+                .command "IFIND",5,CMD_IFIND
                 .command "INFO",0,CMD_INFO
                 .command "INSERT",0,CMD_INSERT
                 .command "IT",0,CMD_IT
@@ -1442,9 +1443,9 @@ command_table:
                 .command "NEW",0,CMD_NEW
                 .command "NOSCROLL",0,CMD_NOSCROLL
                 .command "NUMBER",0,CMD_NUMBER
-                .command "NOCASE",0,CMD_NOCASE
                 .command "OLD",0,CMD_OLD
                 .command "OVERTYPE",0,CMD_OVERTYPE
+                .command "QICHANGE",$15,CMD_QICHANGE
                 .command "QCHANGE",$15,CMD_QCHANGE
                 .command "RUN",0,CMD_RUN
                 .command "RENUMBER",$45,CMD_RENUMBER
@@ -2583,10 +2584,14 @@ copy_error_loop:
 		RTS
 ; End of function get_error
 
-
-
-
-find_command:				
+ifind_command:
+                lda #$80        ;case-insensitive
+                bne find_or_ifind_command
+find_command:
+                lda #$00        ;case-sensitive
+                ; fall through
+find_or_ifind_command:
+                sta case_insensitive_search        
 		LDA	current_line_no_lsb
 		PHA
 		LDA	current_line_no_msb
@@ -2961,7 +2966,15 @@ loc_929A:
                 BNE	sub_9260
 .pend
 
-change_or_qchange_command .proc	
+qichange_or_ichange_command:
+                lda #$80        ;case-insensitive
+                bne change_or_qchange_or_ichange_or_qichange_command
+                
+change_or_qchange_command:
+                lda #$00        ;case-sensitive
+                ; fall through
+change_or_qchange_or_ichange_or_qichange_command .block
+                sta case_insensitive_search
 		LDA	current_line_no_lsb
 		PHA
 		LDA	current_line_no_msb
@@ -3111,6 +3124,8 @@ loc_9359:
 		STA	byte_6AF
 		CMP	#CMD_QCHANGE
 		BEQ	loc_937E ;taken if command was QCHANGE
+                cmp #CMD_QICHANGE
+                beq loc_937e    ;taken if command was QICHANGE
 		JSR	sub_BDD3
 		JMP	loc_934B
 
@@ -3202,7 +3217,7 @@ sub_93CF:
 		PLA
 		STA	byte_2B
                 RTS
-.pend
+.bend
 ; End of function sub_93CF
 
 
@@ -3556,8 +3571,9 @@ command_jump_table:
                 .command_jump $14,CMD_END,end_command
                 .command_jump 0,CMD_shift_tab_key,loc_9783
                 .command_jump 8,CMD_ZSAVE,zsave_command
-                .command_jump 0,CMD_CASE,case_command
-                .command_jump 0,CMD_NOCASE,nocase_command
+                .command_jump 0,CMD_IFIND,ifind_command
+                .command_jump 0,CMD_ICHANGE,qichange_or_ichange_command
+                .command_jump 0,CMD_QICHANGE,qichange_or_ichange_command
                 .command_jump 8,CMD_ZRUN,zrun_command
                 .if ENABLE_DEBUG
                 .command_jump 8,CMD_shift_f5_key,print_debug_stuff_edit_mode_command
@@ -11275,14 +11291,6 @@ print_status:
 
                 jsr osnewl
 
-                jsr print_next_string
-                .text "Ignore search case: ",255
-
-                lda case_insensitive_search
-                jsr print_on_off
-
-                jsr osnewl
-                
 		LDA	#$87		; get MODE in Y
 		JSR	OSBYTE		; get MODE in Y
 		CPY	#7		; MODE 7?
@@ -12116,22 +12124,6 @@ skipspaces
                 lda ($17),y
                 cmp #32
                 beq skipspaces
-                rts
-                .pend
-
-;-------------------------------------------------------------------------
-
-case_command .proc
-                lda #0
-                sta case_insensitive_search
-                rts
-                .pend
-
-;-------------------------------------------------------------------------
-
-nocase_command .proc
-                lda #$80
-                sta case_insensitive_search
 return:
                 rts
                 .pend
@@ -12140,7 +12132,7 @@ return:
 
 maybe_verbose_exit_on_error: .proc
                 bit language_entry_mode
-                bpl nocase_command.return
+                bpl find_program_name.return
 
                 jsr display_error_message
                 jmp exit_and_OLD

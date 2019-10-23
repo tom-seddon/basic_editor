@@ -48,14 +48,11 @@ You can press Shift+ESCAPE at the command prompt to get back to BASIC.
 
 ## Case-insensitive search
 
-The `FIND`, `CHANGE` and `QCHANGE` commands can now search
-case-insensitively. (When using `CHANGE` or `QCHANGE`, the replacement
-text's case is always retained.)
+The `FIND`, `CHANGE` and `QCHANGE` commands have case-insensitive
+equivalents: `IFIND`, `ICHANGE` and `QICHANGE`.
 
-The new command `CASE` makes these commands case-sensitive (the
-default); the new command `NOCASE` makes them case-insensitive.
-
-The case sensitivity status can be seen using the `INFO` command.
+When using `ICHANGE` or `QICHANGE`, the replacement text's case is
+always retained.
 
 # Edit mode
 
