@@ -365,6 +365,9 @@ zrun:
                 jmp exit_and_OLD_and_RUN
 
 saving_message:
+                lda #1
+                sta editor_mode_id  ; 1=command mode, 2=edit mode
+                
                 jsr find_program_name
                 bcc ret
 
