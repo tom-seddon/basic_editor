@@ -3489,8 +3489,13 @@ command_jump_table:
                 .command_jump $18,$BF,shift_cursor_up_edit_mode_command
                 .command_jump 0,$CC,move_to_prev_stmt_edit_mode_command
                 .command_jump 0,$CD,move_to_next_stmt_edit_mode_command
+                .if ORIGINAL_CTRL_UP_DOWN
+                .command_jump $10,$CE,move_to_bottom_of_screen_edit_mode_command
+                .command_jump $10,$CF,move_to_top_of_screen_edit_mode_command
+                .else
                 .command_jump $10,$CE,move_to_next_line_edit_mode_command
                 .command_jump $10,$CF,move_to_prev_line_edit_mode_command
+                .endif
                 .command_jump 2,CMD_LOAD,load_command
                 .command_jump 0,CMD_APPEND,append_command
                 .command_jump 0,CMD_SAVE,save_command
@@ -7215,54 +7220,54 @@ found_stmt:
                 
 ;-------------------------------------------------------------------------
 
-; move_to_top_of_screen_edit_mode_command: .proc
-; 		JSR	sub_AA06
-; 		LDA	byte_6C0
-; 		STA	byte_2B
-; 		LDA	byte_6C1
-; 		STA	byte_2C
-; 		JSR	save_line_number ; saves line number from program.
-; 					;
-; 					; Entry:
-; 					; (byte_2b) points to current line
-; 					;
-; 					; Exit:
-; 					; current_line_no_lsb, current_line_no_msb = the line number
-; 		JSR	sub_A069
-; 		JMP	start_of_line
-;                 .pend
+move_to_top_of_screen_edit_mode_command: .proc
+		JSR	sub_AA06
+		LDA	byte_6C0
+		STA	byte_2B
+		LDA	byte_6C1
+		STA	byte_2C
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_A069
+		JMP	start_of_line
+                .pend
 
 ;-------------------------------------------------------------------------
 
-; move_to_bottom_of_screen_edit_mode_command: .proc
-; 		JSR	sub_AA06
-; 		LDA	#0
-; 		STA	byte_2B
-; 		STA	byte_2C
-; 		JSR	sub_BA69
-; 		LDA	$6BF,X
-; 		STA	byte_2C
-; 		LDA	$6BE,X
-; 		STA	byte_2B
-; 		JSR	sub_BA69
-; 		INX
-; 		JSR	get_line_ptr	; gets pointer to line visible on screen.
-; 					;
-; 					; Entry:
-; 					; X = screen line number * 2 + 1
-; 					;
-; 					; Exit:
-; 					; (byte_2B) points to BASIC line
-; 					; X decremented
-; 		JSR	save_line_number ; saves line number from program.
-; 					;
-; 					; Entry:
-; 					; (byte_2b) points to current line
-; 					;
-; 					; Exit:
-; 					; current_line_no_lsb, current_line_no_msb = the line number
-; 		JMP	sub_9FD8
-;                 .pend
+move_to_bottom_of_screen_edit_mode_command: .proc
+		JSR	sub_AA06
+		LDA	#0
+		STA	byte_2B
+		STA	byte_2C
+		JSR	sub_BA69
+		LDA	$6BF,X
+		STA	byte_2C
+		LDA	$6BE,X
+		STA	byte_2B
+		JSR	sub_BA69
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	sub_9FD8
+                .pend
 
 ;-------------------------------------------------------------------------
 

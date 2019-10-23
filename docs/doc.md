@@ -98,13 +98,6 @@ be found, even if it's in a string or a comment.)
 lines - is replaced by the new CTRL+up/down shortcut. Not exactly the
 same, just very similar.)
 
-## CTRL+up/down
-
-Use CTRL+up/down to move the cursor to the previous or next line.
-
-(The previous CTRL+up/down functionality - move cursor to top or
-bottom of screen - is gone.)
-
 ## SHIFT+f9, CTRL+f9
 
 If the program has a `REM>` (see above), press SHIFT+f9 to save it
