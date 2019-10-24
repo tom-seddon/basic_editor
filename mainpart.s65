@@ -1239,11 +1239,7 @@ loc_85E0:
 ; 0
 
 error_message: .macro text
-                .byte \text[0]|$80
-                .for i=1,i<len(\text),i+=1
-                .byte \text[i]
-                .next
-                ; .text \text[0]|$80,\text[1:]
+                .text \text|$80
                 .endm
                 
 error_messages_table:
