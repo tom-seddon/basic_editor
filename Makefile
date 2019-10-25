@@ -5,7 +5,7 @@ DRIVE:=./beeb/0
 ##########################################################################
 ##########################################################################
 
-TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q
+TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 
 .PHONY:build
 build: VER?=$(shell date '+%Y-%m-%d %H:%M:%S')

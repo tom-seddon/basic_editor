@@ -26,6 +26,10 @@ LINE_LENGTH_LIMIT=$fc
 ;
 ; if false, CTRL+up/down = move cursor between program lines
 ORIGINAL_CTRL_UP_DOWN=true
+
+OPTIONS_OSBYTE=26
+
+OPTION_SHIFT_ESCAPE=1
                 
 ;-------------------------------------------------------------------------
 
@@ -176,7 +180,7 @@ addrs:=(byte_C,byte_D,byte_3E,byte_3F)
 
 rom_start:
                 JMP     language_entry
-                JMP     service_entry
+                JMP     svc
 
                 .byte ROM_FLAGS
 
@@ -210,68 +214,42 @@ aC1984Acornsoft:
                 
 ; A = code, X = ROM number, Y = parameter.
 
-service_entry .proc
+svc: .proc
                 pha
 
-maybe_star:
                 cmp #4
-                bne maybe_help
-star:
+                beq svc_star
+
+                .if !HI
+                cmp #6
+                beq svc_brk
+                .endif
+
+                cmp #7
+                beq svc_osbyte
+                
+                cmp #9
+                beq svc_help
+
+done:
+                pla
+                ldx $f4
+                rts
+
+claimed:
+                pla
+                lda #0
+                ldx $f4
+                rts
+                
+                .pend
+
+;-------------------------------------------------------------------------
+
+svc_star: .proc
                 tya
                 pha
 
-check_be:
-                ; *...
-                lda ($f2),Y
-                and #$df
-                cmp #"B"
-                bne star_done
-
-                ; *B....
-                iny
-                lda ($f2),Y
-                and #$df
-                pha
-
-                ; *B?...
-                iny
-                lda ($f2),Y
-                cmp #13
-                beq check_command
-                pla
-star_done:
-                pla
-                tay
-                jmp done
-
-check_command:
-                ; *B?|M
-                pla
-                cmp #"E"
-                bne try_z
-                ; *BE|M
-                ldx #LANGUAGE_MODE_NORMAL
-                bne enter_language
-
-try_z:
-                cmp #"Z"
-                bne try_r
-                ; *BZ|M
-                ldx #LANGUAGE_MODE_ZSAVE
-                bne enter_language
-                
-try_r:
-                cmp #"R"
-                bne star_done
-                ; *BR|M
-                ldx #LANGUAGE_MODE_ZRUN
-                
-enter_language:
-                ; set the user flag for the language entry point.
-                lda #1
-                ldy #0
-                jsr osbyte
-                
                 .if HI
                 ; if there's no Tube, just ignore the request - this
                 ; gives the non-HI ROM a chance, if it's there, or a
@@ -282,22 +260,68 @@ enter_language:
                 ldy #$ff
                 jsr osbyte
                 inx
-                bne star_done
+                bne ply_and_svc_done
                 .endif
                 
+check_be:
+                ; *...
+                lda ($f2),Y
+                and #$df
+                cmp #"B"
+                bne ply_and_svc_done
+
+                ; *B....
+                iny
+                iny
+                lda ($f2),Y
+                cmp #13
+                bne ply_and_svc_done
+
+check_command:
+                ; *B?|M
+                dey
+                lda ($f2),y
+                
+                ldx #LANGUAGE_MODE_NORMAL
+                cmp #"E"
+                beq enter_language
+
+                ldx #LANGUAGE_MODE_ZSAVE
+                cmp #"Z"
+                beq enter_language
+
+                ldx #LANGUAGE_MODE_ZRUN
+                cmp #"R"
+                beq enter_language
+                ; fall through
+                .pend
+ply_and_svc_done: .block
+                pla
+                tay
+                jmp svc.done
+                .bend
+
+;-------------------------------------------------------------------------
+
+enter_language: .proc
+                ; set the user flag for the language entry point.
+                lda #1
+                ldy #0
+                jsr osbyte
+
                 ldx $f4
                 lda #$8e        ;enter language ROM
                 jmp osbyte
+                .pend
 
-maybe_help:
-                cmp #9
-                bne done
-help:
+;-------------------------------------------------------------------------
+
+svc_help: .proc
                 lda ($f2),Y
                 cmp #" "
-                beq help
+                beq print_help
                 cmp #13
-                bne done
+                bne svc.done
 print_help:
                 tya
                 pha
@@ -313,14 +337,174 @@ print_help_name_loop:
                 cpy #aC1984Acornsoft-aTheBasicEditor_0
                 bne print_help_name_loop
                 jsr osnewl
-                pla
-                tay
-done:
-                ldx $f4
-                pla
-                rts
+                jmp ply_and_svc_done
                 .pend
 
+;-------------------------------------------------------------------------
+
+svc_brk: .proc
+                lda $df0,x
+                and #OPTION_SHIFT_ESCAPE
+                beq svc.done
+                
+                tya
+                pha
+
+                lda #$bb   ;read ROM number of socket containing BASIC
+                           ;(MasRef D.2-57)
+                jsr osbyte_x00_yff
+                stx $a8
+
+                ; osbyte $ba = read ROM number active at last BRK, but
+                ; the value is in X, and OSRDRM wants the ROM number
+                ; in Y. So do osbyte $b9 instead...
+                ; (MasRef D.2-56)
+                lda #$b9        
+                jsr osbyte_x00_yff
+
+                cpy $a8         ;was BRK in BASIC?
+                bne ply_and_svc_done ;taken if not BRK in BASIC
+
+                ; MasRef D.6-1
+                lda $fd         ;error address LSB
+                sta $f6         ;osrdsc address LSB
+                
+                lda $fe         ;... MSB
+                sta $f7         ;... MSB
+
+                jsr osrdsc
+
+                cmp #17          ;was it Escape?
+                bne ply_and_svc_done ;taken if not Escape
+
+                ; poll SHIFT
+                lda #$81        ;poll for key (MasRef D.2-38)
+                ldx #$ff        ;-1, shift
+                jsr osbyte_yff
+                inx
+                bne ply_and_svc_done ;taken if X!=$ff, i.e., shift not
+                                     ;pressed
+
+                ; Shift+ESCAPE pressed during BASIC...
+                lda #$7e        ;acknowledge escape (MasRef D.2-37)
+                jsr osbyte
+                
+                ldx #LANGUAGE_MODE_NORMAL
+                jmp enter_language
+                
+                .pend
+
+;-------------------------------------------------------------------------
+
+svc_osbyte: .proc
+                lda $ef
+                cmp #OPTIONS_OSBYTE
+                bne svc.done
+
+                lda $f0
+                cmp #1
+                
+                lda $df0,x
+                and #%11111110
+                adc #0
+                sta $df0,x
+
+                jmp svc.claimed
+                
+                .pend
+
+;-------------------------------------------------------------------------
+
+osbyte_x00_yff:
+                ldx #$00
+osbyte_yff:
+                ldy #$ff
+                jmp osbyte
+
+;-------------------------------------------------------------------------
+
+; get_default_wordv: .proc
+;                 lda $ffb7
+;                 sta $a8
+;                 lda $ffb8
+;                 sta $a9
+;                 ldy #<wordv
+;                 lda ($a8),y     ;lsb
+;                 tax
+;                 lda ($a8),y     ;msb
+;                 tay
+;                 rts
+;                 .pend
+
+; osword_hook: .proc
+;                 sta $ef
+;                 stx $f0
+;                 sty $f1
+;                 jsr get_default_wordv
+;                 jsr call_osword
+
+;                 php
+;                 pha
+;                 txa
+;                 pha
+;                 tya
+;                 pha
+                
+;                 bcc not_us
+
+;                 lda #$fc        ;read language ROM number (AUG 243)
+;                 jsr osbyte_x00_yff
+;                 sta $ef
+                
+;                 lda #$bb        ;read BASIC ROM number
+;                 jsr osbyte_x00_yff
+;                 txa
+
+;                 tsx
+;                 cmp $ef
+;                 bne not_us      ;taken if not BASIC ROM
+
+;                 ; poll SHIFT
+;                 lda #$81        ;poll for key (MasRef D.2-38)
+;                 ldx #$ff        ;-1, shift
+;                 jsr osbyte_yff
+;                 inx
+;                 bne not_us      ;taken if X!=$ff, i.e., shift not
+;                                 ;pressed
+                
+;                 ; Shift+ESCAPE pressed during BASIC...
+;                 lda #$7e        ;acknowledge escape (MasRef D.2-37)
+;                 jsr osbyte
+                
+;                 ldx #LANGUAGE_MODE_NORMAL
+;                 jmp enter_language
+
+; not_us:
+;                 pla
+;                 tay
+;                 pla
+;                 tax
+;                 pla
+;                 sta $ef
+;                 plp
+;                 rts
+
+; call_osword:
+;                 lda $f0
+;                 stx $f0
+;                 tax
+;                 lda $f1
+;                 sty $f1
+;                 tay
+;                 lda $ef
+;                 jmp ($f0)
+                
+                ; .pend
+                
+;-------------------------------------------------------------------------
+
+
+                
                 .bend
                 .send service
 ;-------------------------------------------------------------------------

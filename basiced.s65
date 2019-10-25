@@ -5,7 +5,9 @@ oswrch = $ffee
 osbyte = $fff4
 osword = $fff1
 osfile = $ffdd
-
+osrdsc=$ffb9
+wordv=$20c
+                
 ;-------------------------------------------------------------------------
                 
 ; BUILD_TYPE==0: standard
