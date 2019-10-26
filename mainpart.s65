@@ -621,9 +621,9 @@ command_prompt_loop:
                 BCS     loc_8147
                 JSR     is_program_empty ; sets C if no program
                 BCS     loc_8147
-                LDA     current_line_no_lsb
-                STA     byte_2B
                 LDA     current_line_no_msb
+                STA     byte_2B
+                LDA     current_line_no_lsb
                 STA     byte_2C
                 JSR     find_line_by_number ; finds a line, given a line number
                                         ;
@@ -645,7 +645,7 @@ loc_8144:
                                         ; (byte_2b) points to current line
                                         ;
                                         ; Exit:
-                                        ; current_line_no_lsb, current_line_no_msb = the line number
+                                        ; current_line_no_msb, current_line_no_lsb = the line number
 
 loc_8147:                               
                                         
@@ -659,9 +659,9 @@ command_loop:
 ; edit mode
                 LDA     byte_15
                 BEQ     loc_8163
-                LDA     current_line_no_lsb
-                STA     byte_50
                 LDA     current_line_no_msb
+                STA     byte_50
+                LDA     current_line_no_lsb
                 STA     byte_51
                 JMP     command_prompt_loop
 
@@ -831,9 +831,9 @@ clear_program:
                 STA     (oshwm),Y
                 JSR     find_program
                 LDA     #0
-                STA     current_line_no_lsb
-                LDA     #$A
                 STA     current_line_no_msb
+                LDA     #$A
+                STA     current_line_no_lsb
                 JSR     sub_B358
                 JMP     clear_line_commands
 ; End of function clear_program
@@ -844,8 +844,8 @@ clear_program:
 sub_8314:                               
                                         
                 LDA     #0
-                STA     current_line_no_lsb
                 STA     current_line_no_msb
+                STA     current_line_no_lsb
                 STA     byte_50
                 STA     byte_51
                 RTS
@@ -2762,9 +2762,9 @@ find_command:
                 ; fall through
 find_or_ifind_command:
                 sta case_insensitive_search        
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	byte_50
 		PHA
@@ -2837,9 +2837,9 @@ loc_912C:
 		LDA	byte_2C
 		STA	byte_6C1
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JMP	language_entry.command_loop
 
 line_valid:				
@@ -2863,11 +2863,11 @@ loc_9163:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	cls_and_reset_6c0_to_6ff
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		LDA	#0
 		STA	byte_3B
@@ -2888,7 +2888,7 @@ loc_9163:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_A069
 		JSR	position_edit_mode_cursor
 		JMP	edit_mode_loop
@@ -3051,7 +3051,7 @@ sub_9247:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 
 
 
@@ -3145,9 +3145,9 @@ change_or_qchange_command:
                 ; fall through
 change_or_qchange_or_ichange_or_qichange_command .block
                 sta case_insensitive_search
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	byte_50
 		PHA
@@ -3252,9 +3252,9 @@ loc_9312:
 		LDA	byte_2C
 		STA	byte_6C1
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		RTS
 
 loc_932C:				
@@ -3278,7 +3278,7 @@ loc_9337:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 
 loc_934B:				
@@ -3305,9 +3305,9 @@ loc_9369:
 		PLA
 		PLA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		LDA	#8        ;"String not found"
 		JSR	get_error	; A = error code
 
@@ -3322,9 +3322,9 @@ loc_937E:
 
 loc_9388:				
 		JSR	cls_and_reset_6c0_to_6ff
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		LDA	#0
 		STA	byte_3B
@@ -3345,7 +3345,7 @@ loc_9388:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_A069
 		JSR	position_edit_mode_cursor
 
@@ -3756,17 +3756,17 @@ command_jump_table:
 loc_967A:				
 		JSR	sub_9698
 		BCS	loc_9695
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		JSR	sub_9706
 		SEC
 		JSR	sub_9DEA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JMP	sub_9FD8
 
 loc_9695:				
@@ -3782,7 +3782,7 @@ sub_9698:
 		CMP	#-1
 		BEQ	loc_96BB
 		LDY	#1
-		LDA	current_line_no_lsb
+		LDA	current_line_no_msb
 		CMP	(byte_27),Y
 		BCS	loc_96B0
 
@@ -3793,7 +3793,7 @@ loc_96AE:
 loc_96B0:				
 		BNE	loc_96BD
 		INY
-		LDA	current_line_no_msb
+		LDA	current_line_no_lsb
 		CMP	(byte_27),Y
 		BCC	loc_96AE
 		BNE	loc_96BD
@@ -3810,9 +3810,9 @@ loc_96BF:
 		STA	$700,X
 		DEX
 		BPL	loc_96BF
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	#0
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
@@ -3839,7 +3839,7 @@ loc_96BF:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_BA69
 		TXA
 		LSR
@@ -3884,10 +3884,10 @@ sub_9706:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	current_line_no_lsb
-		STA	byte_2B
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		RTS
 ; End of function sub_9706
@@ -4046,7 +4046,7 @@ loc_97C4:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_A069
 
 loc_97EA:				
@@ -4253,16 +4253,16 @@ loc_98DB:
 					; Y is LSB of size
 
 loc_992F:				
-		LDX	current_line_no_lsb
-		LDY	current_line_no_msb
-		INC	current_line_no_msb
-		BNE	loc_9939
+		LDX	current_line_no_msb
+		LDY	current_line_no_lsb
 		INC	current_line_no_lsb
+		BNE	loc_9939
+		INC	current_line_no_msb
 
 loc_9939:				
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		TXA
 		PHA
@@ -4319,8 +4319,8 @@ sub_9968:
 		LDA	byte_2C
 		ADC	#0
 		STA	byte_D
-		LDX	current_line_no_lsb
-		LDY	current_line_no_msb
+		LDX	current_line_no_msb
+		LDY	current_line_no_lsb
 		INY
 		BNE	loc_9986
 		INX
@@ -4901,7 +4901,7 @@ loc_9C26:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	#4		; "Line	too long"
 		JMP	loc_859D
                 .pend
@@ -5205,18 +5205,18 @@ enter_edit_mode:
 		JSR	sub_9698
 		BCS	loc_9DA8
                 
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		JSR	sub_9706
 		JSR	cls_and_reset_6c0_to_6ff
 		CLC
 		JSR	sub_9DEA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JMP	loc_9DE4
 
 loc_9DA8:				
@@ -5236,9 +5236,9 @@ loc_9DA8:
 		JMP	loc_9DE4
 
 loc_9DC9:				
-		LDA	current_line_no_msb
-		STA	byte_2C
 		LDA	current_line_no_lsb
+		STA	byte_2C
+		LDA	current_line_no_msb
 		STA	byte_2B
 		JSR	cls_and_reset_6c0_to_6ff
 		LDA	#0
@@ -5260,7 +5260,7 @@ loc_9DC9:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 
 loc_9DE4:				
 		JSR	sub_9FD8
@@ -5377,7 +5377,7 @@ sub_9E5F:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	screen_height
 		SEC
 		SBC	byte_3B
@@ -5816,16 +5816,16 @@ loc_A035:
 ; (byte_2b) points to current line
 ;
 ; Exit:
-; current_line_no_lsb, current_line_no_msb = the line number
+; current_line_no_msb, current_line_no_lsb = the line number
 
 save_line_number:			
 					
 		LDY	#1
 		LDA	(byte_2B),Y
-		STA	current_line_no_lsb
+		STA	current_line_no_msb
 		INY
 		LDA	(byte_2B),Y
-		STA	current_line_no_msb
+		STA	current_line_no_lsb
 		RTS
 ; End of function save_line_number
 
@@ -5915,14 +5915,17 @@ loc_A074:
 		BEQ	loc_A09B
                 
 		LDY	#1
-		LDA	(byte_2B),Y
-		CMP	current_line_no_lsb
-		BCC	loc_A090
-		BNE	loc_A095
-		INY
-		LDA	(byte_2B),Y
+		LDA	(byte_2B),Y         ;program line # MSB
 		CMP	current_line_no_msb
-		BCS	loc_A095
+		BCC	loc_A090            ;taken if program
+                                            ;line<current line
+		BNE	loc_A095            ;taken if program
+                                            ;line>current line
+		INY
+                
+		LDA	(byte_2B),Y ;program line # LSB
+		CMP	current_line_no_lsb
+		BCS	loc_A095 ;taken if program line>=current line
 
 loc_A090:				
 		INX
@@ -5939,7 +5942,7 @@ loc_A095:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 
 loc_A09B:				
 		TXA
@@ -6137,8 +6140,8 @@ redraw_line_number:
 		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6148,8 +6151,8 @@ redraw_line_number:
 		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6159,16 +6162,16 @@ redraw_line_number:
 		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
 					; readline_ptr_msb bumped by number of chars printed.
 		LDA	readline_ptr_msb
 		BNE	print_post_line_command_padding	; branch taken if any line command chars printed
-		LDX	current_line_no_msb
-		LDY	current_line_no_lsb
+		LDX	current_line_no_lsb
+		LDY	current_line_no_msb
 		JSR	itoa		; Gets string representation of	16-bit number.
 					;
 					; Entry:
@@ -6192,8 +6195,8 @@ print_space_or_marker:
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6222,8 +6225,8 @@ goto_start_of_line:
 ; prints line command chars for	the current line, if any.
 ;
 ; Entry:
-; current_line_no_lsb,
-; current_line_no_msb =	current	line
+; current_line_no_msb,
+; current_line_no_lsb =	current	line
 ; X = line command slot	ID
 ;
 ; Exit:
@@ -6237,8 +6240,8 @@ print_line_command_chars:
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6322,9 +6325,9 @@ use_slot:
 set_line_command:			
 					
 		STA	$40,X		; store	command
-		LDA	current_line_no_lsb
-		STA	$41,X		; store	line no	LSB
 		LDA	current_line_no_msb
+		STA	$41,X		; store	line no	LSB
+		LDA	current_line_no_lsb
 		STA	$42,X		; store	line no	MSB
 
 loc_A216:				
@@ -6337,8 +6340,8 @@ loc_A216:
 ; checks if the	given line command is set on the current line.
 ;
 ; Entry:
-; current_line_no_lsb,
-; current_line_no_msb =	current	line
+; current_line_no_msb,
+; current_line_no_lsb =	current	line
 ; X = line command slot	ID
 ;
 ; Exit:
@@ -6347,10 +6350,10 @@ loc_A216:
 is_current_line:			
 					
 		PHA
-		LDA	current_line_no_lsb
+		LDA	current_line_no_msb
 		CMP	$41,X
 		BNE	loc_A22C
-		LDA	current_line_no_msb
+		LDA	current_line_no_lsb
 		CMP	$42,X
 		BNE	loc_A22C
 		SEC
@@ -6387,8 +6390,8 @@ is_line_command_slot_free:
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6409,9 +6412,9 @@ loc_A245:
 		LDA	current_command_id
 		ADC	#$40 ; '@'
 		STA	byte_46
-		LDA	current_line_no_lsb
-		STA	byte_47
 		LDA	current_line_no_msb
+		STA	byte_47
+		LDA	current_line_no_lsb
 		STA	byte_48
 		JMP	loc_AC08
 
@@ -6427,8 +6430,8 @@ loc_A258:
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6452,8 +6455,8 @@ sub_A280:
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	current	line
+					; current_line_no_msb,
+					; current_line_no_lsb =	current	line
 					; X = line command slot	ID
 					;
 					; Exit:
@@ -6840,28 +6843,28 @@ loc_A681:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		PLA
 		TAX
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		TXA
 		PHA
 		JSR	sub_AA47
 		LDA	#0
 		STA	byte_3B
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		PLP
 		JSR	sub_9DEA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JSR	sub_9FD8
 		JMP	edit_mode_loop
 
@@ -6935,15 +6938,15 @@ undo_edit_mode_command:
 		JMP	loc_9DA8
 
 loc_A726:				
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		JSR	sub_AA17
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JSR	sub_9FD8
 		JMP	position_edit_mode_cursor
 
@@ -6964,9 +6967,9 @@ loc_A74B:
 		RTS
 
 top_of_screen_edit_mode_command:	
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		JMP	loc_A661
 
@@ -7440,7 +7443,7 @@ move_to_top_of_screen_edit_mode_command: .proc
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_A069
 		JMP	start_of_line
                 .pend
@@ -7473,7 +7476,7 @@ move_to_bottom_of_screen_edit_mode_command: .proc
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	sub_9FD8
                 .pend
 
@@ -7516,7 +7519,7 @@ shift_cursor_down_edit_mode_command:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	loc_9DA8
 
 ;-------------------------------------------------------------------------
@@ -7571,9 +7574,9 @@ loc_A8CC:
 		STA	unk_503
 		LDA	#$D
 		STA	unk_500 ;??
-		LDA	current_line_no_lsb
-		STA	unk_501
 		LDA	current_line_no_msb
+		STA	unk_501
+		LDA	current_line_no_lsb
 		STA	unk_502
 
                 .if KEEP_A8C0_MEMMOVE
@@ -7652,9 +7655,9 @@ loc_A928:
 		PLA
 
 loc_A929:				
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		JSR	find_line_by_number ; finds a line, given a line number
 					;
@@ -7668,12 +7671,12 @@ loc_A929:
                                         
 		LDY	#1
 		LDA	(byte_2B),Y             ;get line # LSB
-		CMP	current_line_no_lsb ;is it the current line?
+		CMP	current_line_no_msb ;is it the current line?
 		BNE	loc_A943            ;no - going to have to
                                             ;insert
 		INY                         ;
 		LDA	(byte_2B),Y             ;get line # MSB
-		CMP	current_line_no_msb ;is it the current line?
+		CMP	current_line_no_lsb ;is it the current line?
 		BEQ	loc_A947            ;yes, update in place
 
 loc_A943:				
@@ -7698,8 +7701,8 @@ loc_A958:
 		STA	byte_28
 		JSR	find_program
 		JSR	check_for_room
-		LDX	current_line_no_msb
-		LDY	current_line_no_lsb
+		LDX	current_line_no_lsb
+		LDY	current_line_no_msb
 		INX
 		BNE	loc_A96E
 		INY
@@ -7858,9 +7861,9 @@ sub_AA17:
 loc_AA2E:				
 		LDA	byte_3B
 		PHA
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		SEC
 		JSR	sub_9DEA
@@ -7906,10 +7909,10 @@ loc_AA5C:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	current_line_no_lsb
-		STA	byte_2B
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		JSR	find_line_by_number ; finds a line, given a line number
 					;
@@ -7930,7 +7933,7 @@ loc_AA71:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 
 
 ; swap byte_2B with unk_2F, swap byte_2C with unk_30
@@ -8112,9 +8115,9 @@ loc_AB3C: ;nuts and bolts of the Extend Statement command??
 		JSR	sub_ABDB
 		LDA	screen_chars_in_line+0
 		PHA
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	screen_height
 		ASL
@@ -8156,8 +8159,8 @@ loc_AB6A:
 		BEQ	loc_ABB0
 		STA	byte_3B
 		INC	byte_3B
-		LDY	current_line_no_lsb
-		LDX	current_line_no_msb
+		LDY	current_line_no_msb
+		LDX	current_line_no_lsb
 		INX
 		BNE	loc_ABA8
 		INY
@@ -8184,9 +8187,9 @@ loc_ABB0:
 					; (byte_2B) points to BASIC line
 					; X decremented
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		CLC
 		PLA
 		ADC	code_area_width
@@ -8261,9 +8264,9 @@ loc_AC08:
 		JSR	make_cursor_invisible
 		LDA	byte_3B
 		PHA
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDX	#-1
 		STX	byte_3B
@@ -8298,9 +8301,9 @@ loc_AC38:
 		BNE	loc_AC54
 		PLA
 		TAX
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		PHA
 		TXA
 		PHA
@@ -8313,7 +8316,7 @@ loc_AC54:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 
 loc_AC57:				
 		JSR	redraw_line_number
@@ -8321,9 +8324,9 @@ loc_AC57:
 
 loc_AC5D:				
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		PLA
 		STA	byte_3B
 		ASL
@@ -8598,7 +8601,7 @@ loc_ADDA:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDY	#3
 		LDA	(byte_2B),Y
 
@@ -8778,7 +8781,7 @@ sub_AEAA:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
 ; End of function sub_AEAA
 
@@ -8914,10 +8917,10 @@ loc_AF70:
 loc_AF72:				
 		TAY
 		CLC
-		ADC	current_line_no_msb
+		ADC	current_line_no_lsb
 		STA	byte_3A
 		LDA	#0
-		ADC	current_line_no_lsb
+		ADC	current_line_no_msb
 		STA	byte_39
 		BPL	loc_AF8C
 		DEY
@@ -8946,14 +8949,14 @@ loc_AF9A:
 		PHA
 		TYA
 		PHA
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	byte_36
 		PHA
-		STX	current_line_no_lsb
-		STY	current_line_no_msb
+		STX	current_line_no_msb
+		STY	current_line_no_lsb
 		JSR	get_line_height	; get height of	current	line
 					;
 					; Entry:
@@ -9026,7 +9029,7 @@ loc_AFE9:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 
 loc_B00D:				
@@ -9056,9 +9059,9 @@ loc_B026:
 		STA	byte_2B
 		JSR	sub_9DEA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JSR	sub_9FD8
 		JMP	edit_mode_loop
 
@@ -9067,9 +9070,9 @@ loc_B03B:
 		PLA
 		PLA
 		TAX
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		PHA
 		TXA
 		PHA
@@ -9081,9 +9084,9 @@ loc_B04C:
 		SEC
 		JSR	sub_9DEA
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		JMP	sub_9FD8
 
 loc_B05C:				
@@ -9110,8 +9113,8 @@ loc_B07F:
 		PHA
 		LDX	#0
 		LDY	#1
-		STX	current_line_no_lsb
-		STY	current_line_no_msb
+		STX	current_line_no_msb
+		STY	current_line_no_lsb
 		JMP	loc_AF9A
 
 ie_cmd:					
@@ -9135,7 +9138,7 @@ ie_cmd:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	loc_AF5C
 
 
@@ -9779,9 +9782,9 @@ sub_B358:
 
 mark_edit_mode_command:			
 					
-		LDA	current_line_no_lsb
-		STA	unk_4D
 		LDA	current_line_no_msb
+		STA	unk_4D
+		LDA	current_line_no_lsb
 		STA	unk_4E
 		JMP	loc_AC08
 ; End of function mark_edit_mode_command
@@ -9798,9 +9801,9 @@ goto_edit_mode_command:
 loc_B370:				
 					
 		LDA	unk_4D
-		STA	current_line_no_lsb
-		LDA	unk_4E
 		STA	current_line_no_msb
+		LDA	unk_4E
+		STA	current_line_no_lsb
 		JMP	loc_9DA8
 ; End of function goto_edit_mode_command
 
@@ -9851,9 +9854,9 @@ loc_B3A6:
 		JMP	loc_859D
 
 number_command:				
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	#0
 		STA	unk_1E
@@ -9866,9 +9869,9 @@ loc_B3BB:
 		LDA	(byte_2B),Y
 		BPL	loc_B3DB
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		LDA	unk_1E
 		AND	#1
 		BEQ	loc_B3D2
@@ -9893,7 +9896,7 @@ loc_B3DB:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	byte_2B
 		STA	byte_C
 		LDA	byte_2C
@@ -10242,9 +10245,9 @@ loc_B5B0:
 ;-------------------------------------------------------------------------
 
 label_command:				
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		LDA	#0
 		STA	unk_1E
@@ -10262,7 +10265,7 @@ loc_B5C3:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	#0
 		STA	byte_6B3
 		JMP	loc_B65A
@@ -10286,9 +10289,9 @@ loc_B5E9:
 
 loc_B5EC:				
 		PLA
-		STA	current_line_no_msb
-		PLA
 		STA	current_line_no_lsb
+		PLA
+		STA	current_line_no_msb
 		LDA	unk_1E
 		BNE	locret_B5FB
 		LDA	#$13
@@ -10691,7 +10694,7 @@ loc_B7DD:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 		JSR	calculate_screen_chars_in_line
 		CLC
@@ -10732,7 +10735,7 @@ loc_B832:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 		LDX	unk_34
 		JSR	calculate_screen_chars_in_line.loc_A021 ;just
@@ -10764,10 +10767,10 @@ loc_B85D:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	current_line_no_lsb
-		STA	byte_2B
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		LDA	byte_3B
 		PHA
@@ -10783,9 +10786,9 @@ loc_B880:
 		PHA
 		ADC	byte_35
 		STA	byte_3B
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		SEC
 		JSR	sub_9DEA
@@ -10804,8 +10807,8 @@ loc_B89D:
 		LDY	$6C0,X
 		BNE	loc_B8AE
 		DEY
-		STY	current_line_no_lsb
 		STY	current_line_no_msb
+		STY	current_line_no_lsb
 		BNE	loc_B8BA
 
 loc_B8AE:				
@@ -10823,10 +10826,10 @@ loc_B8AE:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		INC	current_line_no_msb
-		BNE	loc_B8BA
+					; current_line_no_msb, current_line_no_lsb = the line number
 		INC	current_line_no_lsb
+		BNE	loc_B8BA
+		INC	current_line_no_msb
 
 loc_B8BA:				
 					
@@ -10958,7 +10961,7 @@ loc_B92A:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 		JSR	rstrip_detokenized_line
 		LDA	byte_400
@@ -11008,7 +11011,7 @@ loc_B987:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 		JSR	rstrip_detokenized_line
 		LDA	unk_700
@@ -11102,9 +11105,9 @@ loc_B9E5:
 		CMP	screen_height
 		BEQ	loc_BA47
 		BCC	loc_BA47
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		JSR	find_line_by_number ; finds a line, given a line number
 					;
@@ -11121,18 +11124,18 @@ loc_B9E5:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	sub_A069
 		JMP	loc_B00D
 
 loc_BA47:				
-		LDA	current_line_no_lsb
-		PHA
 		LDA	current_line_no_msb
 		PHA
 		LDA	current_line_no_lsb
 		PHA
 		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
 		PHA
 		JMP	loc_B025
 
@@ -11383,7 +11386,7 @@ goto_line_command .proc
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	loc_9DA8
 
 loc_BBB0:				
@@ -11583,8 +11586,8 @@ loc_BCA4:
                 JSR	OSNEWL
                 jsr print_next_string
                 .text "Current line: ",255
-		LDX	current_line_no_msb
-		LDY	current_line_no_lsb
+		LDX	current_line_no_lsb
+		LDY	current_line_no_msb
 		JSR	print_number
 		JSR	sub_BD83
 		JSR	sub_B37B
@@ -11810,7 +11813,7 @@ loc_BE23:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	#$25 ; '%'
 		JMP	loc_859D
 
@@ -11930,8 +11933,8 @@ loc_BEB5:
 		JSR	find_current_line_by_number ; finds current line by number.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	line number to search for
+					; current_line_no_msb,
+					; current_line_no_lsb =	line number to search for
 					;
 					; Exit:
 					; (byte_2B) points to line found
@@ -11959,8 +11962,8 @@ loc_BEB5:
 		JSR	find_current_line_by_number ; finds current line by number.
 					;
 					; Entry:
-					; current_line_no_lsb,
-					; current_line_no_msb =	line number to search for
+					; current_line_no_msb,
+					; current_line_no_lsb =	line number to search for
 					;
 					; Exit:
 					; (byte_2B) points to line found
@@ -11971,7 +11974,7 @@ loc_BEB5:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JSR	detokenize_one_line
 		JSR	calculate_screen_chars_in_line ;also sets
                                                        ;byte_2d to
@@ -12134,7 +12137,7 @@ copy_rows_table_done:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		PLA
 		STA	screen_chars_in_line+1
 		PLA
@@ -12181,7 +12184,7 @@ loc_BFCB:
 					; (byte_2b) points to current line
 					;
 					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
+					; current_line_no_msb, current_line_no_lsb = the line number
 		JMP	sub_A069
                 .pend
 
@@ -12189,16 +12192,16 @@ loc_BFCB:
 ; finds	current	line by	number.
 ;
 ; Entry:
-; current_line_no_lsb,
-; current_line_no_msb =	line number to search for
+; current_line_no_msb,
+; current_line_no_lsb =	line number to search for
 ;
 ; Exit:
 ; (byte_2B) points to line found
 
 find_current_line_by_number:		
-		LDA	current_line_no_lsb
-		STA	byte_2B
 		LDA	current_line_no_msb
+		STA	byte_2B
+		LDA	current_line_no_lsb
 		STA	byte_2C
 		JMP	find_line_by_number ; finds a line, given a line number
 ; End of function find_current_line_by_number ;
