@@ -857,7 +857,7 @@ sub_8314:
 find_program:                           
                                         
                 LDA     #0
-                STA     unk_16
+                STA     is_bad_program
                 STA     byte_38
                 STA     byte_C
                 STA     byte_D
@@ -878,8 +878,8 @@ bad_program:
                 PLA
                 PLA
                 PLA
-                INC     unk_16
-                LDA     #1        ;"Bad program"
+                INC     is_bad_program ;?is_bad_program=1
+                LDA     #1             ;"Bad program"
                 JSR     get_error       ; A = error code
                 SEC                     ; bad program
                 RTS
@@ -1558,15 +1558,16 @@ do_command_line .proc
 		LDA	#100
 		JSR	read_line
 		BCC got_command_line
-; ESCAPE was pressed
+                
+; ESCAPE was pressed at command line
 
                 ldx #$ff        ;FF=shift, FE=ctrl
                 jsr poll_key
                 beq bye
                 
-		LDA	unk_16
+		LDA	is_bad_program
 		BNE do_command_line_done
-		JMP	enter_edit_mode	; enter	editing	mode
+		JMP	enter_edit_mode
 
 got_command_line:			
 		JSR	parse_command_line
@@ -2397,6 +2398,7 @@ done:
 .pend
 
 
+;-------------------------------------------------------------------------
 
 ; work out dimensions of line.
 ;
@@ -2443,9 +2445,9 @@ loc_8F74:
 		PLA
 		STA	byte_39
                 RTS
-.pend
-; End of function get_line_dimensions
+                .pend
 
+;-------------------------------------------------------------------------
 
 
 ; entry: (byte_3E) points to command line;
@@ -2584,7 +2586,7 @@ check_bit_1:				; get control byte
 		AND	#2		; extract bit 1
 		BNE	check_bit_2	; branch taken if bit 1	reset
 ; bit 1 set
-		LDA	unk_16
+		LDA	is_bad_program
 		BNE	execute_command_done
 
 check_bit_2:				
@@ -4838,7 +4840,7 @@ kbflush:
 ; End of function kbflush
 
 
-
+;-------------------------------------------------------------------------
 
 detokenize_one_line: .proc
 
@@ -4847,11 +4849,11 @@ detokenize_one_line: .proc
                 ldx #1
                 lda #$20
 loop400:
-                sta $400,x
+                sta byte_400,x
                 inx
                 bne loop400
 loop500:
-                sta $500,x
+                sta unk_500,x
                 inx
                 cpx #$25
                 bne loop500
@@ -4906,6 +4908,7 @@ loc_9C26:
 		JMP	loc_859D
                 .pend
 
+;-------------------------------------------------------------------------
 
 ; detokenize line and store result.
 ;
@@ -4917,7 +4920,7 @@ loc_9C26:
 ; $401... = line text
 ; unk_6A8 incremented if line too long
 
-detokenize_line:			
+detokenize_line: .proc
 					
 		CLC
 ; Point (unk_27) at start of data of current line
@@ -5105,9 +5108,9 @@ copy_detokenized_text:
 					; (byte_E) points to space in dest buffer
 					; Y is index of	last byte in each case (bytes are copied until Y<0)
 		RTS
-; End of function detokenize_line
+                .pend
 
-
+;-------------------------------------------------------------------------
 
 ; decode line number from program.
 ;
@@ -5117,7 +5120,7 @@ copy_detokenized_text:
 ; Exit:
 ; unk_21.w is line number.
 
-decode_line_number:			
+decode_line_number: .proc		
 					
 		INY
 		LDA	(byte_27),Y	; get first line number	byte
@@ -5137,9 +5140,7 @@ decode_line_number_loop:
 		BPL	decode_line_number_loop
 		PLA
 		RTS
-; End of function decode_line_number
-
-
+                .pend
 
 ;-------------------------------------------------------------------------
 
@@ -5411,6 +5412,7 @@ sub_9E82:
 ; End of function sub_9E82
 
 
+;-------------------------------------------------------------------------
 
 ; finds	a line,	given a	line number
 ;
@@ -5421,7 +5423,7 @@ sub_9E82:
 ; Exit:
 ; (byte_2B) points to most suitable line
 
-find_line_by_number:			
+find_line_by_number: .proc
 					
 		LDA	byte_2B
 		STA	byte_39
@@ -5457,9 +5459,9 @@ loc_9EB4:
 find_line_by_number_done:					
 					
 		RTS
-; End of function find_line_by_number
+                .pend
 
-
+;-------------------------------------------------------------------------
 
 ; get height of	current	line
 ;
@@ -5469,7 +5471,7 @@ find_line_by_number_done:
 ; Exit:
 ; X = line height
 
-get_line_height:			
+get_line_height: .proc
 					
 		LDY	#0
 		LDX	byte_400	; get line length
@@ -5494,8 +5496,9 @@ loc_9ECF:
 
 locret_9ED4:				
 		RTS
-; End of function get_line_height
-
+                .pend
+                
+;-------------------------------------------------------------------------
 
 fg_table:
                 ;    0 1 2 3 4 5 6 7
@@ -5728,7 +5731,7 @@ locret_9FF1:
 		RTS
                 .pend
 
-
+;-------------------------------------------------------------------------
 
 ; check if there's room to store (byte_27) bytes past TOP. Causes a
 ; 'No room' error if not.
@@ -5775,8 +5778,14 @@ loc_A017:
 ; End of function cls_and_reset_6c0_to_6ff
 
 
+;-------------------------------------------------------------------------
 
-
+; entry:
+; detokenized line in byte_400
+;
+; exit:
+; screen_chars_in_line.w = count
+                
 calculate_screen_chars_in_line: .proc
 		JSR	get_line_height	; get height of	current	line
 					;
@@ -5808,7 +5817,7 @@ loc_A035:
 		RTS
                 .pend
 
-
+;-------------------------------------------------------------------------
 
 ; saves	line number from program.
 ;
@@ -5895,24 +5904,27 @@ loc_A06B:
 		TXA
 		LSR			; A = true screen line index
 		CMP	screen_height	; check	against	height of screen
-		BEQ	loc_A074        ; 
-		BCS	loc_A093
 
-loc_A074:				
-		JSR	get_line_ptr2	; gets pointer to line visible on screen.
+                ; end loop if A>screen_height
+		BEQ	+
+		BCS	loc_A093
++
+                
+		JSR	get_line_ptr2	; gets pointer to line visible
+                                        ; on screen.
 					;
 					; Entry:
 					; X = screen line number * 2
 					;
 					; Exit:
 					; (byte_2B) points to BASIC line
-					;
+					; X=screen line number*2+1
 
                 ; 
 		LDY	byte_6C0,X
-		BEQ	loc_A093
+		BEQ	loc_A093 ;taken if entry is $00
 		INY
-		BEQ	loc_A09B
+		BEQ	loc_A09B ;taken if entry is $ff
                 
 		LDY	#1
 		LDA	(byte_2B),Y         ;program line # MSB
@@ -5928,8 +5940,8 @@ loc_A074:
 		BCS	loc_A095 ;taken if program line>=current line
 
 loc_A090:				
-		INX
-		BNE	loc_A06B
+		INX              ;X+=2 in total
+		BNE	loc_A06B ;JMP, in effect
 
 loc_A093:				
 		LDX	#1
@@ -5945,9 +5957,9 @@ loc_A095:
 					; current_line_no_msb, current_line_no_lsb = the line number
 
 loc_A09B:				
-		TXA
-		LSR
-		STA	byte_3B
+		TXA             
+		LSR             ;A = true screen line index
+		STA	byte_3B ;save screen line
 		JSR	detokenize_one_line
 		LDX	#0
 		STX	byte_6B3
@@ -5964,17 +5976,18 @@ loc_A09B:
 ;
 ; Exit:
 ; (byte_2B) points to BASIC line
+; X=screen line number*2+1
 ;
 
 get_line_ptr2:				
-		INX			; bump X because get_line_ptr is wierd
-; End of function get_line_ptr2
-
-
-
+		INX			; bump X because get_line_ptr
+                                        ; is wierd
+                                        
+                ; fall through
 
 get_line_ptr_retainingX:		
-		JSR	get_line_ptr	; gets pointer to line visible on screen.
+		JSR	get_line_ptr	; gets pointer to line visible
+                                        ; on screen.
 					;
 					; Entry:
 					; X = screen line number * 2 + 1
@@ -5982,6 +5995,7 @@ get_line_ptr_retainingX:
 					; Exit:
 					; (byte_2B) points to BASIC line
 					; X decremented
+                                        
 		INX			; restore original X
 		RTS
 ; End of function get_line_ptr_retainingX
@@ -6746,7 +6760,7 @@ run_or_exit_command: .proc
 		JSR	reset_keys_settings
 		LDA	#228
 		JSR	osbyte_with_x0_y0
-		LDA	unk_16
+		LDA	is_bad_program
                 BNE	loc_A64D
 run_or_exit_without_shutdown:
 		JSR	is_program_empty ; sets	C if no	program
@@ -8794,17 +8808,17 @@ loc_AEB9:
 		JMP	loc_859D
 
 loc_AEC4:				
-		LDA	unk_4D
+		LDA	marked_line_no_msb
 		CMP	byte_41
 		BCC	loc_AEE3
-		LDA	unk_4E
+		LDA	marked_line_no_lsb
 		CMP	byte_42
 		BCC	loc_AEE3
-		LDA	unk_4D
+		LDA	marked_line_no_msb
 		CMP	byte_44
 		BCC	loc_AEE0
 		BNE	loc_AEE3
-		LDA	unk_4E
+		LDA	marked_line_no_lsb
 		CMP	byte_45
 		BEQ	loc_AEE0
 		BCS	loc_AEE3
@@ -9773,7 +9787,7 @@ locret_B329:
 sub_B358:				
 					
 		LDA	#$FF
-		STA	unk_4D
+		STA	marked_line_no_msb
 		RTS
 ; End of function sub_B358
 
@@ -9783,9 +9797,9 @@ sub_B358:
 mark_edit_mode_command:			
 					
 		LDA	current_line_no_msb
-		STA	unk_4D
+		STA	marked_line_no_msb
 		LDA	current_line_no_lsb
-		STA	unk_4E
+		STA	marked_line_no_lsb
 		JMP	loc_AC08
 ; End of function mark_edit_mode_command
 
@@ -9800,9 +9814,9 @@ goto_edit_mode_command:
 
 loc_B370:				
 					
-		LDA	unk_4D
+		LDA	marked_line_no_msb
 		STA	current_line_no_msb
-		LDA	unk_4E
+		LDA	marked_line_no_lsb
 		STA	current_line_no_lsb
 		JMP	loc_9DA8
 ; End of function goto_edit_mode_command
@@ -9812,7 +9826,7 @@ loc_B370:
 
 sub_B37B:				
 					
-		LDA	unk_4D
+		LDA	marked_line_no_msb
 		CMP	#-1
 		BNE	loc_B384
 		LDA	#1
@@ -9820,7 +9834,7 @@ sub_B37B:
 
 loc_B384:				
 		STA	byte_2B
-		LDA	unk_4E
+		LDA	marked_line_no_lsb
 		STA	byte_2C
 		JSR	find_line_by_number ; finds a line, given a line number
 					;
@@ -9832,11 +9846,11 @@ loc_B384:
 					; (byte_2B) points to most suitable line
 		LDY	#1
 		LDA	(byte_2B),Y
-		CMP	unk_4D
+		CMP	marked_line_no_msb
 		BNE	locret_B39A
 		INY
 		LDA	(byte_2B),Y
-		CMP	unk_4E
+		CMP	marked_line_no_lsb
 
 locret_B39A:				
 		RTS
@@ -11395,7 +11409,7 @@ loc_BBB0:
 
 
 print_bytes_free: .proc
-                lda unk_16
+                lda is_bad_program
                 bne bad
 
                 lda himem
@@ -11419,7 +11433,7 @@ info_command:
                 ; adc #'A'
                 ; jsr oswrch
 
-                lda unk_16
+                lda is_bad_program
                 bne print_status
 
                 ldx top
@@ -11521,7 +11535,7 @@ loc_BC42:
                 JSR	sub_BD83
                 jsr print_next_string
                 .text "No.of lines: ",255
-		LDA	unk_16
+		LDA	is_bad_program
 		BNE	loc_BC94
 		LDX	#0
 		STX	byte_38
@@ -11549,7 +11563,7 @@ loc_BC8D:
 
 loc_BC94:				
 		JSR	OSNEWL
-		LDA	unk_16
+		LDA	is_bad_program
 		BEQ	loc_BC9C
 		RTS
 
@@ -11598,8 +11612,8 @@ loc_BCA4:
 		BNE	loc_BCFF
 		LDA	#aMarkedLineEnd-aMarkedLine
 		JSR	print_n_chars
-		LDX	unk_4E
-		LDY	unk_4D
+		LDX	marked_line_no_lsb
+		LDY	marked_line_no_msb
 		JSR	print_number
 		JMP	loc_BD04
 

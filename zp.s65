@@ -44,7 +44,7 @@ spare_14:
                 .fill 1	
 byte_15:
                 .fill 1	
-unk_16:
+is_bad_program:
                 .fill 1 
 oshwm:
                 .fill 1
@@ -147,14 +147,14 @@ byte_48:
                 .fill 1	
 byte_49:
                 .fill 1	
-current_line_no_lsb:
-                .fill 1 
 current_line_no_msb:
                 .fill 1 
+current_line_no_lsb:
                 .fill 1 
-unk_4D:
                 .fill 1 
-unk_4E:
+marked_line_no_msb:
+                .fill 1 
+marked_line_no_lsb:
                 .fill 1 
                 .fill 1 
 byte_50:
