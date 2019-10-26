@@ -70,6 +70,20 @@ LANG_BASE:= $3800
 
 *=0
                 .dsection zp
+
+                ; Zero page unused by BASIC:
+                
+; 1/2 = $4f... - see BASIC ROM user guide
+
+; 4 = $4c... - not quite clear? see http://8bs.com/basic/memory.htm
+
+; 4.32 = $4f... - see https://github.com/hoglet67/BBCBasic4r32/blob/master/disassembly/Basic432.asm
+
+; So $60 should be fairly safe...
+
+*=$60
+                .dsection basic_unused_zp
+                
                 ; language zero page runs up to $8f, but it would be
                 ; nice to leave $70...$8f free as BASIC reserves that
                 ; for user stuff. Then you can go BASIC->BE->BASIC

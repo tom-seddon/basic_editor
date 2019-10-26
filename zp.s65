@@ -211,3 +211,8 @@ debug_ptr:
                 .endif
                 
                 .send zp
+
+; zero page vars that occupy space that's (hopefully) unused by BASIC.
+                
+                .section basic_unused_zp
+                .send basic_unused_zp
