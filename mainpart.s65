@@ -306,7 +306,6 @@ ply_and_svc_done: .block
 enter_language: .proc
                 ; set the user flag for the language entry point.
                 lda #1
-                ldy #0
                 jsr osbyte
 
                 ldx $f4
@@ -517,23 +516,14 @@ init_language_entry_mode: .proc
                 ; 4 handler.
                 lda #1
                 ldx #0
-                ldy #$ff
                 jsr osbyte
 
                 stx language_entry_mode
 
-                ; reset flag, whatever it was
-                lda #1
-                ldx #0
-                ldy #0
-                jsr osbyte
-
-                lda language_entry_mode
-                
-                cmp #LANGUAGE_MODE_ZSAVE
+                cpx #LANGUAGE_MODE_ZSAVE
                 beq zsave
 
-                cmp #LANGUAGE_MODE_ZRUN
+                cpx #LANGUAGE_MODE_ZRUN
                 beq zrun
 ret:
                 rts
