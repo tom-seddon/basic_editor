@@ -634,7 +634,7 @@ command_prompt_loop:
                                         ; Exit:
                                         ; (byte_2B) points to most suitable line
                 LDY     #1
-                LDA     ($2B),Y
+                LDA     (byte_2B),Y
                 BPL     loc_8144
                 JSR     sub_AA77        ; swap byte_2B with unk_2F, swap byte_2C with unk_30
 
@@ -673,10 +673,10 @@ loc_8163:
                 LDA     byte_6C0
                 STA     byte_39
                 LDY     #1
-                LDA     ($39),Y
+                LDA     (byte_39),Y
                 STA     byte_50
                 INY
-                LDA     ($39),Y
+                LDA     (byte_39),Y
                 STA     byte_51
                 JMP     command_prompt_loop
 ; End of function language_entry
@@ -825,10 +825,10 @@ clear_program:
                                         
                 LDY     #0
                 LDA     #$D
-                STA     ($17),Y
+                STA     (oshwm),Y
                 INY
                 LDA     #-1
-                STA     ($17),Y
+                STA     (oshwm),Y
                 JSR     find_program
                 LDA     #0
                 STA     current_line_no_lsb
@@ -1210,7 +1210,7 @@ loc_84EB:
 		LDA	#$40 ; '@'
 
 loc_84F9:				
-		STA	($27),Y
+		STA	(byte_27),Y
 		INY
 		DEX
 		BNE	loc_84F9
@@ -1224,7 +1224,7 @@ loc_8505:
 		CMP	byte_21
 		BNE	loc_8529
 		INY
-		LDA	($25),Y
+		LDA	(byte_25),Y
 		CMP	byte_22
 		BNE	loc_8529
 		LDX	byte_35
@@ -1237,7 +1237,7 @@ loc_8505:
 
 loc_851F:				
 		INY
-		STA	($27),Y
+		STA	(byte_27),Y
 		LDA	$34,X
 		DEX
 		BPL	loc_851F
@@ -1248,7 +1248,7 @@ loc_8529:
 		BNE	loc_84EB
 
 loc_852E:				
-		LDA	($27),Y
+		LDA	(byte_27),Y
 		CMP	#$22 ; '"'
 		BNE	loc_853A
 		LDA	byte_38
@@ -1262,7 +1262,7 @@ loc_853A:
 loc_853F:				
 		LDY	#3
 		CLC
-		LDA	($27),Y
+		LDA	(byte_27),Y
 		ADC	byte_27
 		STA	byte_27
 		BCC	loc_854C
@@ -1276,19 +1276,19 @@ loc_854F:
 
 loc_8552:				
 		LDY	#1
-		LDA	($25),Y
+		LDA	(byte_25),Y
 		BMI	loc_858A
 		LDX	#$11
 
 loc_855A:				
 		LDY	#2
 		LDA	$40,X
-		CMP	($25),Y
+		CMP	(byte_25),Y
 		BNE	loc_8575
 		DEX
 		DEY
 		LDA	$40,X
-		CMP	($25),Y
+		CMP	(byte_25),Y
 		BNE	loc_8576
 		LDA	byte_35
 		ORA	#$80 ; 'Ä'
@@ -1306,10 +1306,10 @@ loc_8576:
 		BPL	loc_855A
 		LDY	#1
 		LDA	byte_35
-		STA	($25),Y
+		STA	(byte_25),Y
 		INY
 		LDA	byte_36
-		STA	($25),Y
+		STA	(byte_25),Y
 		JSR	sub_85BF
 		BNE	loc_8552
 
@@ -1363,7 +1363,7 @@ locret_85BE:
 sub_85BF:				
 		LDY	#3
 		CLC
-		LDA	($25),Y
+		LDA	(byte_25),Y
 		ADC	byte_25
 		STA	byte_25
 		BCC	loc_85CC
@@ -1566,7 +1566,7 @@ do_command_line .proc
                 
 		LDA	unk_16
 		BNE do_command_line_done
-		JMP	loc_9D67	; enter	editing	mode
+		JMP	enter_edit_mode	; enter	editing	mode
 
 got_command_line:			
 		JSR	parse_command_line
@@ -1778,7 +1778,7 @@ spaces_skipped:
 		CMP	#13		; end of command line?
 		BEQ	loc_8D52
 		INX			; X=1
-; Set ($3E) to point to remainder of command line
+; Set (byte_3E) to point to remainder of command line
 		CLC
 		TYA
 		ADC	byte_C
@@ -2559,7 +2559,7 @@ execute_command_done:
 
 loc_8FFA:				
 		INY
-		LDA	($39),Y		; get command ID
+		LDA	(byte_39),Y		; get command ID
 		CMP	current_command_id ; is	it the desired command?
 		BEQ	loc_9005	; branch taken if desired command found
 		JMP	next_command
@@ -2570,10 +2570,10 @@ loc_9005:
 		STA	unk_6B0
 		STA	byte_6A7
 		INY
-		LDA	($39),Y		; get command routine ptr LSB
+		LDA	(byte_39),Y		; get command routine ptr LSB
 		STA	unk_6B1		; store	JMP target LSB
 		INY
-		LDA	($39),Y		; get command routine ptr MSB
+		LDA	(byte_39),Y		; get command routine ptr MSB
 		STA	unk_6B2		; store	JMP target MSB
 		LDA	byte_49		; get control byte
 		AND	#1		; extract bit 0
@@ -2596,7 +2596,7 @@ check_bit_2:
 		CMP	#2		; edit mode?
 		BEQ	check_bit_3	; branch taken if edit mode
 ; not in edit mode
-		JSR	enter_edit_mode
+		JSR	init_edit_mode
 		LDA	byte_49		; get control byte
 		AND	#$10		; extract bit 4
 		BEQ	check_bit_6	; branch taken if bit 4	reset
@@ -2850,7 +2850,7 @@ line_valid:
 		BNE	loc_918A
 		INY
 		STY	byte_6AF
-		JSR	enter_edit_mode
+		JSR	init_edit_mode
 		LDA	current_command_id
                 CMP	#CMD_EDIT ;was this EDIT?
                 BNE	loc_918A  ;taken if not EDIT (i.e., FIND)
@@ -3059,7 +3059,7 @@ advance_2b_to_next_line:
 					
 		LDY	#3		; offset of line length
 		CLC
-		LDA	($2B),Y		; get line length
+		LDA	(byte_2B),Y		; get line length
 		ADC	byte_2B
 		STA	byte_2B
 		BCC	advance_2b_to_next_line_done
@@ -3159,7 +3159,7 @@ change_or_qchange_or_ichange_or_qichange_command .block
 		LDY	#0
 
 loc_92B1:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$20 ; ' '
 		BEQ	loc_92C3
 		CMP	#$D
@@ -3177,7 +3177,7 @@ loc_92C3:
 		STY	byte_6BE
 
 loc_92C6:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_92BE
 		CMP	#$20 ; ' '
@@ -3196,7 +3196,7 @@ loc_92D3:
 		LDX	#0
 
 loc_92E3:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$20 ; ' '
 		BEQ	loc_92F1
 		CMP	#$D
@@ -3206,7 +3206,7 @@ loc_92E3:
 		BNE	loc_92E3
 
 loc_92F1:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_9302
 		CMP	#$20 ; ' '
@@ -3270,7 +3270,7 @@ loc_9337:
 		STY	cursor_offset_msb
 		INY
 		STY	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_9369
 		JSR	save_line_number ; saves line number from program.
 					;
@@ -3318,7 +3318,7 @@ loc_937E:
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#2
 		BEQ	loc_9388
-		JSR	enter_edit_mode
+		JSR	init_edit_mode
 
 loc_9388:				
 		JSR	cls_and_reset_6c0_to_6ff
@@ -3484,7 +3484,7 @@ locret_947A:
                 RTS
 .pend
 
-; entry: ($19) points to buffer
+; entry: (byte_19) points to buffer
 ;
 ; exit:	C=0 if Return, C=1 if Escape
 ; A is line length+1
@@ -3783,7 +3783,7 @@ sub_9698:
 		BEQ	loc_96BB
 		LDY	#1
 		LDA	current_line_no_lsb
-		CMP	($27),Y
+		CMP	(byte_27),Y
 		BCS	loc_96B0
 
 loc_96AE:				
@@ -3794,7 +3794,7 @@ loc_96B0:
 		BNE	loc_96BD
 		INY
 		LDA	current_line_no_msb
-		CMP	($27),Y
+		CMP	(byte_27),Y
 		BCC	loc_96AE
 		BNE	loc_96BD
 
@@ -4015,7 +4015,7 @@ loc_97B6:
 		STY	cursor_offset_msb
 		INY
 		STY	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_9799
 		JSR	detokenize_one_line
 
@@ -4355,7 +4355,7 @@ sub_999A:
 		LDY	#4
 
 loc_999F:				
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		CMP	#7
 		BEQ	loc_99A8
 		INY
@@ -4391,10 +4391,10 @@ loc_99BE:
 					; X is MSB of size
 					; Y is LSB of size
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		SEC
 		SBC	#1
-		STA	($2B),Y
+		STA	(byte_2B),Y
 		RTS
 ; End of function sub_999A
 
@@ -4413,13 +4413,13 @@ loc_99E8:
 		LDY	#1
 
 loc_99EA:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_99FD
 		CMP	#$2C ; ','
 		BNE	loc_99FA
 		LDA	#$20 ; ' '
-		STA	($3E),Y
+		STA	(byte_3E),Y
 		BNE	loc_99FD
 
 loc_99FA:				
@@ -4449,7 +4449,7 @@ loc_9A0D:
 		LDY	#0
 
 loc_9A1F:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_9A39
 		CMP	#$20 ; ' '
@@ -4458,7 +4458,7 @@ loc_9A1F:
 		BNE	loc_9A1F
 
 loc_9A2C:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_9A39
 		CMP	#$20 ; ' '
@@ -4507,7 +4507,7 @@ loc_9A5F:
 		LDY	#0
 
 loc_9A6C:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_9A99
 		CMP	#$20 ; ' '
@@ -4516,7 +4516,7 @@ loc_9A6C:
 		BNE	loc_9A6C
 
 loc_9A79:				
-		LDA	($3E),Y
+		LDA	(byte_3E),Y
 		CMP	#$D
 		BEQ	loc_9A99
 		CMP	#$20 ; ' '
@@ -4563,7 +4563,7 @@ sub_9AAD:
 loc_9ABF:				
 		JSR	advance_2b_to_next_line
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	locret_9AD7
 		CLC
 		TXA
@@ -5141,8 +5141,9 @@ decode_line_number_loop:
 
 
 
+;-------------------------------------------------------------------------
 
-enter_edit_mode:			
+init_edit_mode: .proc
 					
 		LDA	#1
 		STA	byte_6AB
@@ -5172,11 +5173,12 @@ loc_9D3F:
 		LDA	#219		; Read/write character value returned by pressing TAB key (AUG p222)
 		JSR	osbyte_with_y0
 		JMP	loc_8437
-; End of function enter_edit_mode
+                .pend
 
+;-------------------------------------------------------------------------
 
-loc_9D67:				
-		JSR	enter_edit_mode
+enter_edit_mode:
+		JSR	init_edit_mode
 		JSR	is_program_empty ; sets	C if no	program
 		BCS	loc_9DA8
 		LDA	byte_50
@@ -5191,15 +5193,18 @@ loc_9D67:
 					;
 					; Exit:
 					; (byte_2B) points to most suitable line
+                ; end of program?
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_9DA8
+                
 		LDA	byte_2B
 		STA	byte_6C0
 		LDA	byte_2C
 		STA	byte_6C1
 		JSR	sub_9698
 		BCS	loc_9DA8
+                
 		LDA	current_line_no_lsb
 		PHA
 		LDA	current_line_no_msb
@@ -5261,7 +5266,7 @@ loc_9DE4:
 		JSR	sub_9FD8
 		JMP	edit_mode_loop
 
-
+;-------------------------------------------------------------------------
 
 sub_9DEA: .proc
 					
@@ -5278,7 +5283,7 @@ sub_9DEA: .proc
 
 loc_9DF1:				
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_9E19
 		JSR	detokenize_one_line
 		JSR	sub_9E5F
@@ -5880,9 +5885,9 @@ is_not_empty:
                 .pend
 
 
+;-------------------------------------------------------------------------
 
-
-sub_A069:				
+sub_A069: .proc
 					
 		LDX	#0		; first	line on	screen
 
@@ -5890,7 +5895,7 @@ loc_A06B:
 		TXA
 		LSR			; A = true screen line index
 		CMP	screen_height	; check	against	height of screen
-		BEQ	loc_A074
+		BEQ	loc_A074        ; 
 		BCS	loc_A093
 
 loc_A074:				
@@ -5902,10 +5907,13 @@ loc_A074:
 					; Exit:
 					; (byte_2B) points to BASIC line
 					;
-		LDY	$6C0,X
+
+                ; 
+		LDY	byte_6C0,X
 		BEQ	loc_A093
 		INY
 		BEQ	loc_A09B
+                
 		LDY	#1
 		LDA	(byte_2B),Y
 		CMP	current_line_no_lsb
@@ -5942,8 +5950,9 @@ loc_A09B:
 		STX	byte_6B3
 		JSR	calculate_screen_chars_in_line
 		RTS
-; End of function sub_A069
+                .pend
 
+;-------------------------------------------------------------------------
 
 ; gets pointer to line visible on screen.
 ;
@@ -6479,10 +6488,10 @@ sub_A2A1:
 		CMP	#$54 ; 'T'
 		BNE	loc_A2B1
 		LDY	#1
-		LDA	($17),Y
+		LDA	(oshwm),Y
 		TAX
 		INY
-		LDA	($17),Y
+		LDA	(oshwm),Y
 		TAY
 		RTS
 
@@ -6502,10 +6511,10 @@ loc_A2B1:
 					; Exit:
 					; (byte_2B) points to most suitable line
 		LDY	#1
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		TAX
 		INY
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		TAY
 		PLA
 		STA	byte_2C
@@ -6873,7 +6882,7 @@ old_command .proc
 		BCC good_program
 		LDY	#1
 		LDA	#0
-		STA	($17),Y
+		STA	(oshwm),Y
 		JSR	find_program
 		BCC good_program
 		JMP	language_entry.command_loop;ok
@@ -7658,12 +7667,12 @@ loc_A929:
 
                                         
 		LDY	#1
-		LDA	($2B),Y             ;get line # LSB
+		LDA	(byte_2B),Y             ;get line # LSB
 		CMP	current_line_no_lsb ;is it the current line?
 		BNE	loc_A943            ;no - going to have to
                                             ;insert
 		INY                         ;
-		LDA	($2B),Y             ;get line # MSB
+		LDA	(byte_2B),Y             ;get line # MSB
 		CMP	current_line_no_msb ;is it the current line?
 		BEQ	loc_A947            ;yes, update in place
 
@@ -7680,7 +7689,7 @@ loc_A947:
 		BEQ	loc_A958
 		SEC
 		LDY	#3
-		SBC	($2B),Y
+		SBC	(byte_2B),Y
 
 loc_A958:				
 		STA	byte_27
@@ -8513,7 +8522,7 @@ loc_AD44:
 		CMP	#$6D ; 'm'
 		BNE	loc_AD74
 		LDY	#1
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_41
 		BEQ	loc_AD6D
 		BCS	loc_AD87
@@ -8521,17 +8530,17 @@ loc_AD44:
 
 loc_AD6D:				
 		INY
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_42
 		BCS	loc_AD87
 
 loc_AD74:				
 		LDY	#1
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_47
 		BNE	loc_AD87
 		INY
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_48
 		BNE	loc_AD87
 		LDA	byte_46
@@ -8543,7 +8552,7 @@ loc_AD87:
 		LDX	#3
 		JSR	sub_AE93
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		LDX	#2
 		JSR	sub_AE9E
 		LDX	#0
@@ -8591,7 +8600,7 @@ loc_ADDA:
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 
 loc_ADE3:				
 		LDX	#4
@@ -8806,14 +8815,14 @@ loc_AEE3:
 		LDA	byte_6C1
 		STA	byte_3A
 		LDY	#1
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_41
 		BEQ	loc_AEF8
 		JMP	loc_AEFD
 
 loc_AEF8:				
 		INY
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		CMP	byte_42
 
 loc_AEFD:				
@@ -8822,7 +8831,7 @@ loc_AEFD:
 		LDX	#3
 		JSR	sub_AE93
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		LDX	#2
 		JSR	sub_AE9E
 		LDX	#0
@@ -8890,10 +8899,10 @@ loc_AF54:
 loc_AF5C:				
 		JSR	advance_2b_to_next_line
 		LDY	#2
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		STA	byte_38
 		DEY
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		STA	unk_37
 		BPL	loc_AF70
 		LDA	#$A
@@ -9088,10 +9097,10 @@ loc_B05C:
 it_cmd:					
 		JSR	sub_B0A3
 		LDY	#1
-		LDA	($17),Y
+		LDA	(oshwm),Y
 		BNE	loc_B07F
 		INY
-		LDA	($17),Y
+		LDA	(oshwm),Y
 		CMP	#2
 		BCS	loc_B07F
 		JSR	sub_8492
@@ -9264,19 +9273,19 @@ loc_B119:
 		STA	byte_26
 
 loc_B12E:				
-		LDA	($27),Y
-		STA	($25),Y
+		LDA	(byte_27),Y
+		STA	(byte_25),Y
 		DEY
 		BNE	loc_B12E
 		LDY	#3
 		LDA	byte_22
 		ORA	#$40 ; '@'
-		STA	($27),Y
+		STA	(byte_27),Y
 		DEY
 		LDA	byte_21
 		AND	#$3F ; '?'
 		ORA	#$40 ; '@'
-		STA	($27),Y
+		STA	(byte_27),Y
 		DEY
 		LDA	byte_21
 		AND	#-$40 ;	'¿'
@@ -9289,7 +9298,7 @@ loc_B12E:
 		LSR
 		LSR
 		EOR	#$54 ; 'T'
-		STA	($27),Y
+		STA	(byte_27),Y
 		JSR	increment_27
 		JSR	increment_27
 		JSR	increment_27
@@ -9819,11 +9828,11 @@ loc_B384:
 					; Exit:
 					; (byte_2B) points to most suitable line
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		CMP	unk_4D
 		BNE	locret_B39A
 		INY
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		CMP	unk_4E
 
 locret_B39A:				
@@ -9834,7 +9843,7 @@ locret_B39A:
 goto_command:				
 		JSR	sub_B37B
 		BNE	loc_B3A6
-		JSR	enter_edit_mode
+		JSR	init_edit_mode
 		JMP	loc_B370
 
 loc_B3A6:				
@@ -9854,7 +9863,7 @@ number_command:
 
 loc_B3BB:				
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BPL	loc_B3DB
 		PLA
 		STA	current_line_no_msb
@@ -9895,7 +9904,7 @@ loc_B3DB:
 		STA	byte_F
 		LDX	#0
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		TAY
 		INY
 		BNE	loc_B3F9
@@ -9928,7 +9937,7 @@ loc_B412:
 		CMP	cursor_offset	; offset of cursor in detokenized buffer
 		BCC	loc_B476
 		LDY	#0
-		LDA	($1F),Y
+		LDA	(unk_1F),Y
 		CMP	#$20 ; ' '
 		BEQ	loc_B461
 		CMP	#$22 ; '"'
@@ -9941,7 +9950,7 @@ loc_B412:
 loc_B430:				
 		LDA	unk_37
 		BNE	loc_B461
-		LDA	($1F),Y
+		LDA	(unk_1F),Y
 		CMP	#$f4 ;-$C ; 'Ù' REM
 		BEQ	loc_B476
 		CMP	#$DC ; -$24 ;	'‹' DATA
@@ -10068,7 +10077,7 @@ loc_B4C7:
 
 loc_B4CF:				
 		LDY	#1
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		BPL	loc_B4DD
 		LDA	unk_1E
 		ORA	#1
@@ -10083,7 +10092,7 @@ loc_B4DD:
 		LDY	#4
 
 loc_B4E5:				
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		CMP	#$20 ; ' '
 		BNE	loc_B4EF
 		INY
@@ -10095,7 +10104,7 @@ loc_B4EF:
 		INY
 
 loc_B4F4:				
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		CMP	#$20 ; ' '
 		BNE	loc_B4FE
 		INY
@@ -10111,7 +10120,7 @@ loc_B4FE:
 
 loc_B508:				
 		LDY	#0
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		CMP	#$40 ; '@'
 		BEQ	loc_B512
 		BNE	loc_B52F
@@ -10120,8 +10129,8 @@ loc_B512:
 		INY
 
 loc_B513:				
-		LDA	($33),Y
-		CMP	($1F),Y
+		LDA	(unk_33),Y
+		CMP	(unk_1F),Y
 		BNE	loc_B521
 		JSR	sub_B484
 		BCC	loc_B532
@@ -10131,7 +10140,7 @@ loc_B513:
 loc_B521:				
 		JSR	sub_B484
 		BCS	loc_B52F
-		LDA	($1F),Y
+		LDA	(unk_1F),Y
 		JSR	sub_B484
 		BCS	loc_B52F
 		BCC	loc_B532
@@ -10186,25 +10195,25 @@ loc_B53E:
 					; X is MSB of size
 					; Y is LSB of size
 		LDY	#1
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		TAX
 		INY
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		TAY
 		JSR	sub_85D8
 		PHA
 		TYA
 		LDY	#3
-		STA	($1F),Y
+		STA	(unk_1F),Y
 		DEY
 		TXA
-		STA	($1F),Y
+		STA	(unk_1F),Y
 		DEY
 		PLA
-		STA	($1F),Y
+		STA	(unk_1F),Y
 		DEY
 		LDA	#$8d ; -$73 ;	'ç'
-		STA	($1F),Y
+		STA	(unk_1F),Y
 		STA	byte_6B3
 		LDA	unk_1E
 		ORA	#2
@@ -10219,7 +10228,7 @@ loc_B59E:
 loc_B5A3:				
 		LDY	#3
 		CLC
-		LDA	($33),Y
+		LDA	(unk_33),Y
 		ADC	unk_33
 		STA	unk_33
 		BCC	loc_B5B0
@@ -10245,7 +10254,7 @@ label_command:
 
 loc_B5C3:				
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_B5EC
 		JSR	save_line_number ; saves line number from program.
 					;
@@ -10266,7 +10275,7 @@ loc_B5D4:
 loc_B5DC:				
 		LDY	#3
 		CLC
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		ADC	byte_2B
 		STA	byte_2B
 		BCC	loc_B5E9
@@ -10326,10 +10335,10 @@ loc_B621:
 		LDA	byte_6C1
 		STA	byte_3A
 		LDY	#1
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		PHA
 		INY
-		LDA	($39),Y
+		LDA	(byte_39),Y
 		PHA
 		LDA	#1
 		STA	editor_mode_id	; 1=command mode, 2=edit mode
@@ -10370,7 +10379,7 @@ loc_B65A: .proc
 		STA	byte_F
 		LDX	#0
 		LDY	#3
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		TAY
 		INY
 		BNE	loc_B675
@@ -10407,7 +10416,7 @@ loc_B695:
 
 loc_B698:				
 		LDY	#0
-		LDA	($1F),Y
+		LDA	(unk_1F),Y
 		CMP	#$22 ; '"'
 		BNE	loc_B6A6
 		LDA	unk_37
@@ -10422,7 +10431,7 @@ loc_B6AA:
 		JMP	loc_B78C
 
 loc_B6AD:				
-		LDA	($1F),Y
+		LDA	(unk_1F),Y
 		CMP	#$8d ; -$73 ;	'ç'
 		BNE	loc_B6AA
 		LDA	unk_1F
@@ -10467,11 +10476,11 @@ loc_B6DA:
 
 loc_B6DF:				
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		CMP	byte_21
 		BNE	loc_B6D4
 		INY
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		CMP	byte_22
 		BNE	loc_B6D4
 		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
@@ -10482,7 +10491,7 @@ loc_B6DF:
 		LDY	#4
 
 loc_B6F9:				
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		CMP	#$20 ; ' '
 		BNE	loc_B703
 		INY
@@ -10494,7 +10503,7 @@ loc_B703:
 		INY
 
 loc_B708:				
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		CMP	#$20 ; ' '
 		BNE	loc_B712
 		INY
@@ -10514,7 +10523,7 @@ loc_B712:
 
 loc_B724:				
 		INY
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		JSR	sub_B484
 		BCC	loc_B72F
 		INX
@@ -10651,7 +10660,7 @@ loc_B7DD:
 		LDY	#3
 		CLC
 		LDA	byte_2B
-		ADC	($2B),Y
+		ADC	(byte_2B),Y
 		STA	byte_C
 		LDA	byte_2C
 		ADC	#0
@@ -11194,7 +11203,7 @@ back_command_error:
 		JMP	loc_859D
 
 loc_BA98:				
-		LDA	($3E),Y		; get char from	command	line
+		LDA	(byte_3E),Y		; get char from	command	line
 		AND	#$DF		; toupper
 
 find_colour_loop:			
@@ -11366,7 +11375,7 @@ goto_line_command .proc
 					; Exit:
 					; (byte_2B) points to most suitable line
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_BBB0
 		JSR	save_line_number ; saves line number from program.
 					;
@@ -11520,7 +11529,7 @@ loc_BC42:
 
 loc_BC7C:				
 		LDY	#1
-		LDA	($2B),Y
+		LDA	(byte_2B),Y
 		BMI	loc_BC8D
 		JSR	advance_2b_to_next_line
 		INC	byte_38
@@ -11565,10 +11574,10 @@ loc_BCA4:
 					; Exit:
 					; (byte_2B) points to most suitable line
 		LDY	#2
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		TAX
 		DEY
-		LDA	($2F),Y
+		LDA	(unk_2F),Y
 		TAY
 		JSR	print_number
                 JSR	OSNEWL
@@ -11691,10 +11700,10 @@ sub_BD83:
 
 sub_BD8D:				
 		LDY	#2		; offset of line number	MSB
-		LDA	($17),Y		; get line number MSB
+		LDA	(oshwm),Y		; get line number MSB
 		TAX
 		DEY			; offset of line number	LSB
-		LDA	($17),Y		; get line number LSB
+		LDA	(oshwm),Y		; get line number LSB
 		TAY
 ; End of function sub_BD8D
 
@@ -12248,14 +12257,14 @@ done:
 find_program_name: .proc
                 ; check for intial 13.
                 ldy #0
-                lda ($17),y
+                lda (oshwm),y
                 cmp #13
                 bne no
 
                 ; check line MSB - no program if -ve.
                 iny
 
-                lda ($17),y
+                lda (oshwm),y
                 bmi no
 
                 ldy #3
@@ -12274,7 +12283,7 @@ find_program_name: .proc
                 cmp #13
                 beq no
 
-                ; point ($3e) at name
+                ; point (byte_3e) at name
                 clc
                 tya
                 adc $17
@@ -12291,7 +12300,7 @@ no:
 
 skipspaces
                 iny
-                lda ($17),y
+                lda (oshwm),y
                 cmp #32
                 beq skipspaces
 return:
