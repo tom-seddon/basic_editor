@@ -27,16 +27,20 @@ LINE_LENGTH_LIMIT=$fc
 ; if false, CTRL+up/down = move cursor between program lines
 ORIGINAL_CTRL_UP_DOWN=true
 
+; if X bit 7 clear: set options byte to X, return old value
+; if X bit 7 set: leave options alone, return old value
 OPTIONS_OSBYTE=26
 
 OPTION_SHIFT_ESCAPE=1
+OPTION_EDIT_MODE=2
                 
 ;-------------------------------------------------------------------------
 
 ; Language entry point modes.
 ;
-; All modes must be non-zero.
 LANGUAGE_MODE_NORMAL=1
+LANGUAGE_MODE_SHIFT_ESCAPE=2
+                
 LANGUAGE_MODE_ZSAVE=$80
 LANGUAGE_MODE_ZRUN=$81
 
@@ -98,7 +102,7 @@ pop_and_copy_addrs: .macro
                 jmp test_atoi   ;+0
 
                 ; random thing I wanted to test.
-                jmp clear_5B1_to_600 ;+3
+                jmp language.clear_5B1_to_600 ;+3
 
                 ; random thing I wanted to test.
                 jmp test_detokenize_one_line_memset ;+6
@@ -119,7 +123,7 @@ test_B0BB: .proc
 addrs:=(byte_25,byte_26,byte_27,byte_28)
                 push_and_copy_addrs addrs,$70
                 txa
-                jsr sub_B0BB
+                jsr language.sub_B0BB
                 pop_and_copy_addrs addrs,$70
                 rts
                 .pend
@@ -127,13 +131,13 @@ addrs:=(byte_25,byte_26,byte_27,byte_28)
 test_loc_9e1d_memset: .proc
 addrs:=(byte_C,byte_D,byte_3A)
                 push_addrs addrs
-                lda sub_9DEA.loc_9e2e
+                lda language.sub_9DEA.loc_9e2e
                 pha
                 lda #$60
-                sta sub_9DEA.loc_9e2e
-                jsr sub_9DEA.loc_9e1d
+                sta language.sub_9DEA.loc_9e2e
+                jsr language.sub_9DEA.loc_9e1d
                 pla
-                sta sub_9DEA.loc_9e2e
+                sta language.sub_9DEA.loc_9e2e
                 pop_addrs addrs
                 rts
                 
@@ -144,7 +148,7 @@ addrs:=(byte_C,byte_D,byte_2C,byte_3A)
                 push_addrs addrs
                 lda #$ff        ;make it just do the memset
                 sta byte_2C
-                jsr detokenize_one_line
+                jsr language.detokenize_one_line
                 pop_addrs addrs
                 rts
                 .pend
@@ -154,7 +158,7 @@ addrs:=(byte_C,byte_D,byte_3A)
                 sta $70
                 push_addrs addrs
                 lda $70
-                jsr memset
+                jsr language.memset
                 pop_addrs addrs
                 rts
                 .pend
@@ -164,7 +168,7 @@ addrs:=(byte_C,byte_D,byte_3E,byte_3F)
                 push_addrs addrs
                 stx byte_C
                 sty byte_D
-                jsr atoi
+                jsr language.atoi
                 php
                 pla
                 sta $72
@@ -179,7 +183,7 @@ addrs:=(byte_C,byte_D,byte_3E,byte_3F)
                 .endif
 
 rom_start:
-                JMP     language_entry
+                JMP     language.language_entry
                 JMP     svc
 
                 .byte ROM_FLAGS
@@ -376,19 +380,14 @@ svc_brk: .proc
                 cmp #17          ;was it Escape?
                 bne ply_and_svc_done ;taken if not Escape
 
-                ; poll SHIFT
-                lda #$81        ;poll for key (MasRef D.2-38)
-                ldx #$ff        ;-1, shift
-                jsr osbyte_yff
-                inx
-                bne ply_and_svc_done ;taken if X!=$ff, i.e., shift not
-                                     ;pressed
+                jsr language.poll_shift
+                bne ply_and_svc_done ;taken shift not pressed
 
                 ; Shift+ESCAPE pressed during BASIC...
                 lda #$7e        ;acknowledge escape (MasRef D.2-37)
                 jsr osbyte
                 
-                ldx #LANGUAGE_MODE_NORMAL
+                ldx #LANGUAGE_MODE_SHIFT_ESCAPE
                 jmp enter_language
                 
                 .pend
@@ -400,14 +399,19 @@ svc_osbyte: .proc
                 cmp #OPTIONS_OSBYTE
                 bne svc.done
 
-                lda $f0
-                cmp #1
-                
+                ; save off old value
                 lda $df0,x
-                and #%11111110
-                adc #0
-                sta $df0,x
+                pha
 
+                ; update value, if X bit 7 clear
+                lda $f0
+                bmi +
+                sta $df0,x
++
+
+                ; return old value in X
+                pla
+                sta $f0
                 jmp svc.claimed
                 
                 .pend
@@ -499,16 +503,15 @@ osbyte_yff:
 ;                 jmp ($f0)
                 
                 ; .pend
-                
+
 ;-------------------------------------------------------------------------
-
-
                 
                 .bend
                 .send service
 ;-------------------------------------------------------------------------
 
                 .section language
+language: .block
 ; .logical LANG_BASE+(*-SVC_BASE)
 
 init_language_entry_mode: .proc
@@ -616,6 +619,7 @@ command_prompt_loop:
 
                 LDX     #$FF
                 TXS
+                
                 JSR     initialise
                 JSR     find_program
                 BCS     loc_8147
@@ -647,28 +651,52 @@ loc_8144:
                                         ; Exit:
                                         ; current_line_no_msb, current_line_no_lsb = the line number
 
-loc_8147:                               
-                                        
+loc_8147:
+                ; do a one-time check for SHIFT+ESCAPE - if entered
+                ; due to SHIFT+ESCAPE, and the options byte says edit
+                ; mode was the last one used, go to edit mode.
+                lda language_entry_mode
+                cmp #LANGUAGE_MODE_SHIFT_ESCAPE
+                bne +           ;not SHIFT+ESCAPE, or we already
+                                ;checked
+
+                ; pretend it was entered with LANGUAGE_MODE_NORMAL
+                lda #LANGUAGE_MODE_NORMAL
+                sta language_entry_mode
+
+                jsr get_options
+                and #OPTION_EDIT_MODE
+                beq +           ;taken if last mode wasn't edit mode
+
+                jmp enter_edit_mode
+                
++
+                
+                jsr clear_edit_mode_option
                 JSR     print_command_prompt
                 JSR     do_command_line
 
 command_loop:
                 LDA     editor_mode_id  ; 1=command mode, 2=edit mode
                 CMP     #2              ; edit mode?
-                BNE     command_prompt_loop     ; branch taken if not edit mode
-; edit mode
+                BNE     command_prompt_loop ; branch taken if command mode already
+                
+                ; leave edit mode
                 LDA     byte_15
                 BEQ     loc_8163
+                
                 LDA     current_line_no_msb
                 STA     byte_50
                 LDA     current_line_no_lsb
                 STA     byte_51
+                
                 JMP     command_prompt_loop
 
 loc_8163:                               
                 LDA     byte_6C1
                 CMP     #-1
                 BEQ     command_prompt_loop
+                
                 STA     byte_3A
                 LDA     byte_6C0
                 STA     byte_39
@@ -678,17 +706,12 @@ loc_8163:
                 INY
                 LDA     (byte_39),Y
                 STA     byte_51
+                
                 JMP     command_prompt_loop
 ; End of function language_entry
-.pend
+                .pend
 
-; enter_command_mode: .proc
-;                 lda #12
-;                 jsr oswrch
-
-;                 jmp language_entry.command_loop;ok
-                
-;                 .pend
+;-------------------------------------------------------------------------
 
 init_brkv_and_oshwm: .proc
 
@@ -1531,7 +1554,9 @@ tensL:
                 .byte <TENS
 tensH:
                 .byte >TENS
-                
+
+;-------------------------------------------------------------------------
+
 print_on_off: .proc
                 ; prints "Off" if Z set, "On" if Z clear
                 beq off
@@ -1548,7 +1573,9 @@ off:
                 rts
                 
                 .pend
-                
+
+;-------------------------------------------------------------------------
+
 do_command_line .proc		
 		JSR	clear_5B1_to_600
 		LDA	#0
@@ -1561,8 +1588,7 @@ do_command_line .proc
                 
 ; ESCAPE was pressed at command line
 
-                ldx #$ff        ;FF=shift, FE=ctrl
-                jsr poll_key
+                jsr poll_shift
                 beq bye
                 
 		LDA	is_bad_program
@@ -1584,6 +1610,8 @@ bye:
                 
 ; End of function do_command_line
                 .pend
+
+;-------------------------------------------------------------------------
 
 command: .macro text,flags,id
                 .text \text,0
@@ -1632,7 +1660,7 @@ byte_8C95:	.byte $A
 					
 byte_8C96:	.byte 9			
 
-
+;-------------------------------------------------------------------------
 
 parse_command_line:			
 		LDY	#0
@@ -3641,6 +3669,14 @@ clear_escape_condition:
 		RTS
 
 ;-------------------------------------------------------------------------
+
+escape_key_command: .proc
+                jsr poll_shift
+                bne language_entry.command_loop
+                jmp do_command_line.bye
+                .pend
+                
+;-------------------------------------------------------------------------
 ;
 ; command flag masks: (a work in progress...)
 ;
@@ -3658,7 +3694,7 @@ command_jump_table:
                 .command_jump $20,CMD_return_key,return_key_command
                 .command_jump $24,CMD_IE,ie_cmd
                 .command_jump $24,CMD_IT,it_cmd
-                .command_jump 8,$1B,language_entry.command_loop
+                .command_jump 8,$1B,escape_key_command
                 .command_jump 0,CMD_toggle_insert_overtype,toggle_insert_overtype_command
                 .command_jump $19,$A2,top_edit_mode_command
                 .command_jump $19,CMD_f2_key,end_edit_mode_command
@@ -4736,10 +4772,24 @@ execute_non_key_command:
 		JMP	edit_mode_loop
 ; End of function edit_mode_loop
 
-
-
+;-------------------------------------------------------------------------
+;
+; poll SHIFT state.
+;
+; *this routine is also used by the service code*
+;
+; Exit:
+; X = 0	and Z set if SHIFT pressed
+poll_shift:
+                ldx #$ff
+                ; fall through
+                
+;-------------------------------------------------------------------------
+;
 ; poll state of	key.
 ;
+; *this routine is also used by the service code*
+; 
 ; Entry:
 ; X = -ve INKEY	value
 ;
@@ -4753,10 +4803,8 @@ poll_key:
 		JSR	OSBYTE
 		INX
 		RTS
-; End of function poll_key
 
-
-
+;-------------------------------------------------------------------------
 
 make_cursor_invisible:			
 					
@@ -5178,6 +5226,29 @@ loc_9D3F:
 
 ;-------------------------------------------------------------------------
 
+set_edit_mode_option:
+                jsr get_options
+                ora #OPTION_EDIT_MODE
+                bne set_options
+
+clear_edit_mode_option:
+                jsr get_options
+                and #(~OPTION_EDIT_MODE)&$ff
+                ; fall through
+set_options:
+                tax
+                ; fall through
+do_options_osbyte:
+                lda #OPTIONS_OSBYTE
+                jsr osbyte
+                txa
+                rts
+get_options:
+                ldx #$ff
+                bne do_options_osbyte
+                
+;-------------------------------------------------------------------------
+
 enter_edit_mode:
 		JSR	init_edit_mode
 		JSR	is_program_empty ; sets	C if no	program
@@ -5265,6 +5336,7 @@ loc_9DC9:
 
 loc_9DE4:				
 		JSR	sub_9FD8
+                jsr set_edit_mode_option
 		JMP	edit_mode_loop
 
 ;-------------------------------------------------------------------------
@@ -12360,5 +12432,5 @@ done:
                 .endif
                 
 ;-------------------------------------------------------------------------
-
+                .bend
                 .send language
