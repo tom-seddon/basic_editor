@@ -56,11 +56,18 @@ ROM_FLAGS = %11100010
 .else
 ROM_FLAGS = %11000010
 .endif
+
+;-------------------------------------------------------------------------
+
                 
 ;-------------------------------------------------------------------------
                 
                 .section service
                 .block
+                
+osbyte_var: .function index
+                .cerror index<$a6||index>$ff,"bad OSBYTE"
+                .endf $190+index
 
                 .if BUILD_TYPE==4
 
@@ -259,10 +266,7 @@ svc_star: .proc
                 ; gives the non-HI ROM a chance, if it's there, or a
                 ; Bad Command, if it isn't (since the HI language code
                 ; can't run in the IO processor).
-                lda #$ea
-                ldx #$00
-                ldy #$ff
-                jsr osbyte
+                ldx osbyte_var($ea)
                 inx
                 bne ply_and_svc_done
                 .endif
@@ -346,27 +350,18 @@ print_help_name_loop:
 ;-------------------------------------------------------------------------
 
 svc_brk: .proc
-                lda $df0,x
+                jsr language.get_options
                 and #OPTION_SHIFT_ESCAPE
                 beq svc.done
                 
                 tya
                 pha
 
-                lda #$bb   ;read ROM number of socket containing BASIC
-                           ;(MasRef D.2-57)
-                jsr osbyte_x00_yff
-                stx $a8
-
-                ; osbyte $ba = read ROM number active at last BRK, but
-                ; the value is in X, and OSRDRM wants the ROM number
-                ; in Y. So do osbyte $b9 instead...
-                ; (MasRef D.2-56)
-                lda #$b9        
-                jsr osbyte_x00_yff
-
-                cpy $a8         ;was BRK in BASIC?
-                bne ply_and_svc_done ;taken if not BRK in BASIC
+                ldy osbyte_var($ba) ;ROM active at last BRK (MasRef
+                                    ;D.2-56)
+                cpy osbyte_var($bb) ;ROM number of socket containing
+                                    ;BASIC (MasRef D.2-57)
+                bne ply_and_svc_done;taken if not BRK in BASIC
 
                 ; MasRef D.6-1
                 lda $fd         ;error address LSB
@@ -375,6 +370,7 @@ svc_brk: .proc
                 lda $fe         ;... MSB
                 sta $f7         ;... MSB
 
+                ; Y=rom #
                 jsr osrdsc
 
                 cmp #17          ;was it Escape?
@@ -1625,7 +1621,7 @@ command_table:
                 .command "CHANGE",$15,CMD_CHANGE
                 .command "END",0,CMD_END
                 .command "EDIT",5,CMD_EDIT
-                .command "EXIT",0,CMD_EXIT
+                .command "EXIT",0,CMD_EXIT 
                 .command "FIND",5,CMD_FIND
                 .command "FORE",$21,CMD_FORE
                 .command "GOTO",0,CMD_GOTO
