@@ -42,17 +42,20 @@ You can save the program to this file using the new `ZSAVE` command
 (abbrevation `Z`), or save it to this file and then run it using the
 new `ZRUN` command (abbrevation `ZR`).
 
-## Shift+ESCAPE (in command mode)
+## SHIFT+ESCAPE (in The BASIC Editor)
 
-You can press Shift+ESCAPE at the command prompt to get back to BASIC.
+You can press SHIFT+ESCAPE at the command prompt or in edit mode to
+get back to BASIC.
 
-## Shift+ESCAPE (in BASIC)
+## SHIFT+ESCAPE (in BASIC)
 
-You can press Shift+ESCAPE at the BASIC prompt to get to The BASIC
-Editor's command prompt. Switch this on with `*FX26,1`, or switch it
-off with `*FX26,0`.
+You can press SHIFT+ESCAPE at the BASIC prompt to get back to The
+BASIC Editor. If you left The BASIC Editor while in edit mode, using
+SHIFT+ESCAPE or f9, you'll go back to edit mode again; otherwise,
+command mode.
 
-This feature is off by default.
+This feature is off by default. Switch it on with `*FX26,1`, or switch
+it off with `*FX26,0`.
 
 (This works by trapping the `Escape` error while BASIC is active, so
 you don't necessarily have to actually be at the BASIC prompt
