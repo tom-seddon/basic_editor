@@ -1,3 +1,23 @@
+# New in 1.44
+
+- Reinstate old CTRL+up/down behaviour
+- Fix screen drawing bug
+- More reliably clear screen before returning to command mode
+- Switch to Mode 135/Mode 7 when loading a file that's too large for
+  the current mode
+- Fix occasionally missing output when using *BR or *BZ
+- Add separate `IFIND`, `ICHANGE` and `QICHANGE` commands for
+  case-insensitive searching. `CASE` and `NOCASE` are gone
+- You can press SHIFT+ESCAPE in edit mode to get back to BASIC
+- When not in the second processor, you can (optionally - see docs)
+  press SHIFT+ESCAPE in BASIC to get back to The BASIC Editor
+  
+The SHIFT+ESCAPE changes mean you can treat SHIFT+ESCAPE as
+BASIC/editor toggle key.
+
+Beta status has been removed. The invasive changes introduced in 1.41
+seem to be behaving themselves.
+
 # New in 1.43-beta
 
 **1.43-beta is beta** - there may be issues, though hopefully only
