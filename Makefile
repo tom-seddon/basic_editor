@@ -16,9 +16,13 @@ build:
 	@$(MAKE) _assemble BUILD_TYPE=4 VER=_ STEM=basiced_type4
 	@$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
 	@$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
+	@$(MAKE) _assemble BUILD_TYPE=8 "VER=$(VER)" STEM=elkbasiced
+	@$(MAKE) _assemble BUILD_TYPE=9 "VER=$(VER)" STEM=elkhibasiced
 
 	@$(MAKE) _copy STEM=basiced DRIVE=$(DRIVE) BBC=R.BETOM
 	@$(MAKE) _copy STEM=hibasiced DRIVE=$(DRIVE) BBC=R.HBETOM
+	@$(MAKE) _copy STEM=elkbasiced DRIVE=$(DRIVE) BBC=R.EBETOM
+	@$(MAKE) _copy STEM=elkhibasiced DRIVE=$(DRIVE) BBC=R.EHBETOM
 	@$(MAKE) _copy STEM=basiced_type4 DRIVE=$(DRIVE) BBC=R.BE4TOM
 
 	@python tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom

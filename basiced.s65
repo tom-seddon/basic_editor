@@ -15,8 +15,10 @@ wordv=$20c
 ; BUILD_TYPE==2: Relocatable ($8000 version)
 ; BUILD_TYPE==3: Relocatable ($b800 version)
 ; BUILD_TYPE==4: assembled at $3800, for testing routines from BASIC
+; BUILD_TYPE==8: Electron
+; BUILD_TYPE==9: Electron HI (untested)
 
-; Only build types 0 and 1 are valid ROMs!
+; Only build types 0+1 and 8+9 are valid ROMs!
 
 HI_ADDRESS = $b800
 
@@ -24,6 +26,7 @@ HI_ADDRESS = $b800
                 
 RELOCATABLE: = false
 HI: = false
+ELECTRON: = false
 SVC_BASE: = $8000
 LANG_BASE: = $8000
 
@@ -31,6 +34,7 @@ LANG_BASE: = $8000
                 
 RELOCATABLE: = false
 HI: = true
+ELECTRON: = false
 SVC_BASE: = $8000
 LANG_BASE: = HI_ADDRESS
                 
@@ -38,6 +42,7 @@ LANG_BASE: = HI_ADDRESS
                 
 RELOCATABLE: = true
 HI: = false
+ELECTRON: = false
 SVC_BASE: = $8000
 LANG_BASE: = $8000
 
@@ -45,6 +50,7 @@ LANG_BASE: = $8000
                 
 RELOCATABLE: = true
 HI: = false
+ELECTRON: = false
 SVC_BASE: = $8000
 LANG_BASE: = HI_ADDRESS
 
@@ -52,12 +58,29 @@ LANG_BASE: = HI_ADDRESS
 
 RELOCATABLE: = false
 HI: = false
+ELECTRON:= false
 
 ; the ROM ought to fit (at least, in Mode 7...) starting from $3c00,
 ; but the TOC and/or extra debug junk might push the size past 16K.
 SVC_BASE: = $3800
 LANG_BASE:= $3800   
-                
+
+                .elsif BUILD_TYPE==8
+
+RELOCATABLE: = false
+HI: = false
+ELECTRON: = true
+SVC_BASE: = $8000
+LANG_BASE: = $8000
+
+                .elsif BUILD_TYPE==9
+
+RELOCATABLE: = false
+HI: = true
+ELECTRON: = true
+SVC_BASE: = $8000
+LANG_BASE: = HI_ADDRESS
+
                 .endif
 
 ;-------------------------------------------------------------------------

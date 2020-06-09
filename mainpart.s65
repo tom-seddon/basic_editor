@@ -792,7 +792,11 @@ loc_82CB:
                 PHA
                 LDA     cursor_size
                 PHA
+.if !ELECTRON
                 LDA     #0
+.else
+                LDA     #1
+.endif
                 STA     is_insert_mode  ; 0=overtype 1=insert
                 LDA     #$60 ; '`'
                 STA     cursor_size
@@ -4802,11 +4806,12 @@ poll_key:
 ;-------------------------------------------------------------------------
 
 make_cursor_invisible:			
-					
+
+.if !ELECTRON
+
 		LDX	#10
 		LDY	#32
 ; End of function make_cursor_invisible
-
 
 
 ; X = CRTC register
@@ -4831,11 +4836,43 @@ write_crtc:
 		RTS
 ; End of function write_crtc
 
+.else
 
+		LDY #0
+; End of function make_cursor_invisible
+
+
+; Y = VDU 23,1,Y,0;0;0;0;
+
+set_cursor_state:
+
+		PHA			; save A
+		TYA
+		PHA			; save Y
+		LDA #23
+		JSR OSWRCH
+		LDA #1
+		JSR OSWRCH
+		TYA
+		JSR OSWRCH
+		LDY #8
+		LDA #0
+set_cursor_shape_8zeros:
+		JSR OSWRCH
+		DEY
+		BNE set_cursor_shape_8zeros
+		PLA
+		TAY
+		PLA
+		RTS
+
+.endif
 
 
 reset_cursor_shape:			
-					
+
+.if !ELECTRON
+
 		JSR	get_current_mode_in_x
 		LDA	#0
 		LDY	is_insert_mode	; 0=overtype 1=insert
@@ -4859,6 +4896,20 @@ loc_9BE6:
 loc_9BE9:				
 		LDX	#11
 		JMP	write_crtc
+
+.else
+
+		LDY #1	; show cursor
+		JSR set_cursor_state
+
+		LDA is_insert_mode ; 0=overtype 1=insert
+		ORA #2 ; to give 2=steady 3=flashing
+		TAY
+		JMP set_cursor_state
+
+.endif
+
+
 ; End of function reset_cursor_shape
 
 ;-------------------------------------------------------------------------
@@ -6814,7 +6865,11 @@ loc_A5F7:
 		RTS
 
 run_or_exit_command: .proc
+.if !ELECTRON
 		LDA	#0
+.else
+		LDA #1
+.endif
 		STA	is_insert_mode	; 0=overtype 1=insert
 		LDA	#$60 ; '`'
 		STA	cursor_size
