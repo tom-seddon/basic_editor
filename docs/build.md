@@ -10,5 +10,5 @@ Prerequisites:
 To build, type `make`.
 
 The ROM images are written to a folder called `.build`: `basiced.rom`
-and `hibasiced.rom`.
-
+and `hibasiced.rom`.  The Electron ROM images are called
+`elkbasiced.rom` and `elkhibasiced.rom`.

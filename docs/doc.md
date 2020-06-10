@@ -157,3 +157,52 @@ Notes:
   slot; when the Tube isn't active, the ROM does basically nothing, so
   when you type `*BE` you'll get The BASIC Editor.
 
+# Electron version
+
+The Electron version is largely identical to the BBC normal version
+but has had some changes to accommodate differences in the Electron's
+display and keyboard capabilities.
+
+When in the editor, insert mode is indicated by a flashing cursor.
+Overwrite mode uses a steady cursor.
+
+Function keys 0-9 do the same thing as they do on the BBC but you
+obviously have to press FUNC + number.  Also note that f0 (execute)
+is at the other end of the row.
+
+SHIFT and CTRL, however, cannot be used with function keys, nor COPY
+and the cursor keys.  Instead, these functions have been remapped to
+FUNC + various letters and punctuation characters:
+
+- A - swap case (SHIFT+f3)
+- B - number (SHIFT+f7)
+- C - foreground (CTRL+f8)
+- D - previous statement (CTRL+left)
+- E - extend statement (SHIFT+f4)
+- F - next statement (CTRL+right)
+- G - goto (CTRL+f1)
+- J - join statements (CTRL+f3)
+- K - mark (CTRL+f0)
+- L - label (SHIFT+f6)
+- M - mode (SHIFT+f5) - currently unused
+- N - new (SHIFT+f0)
+- O - old (SHIFT+f1)
+- Q - scroll on (CTRL+f5)
+- R - ZRUN (CTRL+f9)
+- S - split statement (CTRL+f2)
+- T - insert at top (SHIFT+f8)
+- U - undo (SHIFT+f2)
+- V - background (CTRL+f7)
+- W - scroll off (CTRL+f6)
+- Y - repeat (CTRL+f4)
+- Z - ZSAVE (SHIFT+f9)
+- ,/< - start of line (SHIFT+left)
+- ./> - end of line (SHIFT+right)
+- :/* - screen up (SHIFT+up)
+- (slash)/? - screen down (SHIFT+down)
+- -/= - top of screen (CTRL+up)
+- ;/+ - bottom of screen (CTRL+down)
+
+Note that these shortcuts prevent you from using FUNC + the letter keys to
+obtain the keyword firmkeys that you would normally get in BASIC on the
+Electron.
