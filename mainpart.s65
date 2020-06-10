@@ -208,6 +208,9 @@ aTheBasicEditor_0:
                 .endif
                 .text 0
                 .text VER
+.if ELECTRON
+				.text "E"
+.endif
 .if RELOCATABLE
                 .text "r"
 .endif
@@ -1092,11 +1095,11 @@ loc_8437:
                 LDX     #$A0
                 LDA     #225
                 JSR     osbyte_with_y0
-; Set SHIFT+function keys to produce ASCII $B0...$B9
+; Set SHIFT+function keys (BBC) or FUNC+A-P (Electron) to produce ASCII $B0...$B9
                 LDX     #$B0
                 LDA     #226
                 JSR     osbyte_with_y0
-; Set Ctrl+function keys to produce ASCII $C0...$C9
+; Set Ctrl+function keys (BBC) or FUNC+Q-Z+punctuation (Electron) to produce ASCII $C0...$C9
                 LDX     #$C0 ; '�'
                 LDA     #227
                 JMP     osbyte_with_y0
@@ -3628,11 +3631,20 @@ reset_keys_settings:
 		LDX	#1
 		LDA	#225		; reset	F key status?
 		JSR	osbyte_with_y0
+.if !ELECTRON
 		LDX	#128
 		LDA	#226		; reset	Shift+F	key status?
 		JSR	osbyte_with_y0
 		LDA	#227
 		JMP	osbyte_with_x0_y0
+.else
+		LDX #1
+		LDA #226		; reset FUNC+A-P
+		JSR osbyte_with_y0
+		LDX #1
+		LDA #227		; reset FUNC+Q-Z+punctuation
+		JMP osbyte_with_y0
+.endif
 ; End of function reset_keys_settings
 
 

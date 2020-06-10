@@ -1,3 +1,7 @@
+.if !ELECTRON
+
+; BBC Micro key layout
+;
 ; Commands are bound to keys by giving them IDs in the following
 ; ranges:
 ;
@@ -18,7 +22,7 @@
 ; More cases can be added in edit_mode_loop - see check_return_key,
 ; check_tab_key, check_delete_key, etc.
 
-; plain
+; key
 CMD_EXECUTE: = $A0
 CMD_TOGGLE_INS_OVER: = $A1
 CMD_TOP_KEY: = $A2
@@ -35,7 +39,7 @@ CMD_RIGHT = $AD
 CMD_DOWN = $AE
 CMD_UP = $AF
 
-; shift+
+; shift+key
 CMD_NEW: = $B0
 CMD_OLD: = $B1
 CMD_UNDO: = $B2
@@ -52,7 +56,7 @@ CMD_LINE_END = $BD
 CMD_SCREEN_DOWN = $BE
 CMD_SCREEN_UP = $BF
 
-; ctrl+
+; ctrl+key
 CMD_MARK: = $C0
 CMD_GOTO_KEY: = $C1
 CMD_SPLIT_STMNT: = $C2
@@ -74,6 +78,90 @@ CMD_LINE_PREV = $CF
 .endif
 
 
+.else
+
+
+; Electron key layout
+;
+; Commands are bound to keys by giving them IDs in the following
+; ranges:
+;
+; $Ax - FUNC + 0-9 ($A0-A9) and (plain) copy ($AB) + cursor (LRDU - $AC-AF)
+; $Bx - FUNC + A-P ($B0-BF)
+; $Cx - FUNC + Q-Z ($C0-C9) and (ignoring quotes) ':;,-./' ($CA-CF)
+;
+; The eletron does not support shift or ctrl with the function, copy or cursor
+; keys so we have to remap things to FUNC + letters.
+;
+; More cases can be added in edit_mode_loop - see check_return_key,
+; check_tab_key, check_delete_key, etc.
+
+; FUNC + copy and cursor keys
+CMD_EXECUTE: = $A0
+CMD_TOGGLE_INS_OVER: = $A1
+CMD_TOP_KEY: = $A2
+CMD_END_KEY: = $A3
+CMD_RENUMBER_KEY: = $A4
+CMD_CONTINUE: = $A5
+CMD_DELETE_EOL: = $A6
+CMD_TOP_SCREEN: = $A7
+CMD_IE: = $A8
+CMD_EXIT: = $A9
+CMD_DELETE_FWDS = $AB
+CMD_LEFT = $AC
+CMD_RIGHT = $AD
+CMD_DOWN = $AE
+CMD_UP = $AF
+
+; FUNC + letters A-Z
+CMD_SWAP_CASE: = $B0
+CMD_NUMBER_KEY: = $B1
+CMD_FORE_KEY := $B2
+CMD_PREV_STMNT = $B3
+CMD_EXTEND_STMNT: = $B4
+CMD_NEXT_STMNT = $B5
+CMD_GOTO_KEY: = $B6
+; $B7 unused
+CMD_tab_key: = $B8
+CMD_JOIN_STMNT: = $B9
+CMD_MARK: = $BA
+CMD_LABEL_KEY: = $BB
+CMD_MODE_KEY: = $BC
+CMD_NEW: = $BD
+CMD_OLD: = $BE
+; $BF unused
+CMD_SCROLL: = $C0
+CMD_ZRUN: = $C1
+CMD_SPLIT_STMNT: = $C2
+CMD_IT: = $C3
+CMD_UNDO: = $C4
+CMD_BACK_KEY := $C5
+CMD_NOSCROLL: = $C6
+; $C7 unused
+CMD_REPEAT: = $C8
+CMD_ZSAVE: = $C9
+
+; FUNC + (ignoring quotes) ':;,-./'
+CMD_SCREEN_UP = $CA
+; $CB used in ORIGINAL_CTRL_UP_DOWN below
+CMD_LINE_START = $CC
+; $CD used in ORIGINAL_CTRL_UP_DOWN below
+CMD_LINE_END = $CE
+CMD_SCREEN_DOWN = $CF
+
+; FUNC + D F
+.if ORIGINAL_CTRL_UP_DOWN
+CMD_SCREEN_TOP = $CD
+CMD_SCREEN_BOTTOM = $CB
+.else
+CMD_LINE_NEXT = $CB
+CMD_LINE_PREV = $CD
+.endif
+
+
+.endif
+
+
 ; numbers outside $A0-$CF are internal numbers for triggering commands and
 ; don't map directly to key codes, so they just need to be unique
 
@@ -88,7 +176,9 @@ CMD_INSERT: = $D7
 CMD_OVERTYPE: = $D8
 CMD_INFO: = $D9
 CMD_goto_line: = $DA
+.if !ELECTRON
 CMD_tab_key: = $DB
+.endif
 CMD_RENUMBER: = $DC
 CMD_LOAD: = $DD
 CMD_APPEND: = $DE
