@@ -17,26 +17,66 @@
 ;
 ; More cases can be added in edit_mode_loop - see check_return_key,
 ; check_tab_key, check_delete_key, etc.
-;
-; 
 
-CMD_toggle_insert_overtype: = $A1
-CMD_f2_key: = $A3
-CMD_f4_key: = $A4
+; plain
+CMD_EXECUTE: = $A0
+CMD_TOGGLE_INS_OVER: = $A1
+CMD_TOP_KEY: = $A2
+CMD_END_KEY: = $A3
+CMD_RENUMBER_KEY: = $A4
+CMD_CONTINUE: = $A5
+CMD_DELETE_EOL: = $A6
+CMD_TOP_SCREEN: = $A7
 CMD_IE: = $A8
 CMD_EXIT: = $A9
-                
+CMD_DELETE_FWDS = $AB
+CMD_LEFT = $AC
+CMD_RIGHT = $AD
+CMD_DOWN = $AE
+CMD_UP = $AF
+
+; shift+
 CMD_NEW: = $B0
 CMD_OLD: = $B1
-CMD_shift_f2_key: = $B2
-CMD_shift_f3_key: = $B3
-CMD_shift_f4_key: = $B4
-CMD_shift_f5_key: = $B5
-CMD_shift_f6_key: = $B6
-CMD_shift_f7_key: = $B7
+CMD_UNDO: = $B2
+CMD_SWAP_CASE: = $B3
+CMD_EXTEND_STMNT: = $B4
+CMD_MODE_KEY: = $B5
+CMD_LABEL_KEY: = $B6
+CMD_NUMBER_KEY: = $B7
 CMD_IT: = $B8
+CMD_ZSAVE: = $B9
+; unused - $BB
+CMD_LINE_START = $BC
+CMD_LINE_END = $BD
+CMD_SCREEN_DOWN = $BE
+CMD_SCREEN_UP = $BF
+
+; ctrl+
+CMD_MARK: = $C0
+CMD_GOTO_KEY: = $C1
+CMD_SPLIT_STMNT: = $C2
+CMD_JOIN_STMNT: = $C3
+CMD_REPEAT: = $C4
 CMD_SCROLL: = $C5
 CMD_NOSCROLL: = $C6
+CMD_BACK_KEY := $C7
+CMD_FORE_KEY := $C8
+CMD_ZRUN: = $C9
+CMD_PREV_STMNT = $CC
+CMD_NEXT_STMNT = $CD
+.if ORIGINAL_CTRL_UP_DOWN
+CMD_SCREEN_BOTTOM = $CE
+CMD_SCREEN_TOP = $CF
+.else
+CMD_LINE_NEXT = $CE
+CMD_LINE_PREV = $CF
+.endif
+
+
+; numbers outside $A0-$CF are internal numbers for triggering commands and
+; don't map directly to key codes, so they just need to be unique
+
 CMD_RUN: = $D0
 CMD_MODE: = $D1
 CMD_NUMBER: = $D2
@@ -66,9 +106,6 @@ CMD_EDIT: = $E9
 CMD_TOP: = $EA
 CMD_END: = $EB
 CMD_shift_tab_key: = $EC
-CMD_ZSAVE: = $b9
 CMD_IFIND: = $EF
 CMD_ICHANGE: = $F0
 CMD_QICHANGE: = $F1
-CMD_ZRUN: = $c9
-                

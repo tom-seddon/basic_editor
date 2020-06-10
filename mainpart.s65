@@ -1093,7 +1093,7 @@ loc_8437:
                 LDA     #226
                 JSR     osbyte_with_y0
 ; Set Ctrl+function keys to produce ASCII $C0...$C9
-                LDX     #$C0 ; '¿'
+                LDX     #$C0 ; 'ÔøΩ'
                 LDA     #227
                 JMP     osbyte_with_y0
 
@@ -1310,7 +1310,7 @@ loc_855A:
 		CMP	(byte_25),Y
 		BNE	loc_8576
 		LDA	byte_35
-		ORA	#$80 ; 'Ä'
+		ORA	#$80 ; 'ÔøΩ'
 		STA	$40,X
 		INX
 		LDA	byte_36
@@ -2956,7 +2956,7 @@ loc_91AA:
 		JMP	loc_912C
 
 loc_91BB:				
-		CMP	#$A7 ; -$59 ;	'ß'
+		CMP	#$A7 ; -$59 ;	'ÔøΩ'
                 beq edit_found_line
                 cmp #13
                 bne loc_91C5
@@ -2965,7 +2965,7 @@ edit_found_line:
 		JMP	loc_9DA8
 
 loc_91C5:				
-		CMP	#$AF ; -$51 ;	'Ø'
+		CMP	#$AF ; -$51 ;	'ÔøΩ'
 		BNE	loc_91E3
 		LDA	byte_3B
 		BNE	loc_91DE
@@ -3691,40 +3691,40 @@ command_jump_table:
                 .command_jump $24,CMD_IE,ie_cmd
                 .command_jump $24,CMD_IT,it_cmd
                 .command_jump 8,$1B,escape_key_command
-                .command_jump 0,CMD_toggle_insert_overtype,toggle_insert_overtype_command
-                .command_jump $19,$A2,top_edit_mode_command
-                .command_jump $19,CMD_f2_key,end_edit_mode_command
-                .command_jump $19,CMD_f4_key,renumber_edit_mode_command
+                .command_jump 0,CMD_TOGGLE_INS_OVER,toggle_insert_overtype_command
+                .command_jump $19,CMD_TOP_KEY,top_edit_mode_command
+                .command_jump $19,CMD_END_KEY,end_edit_mode_command
+                .command_jump $19,CMD_RENUMBER_KEY,renumber_edit_mode_command
                 .command_jump $A,CMD_EXIT,run_or_exit_command
                 .command_jump 2,CMD_NEW,new_command
                 .command_jump 1,CMD_OLD,old_command
-                .command_jump 0,CMD_shift_f2_key,undo_edit_mode_command
-                .command_jump 0,CMD_shift_f4_key,extend_statement_edit_mode_command
-                .command_jump 0,CMD_shift_f3_key,swap_case_edit_mode_command
-                .command_jump $19,$A7,top_of_screen_edit_mode_command
-                .command_jump 0,$A0,execute_edit_mode_command
-                .command_jump 0,$C7,background_edit_mode_command
-                .command_jump 0,$C8,foreground_edit_mode_command
-                .command_jump 0,$A6,delete_to_end_of_line_edit_mode_command
+                .command_jump 0,CMD_UNDO,undo_edit_mode_command
+                .command_jump 0,CMD_EXTEND_STMNT,extend_statement_edit_mode_command
+                .command_jump 0,CMD_SWAP_CASE,swap_case_edit_mode_command
+                .command_jump $19,CMD_TOP_SCREEN,top_of_screen_edit_mode_command
+                .command_jump 0,CMD_EXECUTE,execute_edit_mode_command
+                .command_jump 0,CMD_BACK_KEY,background_edit_mode_command
+                .command_jump 0,CMD_FORE_KEY,foreground_edit_mode_command
+                .command_jump 0,CMD_DELETE_EOL,delete_to_end_of_line_edit_mode_command
                 .command_jump 1,CMD_delete_key,delete_key_command
                 .command_jump 1,CMD_shift_delete_key,loc_AAC8
-                .command_jump 1,$ab,loc_AAC8
-                .command_jump 0,$AC,cursor_left_edit_mode_command
-                .command_jump 0,$AD,cursor_right_edit_mode_command
-                .command_jump 0,$AE,cursor_down_edit_mode_command
-                .command_jump 0,$AF,cursor_up_edit_mode_command
-                .command_jump 0,$BC,shift_cursor_left_edit_mode_command
-                .command_jump 0,$BD,shift_cursor_right_edit_mode_command
-                .command_jump $18,$BE,shift_cursor_down_edit_mode_command
-                .command_jump $18,$BF,shift_cursor_up_edit_mode_command
-                .command_jump 0,$CC,move_to_prev_stmt_edit_mode_command
-                .command_jump 0,$CD,move_to_next_stmt_edit_mode_command
+                .command_jump 1,CMD_DELETE_FWDS,loc_AAC8
+                .command_jump 0,CMD_LEFT,cursor_left_edit_mode_command
+                .command_jump 0,CMD_RIGHT,cursor_right_edit_mode_command
+                .command_jump 0,CMD_DOWN,cursor_down_edit_mode_command
+                .command_jump 0,CMD_UP,cursor_up_edit_mode_command
+                .command_jump 0,CMD_LINE_START,shift_cursor_left_edit_mode_command
+                .command_jump 0,CMD_LINE_END,shift_cursor_right_edit_mode_command
+                .command_jump $18,CMD_SCREEN_DOWN,shift_cursor_down_edit_mode_command
+                .command_jump $18,CMD_SCREEN_UP,shift_cursor_up_edit_mode_command
+                .command_jump 0,CMD_PREV_STMNT,move_to_prev_stmt_edit_mode_command
+                .command_jump 0,CMD_NEXT_STMNT,move_to_next_stmt_edit_mode_command
                 .if ORIGINAL_CTRL_UP_DOWN
-                .command_jump $10,$CE,move_to_bottom_of_screen_edit_mode_command
-                .command_jump $10,$CF,move_to_top_of_screen_edit_mode_command
+                .command_jump $10,CMD_SCREEN_BOTTOM,move_to_bottom_of_screen_edit_mode_command
+                .command_jump $10,CMD_SCREEN_TOP,move_to_top_of_screen_edit_mode_command
                 .else
-                .command_jump $10,$CE,move_to_next_line_edit_mode_command
-                .command_jump $10,$CF,move_to_prev_line_edit_mode_command
+                .command_jump $10,CMD_LINE_NEXT,move_to_next_line_edit_mode_command
+                .command_jump $10,CMD_LINE_PREV,move_to_prev_line_edit_mode_command
                 .endif
                 .command_jump 2,CMD_LOAD,load_command
                 .command_jump 0,CMD_APPEND,append_command
@@ -3744,17 +3744,17 @@ command_jump_table:
                 .command_jump 0,$63,loc_AD39
                 .command_jump 0,$64,loc_AEB9
                 .command_jump 0,$6D,loc_AD39
-                .command_jump 0,$AB,copy_key_edit_mode_command
+                .command_jump 0,CMD_DELETE_FWDS,copy_key_edit_mode_command
                 .command_jump 0,CMD_tab_key,tab_key_command
                 .command_jump 0,CMD_RUN,run_or_exit_command
                 .command_jump 0,CMD_MODE,mode_command
-                .command_jump 0,$C0,mark_edit_mode_command
-                .command_jump $1D,$C1,goto_edit_mode_command
+                .command_jump 0,CMD_MARK,mark_edit_mode_command
+                .command_jump $1D,CMD_GOTO_KEY,goto_edit_mode_command
                 .command_jump $40,CMD_NUMBER,number_command
                 .command_jump $40,CMD_LABEL,label_command
-                .command_jump 0,$C2,split_statement_edit_mode_command
-                .command_jump 1,$C3,join_statements_edit_mode_command
-                .command_jump $21,$C4,repeat_edit_mode_command
+                .command_jump 0,CMD_SPLIT_STMNT,split_statement_edit_mode_command
+                .command_jump 1,CMD_JOIN_STMNT,join_statements_edit_mode_command
+                .command_jump $21,CMD_REPEAT,repeat_edit_mode_command
                 .command_jump 0,CMD_SCROLL,scroll_command
                 .command_jump 0,CMD_NOSCROLL,noscroll_command
                 .command_jump 2,CMD_HELP,help_command
@@ -3763,13 +3763,13 @@ command_jump_table:
                 .command_jump 0,CMD_INSERT,insert_command
                 .command_jump 0,CMD_OVERTYPE,overtype_command
                 .command_jump 2,CMD_INFO,info_command
-                .command_jump $49,CMD_shift_f6_key,label_edit_mode_command
-                .command_jump $49,CMD_shift_f7_key,number_edit_mode_command
+                .command_jump $49,CMD_LABEL_KEY,label_edit_mode_command
+                .command_jump $49,CMD_NUMBER_KEY,number_edit_mode_command
                 .command_jump $14,CMD_goto_line,goto_line_command
                 .command_jump 0,CMD_RENUMBER,renumber_command
                 .command_jump 0,CMD_TAB,tab_command
                 .command_jump 0,CMD_GOTO,goto_command
-                .command_jump 8,$A5,continue_edit_mode_command
+                .command_jump 8,CMD_CONTINUE,continue_edit_mode_command
                 .command_jump 0,CMD_EDIT,find_command
                 .command_jump $14,CMD_TOP,top_command
                 .command_jump $14,CMD_END,end_command
@@ -3780,9 +3780,8 @@ command_jump_table:
                 .command_jump 0,CMD_QICHANGE,qichange_or_ichange_command
                 .command_jump 8,CMD_ZRUN,zrun_command
                 .if ENABLE_DEBUG
-                .command_jump 8,CMD_shift_f5_key,print_debug_stuff_edit_mode_command
+                .command_jump 8,CMD_MODE_KEY,print_debug_stuff_edit_mode_command
                 .endif
-                ; .command_jump 0,$b9,zsave_command
 		.byte $FF
 
 ;-------------------------------------------------------------------------
@@ -4135,7 +4134,7 @@ loc_9821:
 
 loc_9835:				
 		LDA	byte_400
-		CMP	#-5 ; '˚'
+		CMP	#-5 ; 'ÔøΩ'
 		BNE	loc_9840
 
 loc_983C:				
@@ -9373,10 +9372,10 @@ loc_B12E:
 		STA	(byte_27),Y
 		DEY
 		LDA	byte_21
-		AND	#-$40 ;	'¿'
+		AND	#-$40 ;	'ÔøΩ'
 		STA	byte_21
 		LDA	byte_22
-		AND	#-$40 ;	'¿'
+		AND	#-$40 ;	'ÔøΩ'
 		LSR
 		LSR
 		ORA	byte_21
@@ -9441,7 +9440,7 @@ isnumchar:
 		RTS
 ; End of function isnumchar
 
-		.byte  $B1 ; ±
+		.byte  $B1 ; ÔøΩ
 		.byte  $27 ; '
 
 
@@ -9559,7 +9558,7 @@ loc_B207:
 		JMP	sub_B196_scan_line
 
 loc_B210:				
-		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	£)
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	ÔøΩ)
 		BCC	loc_B228        ;taken if not valid symbol char
 
 loc_B215:				
@@ -9568,7 +9567,7 @@ loc_B215:
 loc_B217:
                 ; find next non-symbol char
 		LDA	(byte_27),Y
-		JSR	issymchar	;sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	ú)
+		JSR	issymchar	;sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	ÔøΩ)
 		BCC	loc_B207        ;taken if not valid symbol char
 		JSR	increment_27    ;next input char
 		JMP	loc_B217        ;
@@ -9671,7 +9670,7 @@ found_token:
                 ; check if this is actually a variable name
 		LDA	(byte_27),Y ;get input byte
 		JSR	issymchar ; sets C if A is a valid symbol char
-                                  ; (A-Z, a-z, 0-9, _, ú)
+                                  ; (A-Z, a-z, 0-9, _, ÔøΩ)
 		BCS	loc_B215  ;taken if valid symbol char - this
                                   ;is the prefix of a variable name,
                                   ;not a token
@@ -9718,7 +9717,7 @@ loc_B2B2:
 PROC_or_FN_name:				
 		LDA	(byte_27),Y ;get next input byte
 		JSR	issymchar ; sets C if A is a valid symbol char
-                                  ; (A-Z, a-z, 0-9, _, ú)
+                                  ; (A-Z, a-z, 0-9, _, ÔøΩ)
 		BCC	PROC_or_FN_name_done  ;taken if not a valid symbol char
 		JSR	increment_27 ;next input byte
 		JMP	PROC_or_FN_name     ;keep going
@@ -10036,9 +10035,9 @@ loc_B430:
 		LDA	unk_37
 		BNE	loc_B461
 		LDA	(unk_1F),Y
-		CMP	#$f4 ;-$C ; 'Ù' REM
+		CMP	#$f4 ;-$C ; 'ÔøΩ' REM
 		BEQ	loc_B476
-		CMP	#$DC ; -$24 ;	'‹' DATA
+		CMP	#$DC ; -$24 ;	'ÔøΩ' DATA
 		BEQ	loc_B476
 		CMP	#$2A ; '*'
 		BNE	loc_B446
@@ -10054,7 +10053,7 @@ loc_B446:
 loc_B44E:				
 		LDX	#1
 		STX	byte_36
-		CMP	#$8D ; -$73 ;	'ç' line number
+		CMP	#$8D ; -$73 ;	'ÔøΩ' line number
 		BNE	loc_B45A
 		LDX	#4
 		BNE	loc_B463
@@ -10184,7 +10183,7 @@ loc_B4E5:
 		JMP	loc_B4E5
 
 loc_B4EF:				
-		CMP	#$F4 ; -$C ; 'Ù'
+		CMP	#$F4 ; -$C ; 'ÔøΩ'
 		BNE	loc_B52F
 		INY
 
@@ -10297,7 +10296,7 @@ loc_B53E:
 		PLA
 		STA	(unk_1F),Y
 		DEY
-		LDA	#$8d ; -$73 ;	'ç'
+		LDA	#$8d ; -$73 ;	'ÔøΩ'
 		STA	(unk_1F),Y
 		STA	byte_6B3
 		LDA	unk_1E
@@ -10517,7 +10516,7 @@ loc_B6AA:
 
 loc_B6AD:				
 		LDA	(unk_1F),Y
-		CMP	#$8d ; -$73 ;	'ç'
+		CMP	#$8d ; -$73 ;	'ÔøΩ'
 		BNE	loc_B6AA
 		LDA	unk_1F
 		STA	byte_27
@@ -11774,7 +11773,7 @@ loc_BD7B:
 
 sub_BD83:				
 					
-		LDA	#$86 ; -$7A ;	'Ü'
+		LDA	#$86 ; -$7A ;	'ÔøΩ'
 		JSR	OSBYTE
 		LDX	#$15
 		JMP	gotoxy
@@ -11869,7 +11868,7 @@ loc_BDF5:
 		BCS	loc_BE23
 		SEC
 		SBC	#1
-		CMP	#-4 ; '¸'
+		CMP	#-4 ; 'ÔøΩ'
 		BCS	loc_BE23
 		STA	byte_400
 		BCC	loc_BE57
@@ -11885,7 +11884,7 @@ loc_BE09:
 		LDY	unk_6AE
 		BMI	loc_BE2B
 		BCS	loc_BE23
-		CMP	#-4 ; '¸'
+		CMP	#-4 ; 'ÔøΩ'
 		BCC	loc_BE2B
 
 loc_BE23:				
