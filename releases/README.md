@@ -1,3 +1,7 @@
+# New in 1.45
+
+- Electron version, thanks to https://github.com/mincebert
+
 # New in 1.44
 
 - Reinstate old CTRL+up/down behaviour

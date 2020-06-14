@@ -55,6 +55,8 @@ release:
 	$(MAKE) build
 	cp $(DEST)/basiced.rom $(RELEASES)/$(VER)/
 	cp $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
+	cp $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
+	cp $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
 
 ##########################################################################
 ##########################################################################
