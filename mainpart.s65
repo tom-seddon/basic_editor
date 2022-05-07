@@ -7447,7 +7447,7 @@ get_distance_from_eol: .proc
                 lda cursor_offset
                 sec
                 sbc byte_400
-                bmi within_line
+                bcc within_line
                 beq at_end
                 cmp #1
                 beq past_end
