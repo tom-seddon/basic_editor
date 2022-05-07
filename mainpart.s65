@@ -4792,7 +4792,7 @@ execute_non_key_command:
 ; Exit:
 ; X = 0	and Z set if SHIFT pressed
 poll_shift:
-                ldx #$ff
+                ldx #$ff        ;must be position-independent
                 ; fall through
                 
 ;-------------------------------------------------------------------------
@@ -4807,13 +4807,12 @@ poll_shift:
 ; Exit:
 ; X = 0	and Z set if key pressed
 
-poll_key:				
-					
-		LDY	#$FF
-		LDA	#129
-		JSR	OSBYTE
-		INX
-		RTS
+poll_key:                       ;must be position-independent
+		LDY	#$FF    ;must be position-independent
+		LDA	#129    ;must be position-independent
+		JSR	OSBYTE  ;must be position-independent
+		INX             ;must be position-independent
+		RTS             ;must be position-independent
 
 ;-------------------------------------------------------------------------
 
@@ -5296,14 +5295,14 @@ clear_edit_mode_option:
 set_options:
                 tax
                 ; fall through
-do_options_osbyte:
-                lda #OPTIONS_OSBYTE
-                jsr osbyte
-                txa
-                rts
-get_options:
-                ldx #$ff
-                bne do_options_osbyte
+do_options_osbyte:                    ;must be position-independent
+                lda #OPTIONS_OSBYTE   ;must be position-independent
+                jsr osbyte            ;must be position-independent
+                txa                   ;must be position-independent
+                rts                   ;must be position-independent
+get_options:                          ;must be position-independent
+                ldx #$ff              ;must be position-independent
+                bne do_options_osbyte ;must be position-independent
                 
 ;-------------------------------------------------------------------------
 
