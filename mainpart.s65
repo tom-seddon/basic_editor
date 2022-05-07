@@ -596,23 +596,31 @@ language_start:
 
 language_start_good_program:
 
-                jsr init_language_entry_mode
-
                 LDA     #$D2
                 JSR     osbyte_with_x0_y0 ;suppress sound
-                
+
+                jsr init_language_entry_mode
+
                 jsr print_next_string
                 .byte 254       ;allow control chars
                 .byte 3         ;printer off
-                .byte 6         ;enable VDU drivers
-                .byte 4         ;use text cursor
-                .byte 26        ;restore default windows
-                .byte 12        ;CLS
-                .byte 15        ;disable paged mode
-                .byte 20        ;reset VDU19 stuff
-                .byte 17,7      ;COLOUR7
-                .byte 17,128    ;COLOUR128
+                .byte 22        ;initiate mode change
                 .byte 255
+                
+                ; https://beebwiki.mdfs.net/Reading_screen_mode
+                jsr get_current_mode_in_x
+                lda mode_to_use,x
+                pha
+
+                lda #$75
+                jsr osbyte      ;get VDU status
+                txa
+                and #$10
+                cmp #$10        ;C=1 if shadow mode
+
+                pla
+                ror a           ;set bit 7 if shadow mode
+                jsr oswrch
                 
 command_prompt_loop:
 
@@ -708,6 +716,21 @@ loc_8163:
                 
                 JMP     command_prompt_loop
 ; End of function language_entry
+
+; Map actual screen mode to the mode to use in editor (shifted left
+; 1).
+;
+; Use mode 4 instead of mode 2 or 5 - same amount of memory (or less),
+; and more lines than mode 7,
+mode_to_use:
+                .byte 0<<1      ;mode 0
+                .byte 1<<1      ;mode 1
+                .byte 4<<1      ;mode 2
+                .byte 3<<1      ;mode 3
+                .byte 4<<1      ;mode 4
+                .byte 4<<1      ;mode 5
+                .byte 6<<1      ;mode 6
+                .byte 7<<1      ;mode 7
                 .pend
 
 ;-------------------------------------------------------------------------
