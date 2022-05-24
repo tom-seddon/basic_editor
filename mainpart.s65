@@ -353,13 +353,13 @@ print_help_name_loop:
 ;-------------------------------------------------------------------------
 
 svc_brk: .proc
-                jsr language.get_options
-                and #OPTION_SHIFT_ESCAPE
-                beq svc.done
-                
                 tya
                 pha
 
+                jsr language.get_options
+                and #OPTION_SHIFT_ESCAPE
+                beq ply_and_svc_done ;taken if SHIFT+ESCAPE not enabled
+                
                 ldy osbyte_var($ba) ;ROM active at last BRK (MasRef
                                     ;D.2-56)
                 cpy osbyte_var($bb) ;ROM number of socket containing
