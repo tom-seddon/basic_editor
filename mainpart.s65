@@ -613,7 +613,27 @@ language_start_good_program:
                 .byte 17,7      ;COLOUR7
                 .byte 17,128    ;COLOUR128
                 .byte 255
+
+                ; The default windows are in effect, so text window
+                ; right column is the edge of the screen. Try to
+                ; detect 20-column modes, and switch to MODE 135 if
+                ; necessary, putting you in a 40-column mode that
+                ; definitely doesn't take up more memory than the old
+                ; one.
                 
+                ldx #$0a        ;text window right column
+                jsr read_vdu_variable
+
+                cpx #39
+                bcs display_initialized
+
+                jsr print_next_string
+                .byte 254       ;allow control chars
+                .byte 22,135
+                .byte 255
+
+display_initialized:
+
 command_prompt_loop:
 
                 LDX     #$FF
@@ -4925,11 +4945,11 @@ loc_9BE9:
 
 ;-------------------------------------------------------------------------
 
-get_current_mode_in_x: .proc
-                lda #160        ;read VDU variables (AUG 179)
+get_current_mode_in_x:
                 ldx #$55        ;current MODE (AUG 277)
+read_vdu_variable:
+                lda #160        ;read VDU variables (AUG 179)
                 jmp osbyte
-                .pend
 
 ;-------------------------------------------------------------------------
 
@@ -5268,8 +5288,7 @@ loc_9D3F:
 		LDA	#13
 		JSR	OSWRCH
 		LDX	#9		; VDU variable 9 - text	window coordinates, bottom (X) + right (Y) (AUG	p275)
-		LDA	#160		; read VDU variable value (AUG p179)
-		JSR	OSBYTE
+                jsr read_vdu_variable
 		STX	screen_height	; store	screen height
 		TYA			; get screen width in A
 		SEC
@@ -7457,9 +7476,8 @@ print_debug_stuff_value: .proc
                 tya
                 pha             ;save Y coordinate
 
-                lda #160        ;read VDU variable value (AUG 179)
                 ldx #$0a        ;right hand column (AUG 275)
-                jsr osbyte
+                jsr read_vdu_variable
 
                 ; make space for max 3 digits
                 dex
