@@ -4848,22 +4848,26 @@ make_cursor_invisible:
 ; X = CRTC register
 ; Y = value
 
-write_crtc:				
-					
-		PHA			; save A
-		TYA
-		PHA			; save Y
-		TXA
-		TAY			; value	to write = original X
-		LDX	#0		; $FE00	(CRTC register select)
-		LDA	#151		; write	SHEILA
-		JSR	OSBYTE
-		PLA
-		TAY			; value	to write = original Y
-		LDX	#1		; $FE01	(CRTC register value)
-		LDA	#151		; write	SHEILA
-		JSR	OSBYTE
-		PLA
+write_crtc:
+                lda #23
+                jsr oswrch
+
+                lda #0
+                jsr oswrch
+
+                txa
+                jsr oswrch      ;register
+
+                tya
+                jsr oswrch      ;value
+
+                lda #0
+                ldx #6
+-
+                jsr oswrch
+                dex
+                bne -
+
 		RTS
 ; End of function write_crtc
 
