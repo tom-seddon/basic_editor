@@ -1522,13 +1522,7 @@ six_spaces_string:.byte	 $20 ;
 		.byte  $20 ;
 		.byte  $20 ;
 		.byte  $20 ;
-.byte  $20 ;
-CRTC_cursor_start_values:
-                .byte 7, 7, 7, 7, 7, 7,	7, $12 
-CRTC_cursor_end_values_overtype:
-                .byte 7, 7, 7, 9, 7, 7,	9, $13 
-CRTC_cursor_end_values_insert:
-                .byte 7, 7, 7, 7, 7, 7,	7, $13 
+                .byte  $20 ;
 colour_chars:
                 .text "NRGYBMCW"
 
@@ -4903,35 +4897,46 @@ set_cursor_shape_8zeros:
 
 .endif
 
+; entry: X = mode
+;        A = value to use for mode 7
+;            (value for other modes is always $07)
+; exit: A = value to use for mode
+get_cursor_value: .proc
+                cpx #7
+                beq +
+                lda #7
++
+                rts
+                .endproc
+                
 
-reset_cursor_shape:			
+reset_cursor_shape: .proc
 
 .if !ELECTRON
 
-		JSR	get_current_mode_in_x
-		LDA	#0
-		LDY	is_insert_mode	; 0=overtype 1=insert
-		BNE	loc_9BD2
-		LDA	CRTC_cursor_start_values,X
+                jsr get_current_mode_in_x
 
-loc_9BD2:				
-		ORA	cursor_size
-		TAY
-		LDX	#10
-		JSR	write_crtc
-		JSR	get_current_mode_in_x
-		LDA	is_insert_mode	; 0=overtype 1=insert
-		BNE	loc_9BE6
-		LDY	CRTC_cursor_end_values_overtype,X
-		BNE	loc_9BE9
+                ; Pick cursor start scanline
+                lda #0
+                ldy is_insert_mode ;0=overtype 1=insert
+                bne +              ;taken if insert mode - block cursor
+                ; overtype mode - line cursor
+                lda #$12
+                jsr get_cursor_value
++
+                ora cursor_size
+                tay
+                ldx #10
+                jsr write_crtc
 
-loc_9BE6:				
-		LDY	CRTC_cursor_end_values_insert,X
-
-loc_9BE9:				
-		LDX	#11
-		JMP	write_crtc
-
+                ; Pick cursor end scanline
+                jsr get_current_mode_in_x
+                lda #$13
+                jsr get_cursor_value
+                tay
+                ldx #11
+                jmp write_crtc
+                
 .else
 
 		LDY #1	; show cursor
@@ -4943,6 +4948,7 @@ loc_9BE9:
 		JMP set_cursor_state
 
 .endif
+                .endproc
 
 
 ; End of function reset_cursor_shape
