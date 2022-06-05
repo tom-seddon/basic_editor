@@ -8,6 +8,18 @@ there's an OCR'd copy of the manual in the repo:
 The vast majority of the manual still applies. Differences are noted
 below.
 
+# General
+
+## MODE 2/5 avoidance
+
+The editor will select MODE 135 if it finds itself starting up in a
+mode with less than 40 columns. It's no fun trying to work in 20
+column mode!
+
+On a Master or B+, MODE 135 is a shadow mode; on a B or Electron it's
+equivalent to selecting mode 7. Either way, you'll never lose any
+memory compared to whatever mode was initially selected.
+
 # Command mode
 
 ## Command prompt
@@ -73,6 +85,14 @@ equivalents: `IFIND`, `ICHANGE` and `QICHANGE`.
 When using `ICHANGE` or `QICHANGE`, the replacement text's case is
 always retained.
 
+## No MODE restrictions
+
+You can select any screen mode, not just 0-7, so additional modes
+(shadow RAM, alternative display drivers, etc.) are available.
+
+The editor will switch out of a 20-column mode on startup if it
+detects one, but it will let you select one manually.
+
 # Edit mode
 
 ## Insert mode ##
@@ -87,11 +107,6 @@ blue.
 ## COPY key
 
 The COPY key deletes forward, like SHIFT+DELETE.
-
-## No MODE restrictions
-
-You can use any screen mode to edit, making shadow RAM modes
-available. (And modes 2 and 5, if you're so inclined.)
 
 ## SHIFT+left/right ##
 
