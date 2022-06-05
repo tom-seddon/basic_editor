@@ -610,8 +610,6 @@ language_start_good_program:
                 .byte 12        ;CLS
                 .byte 15        ;disable paged mode
                 .byte 20        ;reset VDU19 stuff
-                .byte 17,7      ;COLOUR7
-                .byte 17,128    ;COLOUR128
                 .byte 255
 
                 ; The default windows are in effect, so text window
@@ -627,12 +625,13 @@ language_start_good_program:
                 cpx #39
                 bcs display_initialized
 
-                jsr print_next_string
-                .byte 254       ;allow control chars
-                .byte 22,135
-                .byte 255
+                ; this does some pointless stuff, but it's fewer bytes
+                ; than doing it manually...
+                ldy #135
+                jsr set_mode
 
 display_initialized:
+                jsr set_palette
 
 command_prompt_loop:
 
@@ -4830,6 +4829,26 @@ poll_key:                       ;must be position-independent
 
 ;-------------------------------------------------------------------------
 
+print_xy000000: .proc
+                txa
+                jsr oswrch      ;register
+
+                tya
+                jsr oswrch      ;value
+
+                lda #0
+                ldx #6
+-
+                jsr oswrch
+                dex
+                bne -
+
+		RTS
+                .endproc
+
+;-------------------------------------------------------------------------
+
+
 make_cursor_invisible:			
 
 .if !ELECTRON
@@ -4849,20 +4868,8 @@ write_crtc:
                 lda #0
                 jsr oswrch
 
-                txa
-                jsr oswrch      ;register
+                jmp print_xy000000
 
-                tya
-                jsr oswrch      ;value
-
-                lda #0
-                ldx #6
--
-                jsr oswrch
-                dex
-                bne -
-
-		RTS
 ; End of function write_crtc
 
 .else
@@ -5658,40 +5665,26 @@ locret_9ED4:
                 
 ;-------------------------------------------------------------------------
 
-fg_table:
-                ;    0 1 2 3 4 5 6 7
-                .byte 1,3,7,1,1,3,1,0
-
-set_palette:				
+set_palette:
+                jsr print_next_string
+                .byte 254       ;allow control chars
+                .byte 17,1
+                .byte 17,128
+                .byte 255
 					
 		LDX	#0		; set colour 0
 		LDY	background_colour ; get	BACK colour
                 JSR	set_palette_entry ; X=logical colour, Y=physical colour
-                
-		LDA	#$87		; get MODE in Y
-                JSR	OSBYTE		; get MODE in Y
-                tya
-                and #7          ;the M128 only ever returns 0-7, but I
-                                ;don't know what other systems do.
-                tay
-                ldx fg_table,Y
-		LDY	foreground_colour ; get	FORE colour
+
+                ldx #1          ;set colour 1
+                ldy foreground_colour ;get FORE colour
 
 set_palette_entry:			
 		LDA	#19		; X=logical colour, Y=physical colour
 		JSR	OSWRCH
-		TXA
-		JSR	OSWRCH
-		TYA
-                JSR	OSWRCH
-                jsr print_next_string
-                .byte 0,0,0,255
-set_palette_done:
-		RTS
-; End of function set_palette
 
-
-
+                ; the extra chars are no problem
+                jmp print_xy000000
 
 sub_9F00:				
 		JSR	make_cursor_invisible
@@ -9904,13 +9897,15 @@ loc_B304:
 		JMP	loc_859D
 
 locret_B329:
+                ldy byte_3E
+                ; fall through to set_mode
+; Y = mode
+set_mode:
                 lda #22
                 jsr oswrch
-                lda byte_3E
+                tya
                 jsr oswrch
-		RTS
-; End of function mode_command
-
+                jmp set_palette
 
 ; mode_edit_mode_command:			
 ;                 LDY	screen_mode
@@ -11394,7 +11389,7 @@ find_colour_loop:
 
 got_colour:				
 		STY	$A,X
-		RTS
+                jmp set_palette
 ; End of function back_command
 
 
