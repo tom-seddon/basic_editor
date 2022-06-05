@@ -45,6 +45,11 @@ LANGUAGE_MODE_ZSAVE=$80
 LANGUAGE_MODE_ZRUN=$81
 
 ;-------------------------------------------------------------------------
+
+FOREGROUND_COLOUR_INDEX=127
+BACKGROUND_COLOUR_INDEX=0
+                
+;-------------------------------------------------------------------------
 ; SLRE---1-
 ; S=service
 ; L=language
@@ -2368,22 +2373,15 @@ print_next_string: .proc
                 ldx #byte_C
                 jsr incz
 
-                lda editor_mode_id
-                pha
+                ; lda editor_mode_id
+                ; pha
 
-                ; If the first byte of the string is 254, temporarily
-                ; replace editor_mode_id with 1,
-                ; allowing printing of control chars.
+                ; If the first byte of the string is 254, take a
+                ; different path that doesn't process control chars.
                 lda (0,x)
                 cmp #254
-                bne +
+                beq print_control_chars
 
-                lda #1
-                sta editor_mode_id
-                
-                jsr incz
-+
-                
 loop:
                 lda (byte_C),Y
                 jsr incz
@@ -2393,10 +2391,21 @@ loop:
                 jmp loop
 
 done:
-                pla
-                sta editor_mode_id
+                ; pla
+                ; sta editor_mode_id
                 
                 jmp (byte_C)
+
+print_control_chars:
+                jsr incz
+-
+                lda (0,x)
+                jsr incz
+                cmp #255
+                beq done
+                jsr oswrch
+                jmp -
+
                 .pend
 
 print_5_spaces: .proc                               
@@ -5668,15 +5677,15 @@ locret_9ED4:
 set_palette:
                 jsr print_next_string
                 .byte 254       ;allow control chars
-                .byte 17,1
-                .byte 17,128
+                .byte 17,FOREGROUND_COLOUR_INDEX
+                .byte 17,$80|BACKGROUND_COLOUR_INDEX
                 .byte 255
 					
-		LDX	#0		; set colour 0
+		LDX	#BACKGROUND_COLOUR_INDEX
 		LDY	background_colour ; get	BACK colour
                 JSR	set_palette_entry ; X=logical colour, Y=physical colour
 
-                ldx #1          ;set colour 1
+                ldx #FOREGROUND_COLOUR_INDEX
                 ldy foreground_colour ;get FORE colour
 
 set_palette_entry:			
