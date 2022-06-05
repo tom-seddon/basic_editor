@@ -2297,12 +2297,8 @@ gotoxy .proc
 .pend
 
 prepare_for_print_1_char: .proc
-                jsr get_current_mode_in_x
-                txa
-                and #7
-                cmp #7
-                ror a
-                sta print_1_char_teletext
+                jsr is_bitmap_mode
+                ror print_1_char_not_teletext ;set bit 7 if bitmap mode
                 rts
                 .pend
 
@@ -2326,8 +2322,8 @@ start:
                 cmp #$7f
                 beq print_space
 
-                bit print_1_char_teletext
-                bpl not_teletext
+                bit print_1_char_not_teletext
+                bmi not_teletext
 
 teletext:
                 lda print_1_char_a
@@ -4904,13 +4900,16 @@ set_cursor_shape_8zeros:
 
 .endif
 
-; entry: X = mode
-;        A = value to use for mode 7
-;            (value for other modes is always $07)
+; entry: C=1 if bitmap mode
+;        X = mode
+;        A = value to use for teletext mode
+;            (value for bitmap modes is always $07)
 ; exit: A = value to use for mode
 get_cursor_value: .proc
-                cpx #7
-                beq +
+                pha
+                jsr is_bitmap_mode
+                pla
+                bcc +
                 lda #7
 +
                 rts
@@ -4920,8 +4919,6 @@ get_cursor_value: .proc
 reset_cursor_shape: .proc
 
 .if !ELECTRON
-
-                jsr get_current_mode_in_x
 
                 ; Pick cursor start scanline
                 lda #0
@@ -4937,7 +4934,6 @@ reset_cursor_shape: .proc
                 jsr write_crtc
 
                 ; Pick cursor end scanline
-                jsr get_current_mode_in_x
                 lda #$13
                 jsr get_cursor_value
                 tay
@@ -4962,8 +4958,12 @@ reset_cursor_shape: .proc
 
 ;-------------------------------------------------------------------------
 
-get_current_mode_in_x:
-                ldx #$55        ;current MODE (AUG 277)
+is_bitmap_mode:
+                ldx #$4f        ;bytes per character
+                jsr read_vdu_variable
+                cpx #2          ;C=1 if bitmap mode
+                rts
+                
 read_vdu_variable:
                 lda #160        ;read VDU variables (AUG 179)
                 jmp osbyte

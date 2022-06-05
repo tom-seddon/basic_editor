@@ -175,7 +175,7 @@ print_1_char_a:
                 .fill 1
 print_1_char_y:
                 .fill 1
-print_1_char_teletext:
+print_1_char_not_teletext:
                 .fill 1
 itoa_value:
                 .fill 2
