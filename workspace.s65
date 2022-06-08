@@ -1,12 +1,19 @@
+; detokenized line buffer - length (1 byte), then text
 byte_400 = $400
 unk_401 = $401
+                
 unk_500 = $500
 unk_501 = $501
 unk_502 = $502
 unk_503 = $503
-unk_5B1 = $5B1
-                ; [$5b1,$600) is used
-unk_643 = $643
+
+; stores error message
+error_message_buffer = $5B1     ;runs until $5ff inclusive
+error_message_buffer_size=$600-error_message_buffer
+
+; last search string
+search_string = $643
+                
 byte_6A7 = $6A7
 byte_6A8 = $6A8
 old_stack_ptr = $6A9
@@ -30,6 +37,17 @@ unk_6BC = $6BC
 current_command_id = $6BD
 byte_6BE = $6BE
 screen_height = $6BF
+
+; lines table, indexed by screen Y coordinare
 byte_6C0 = $6C0
 byte_6C1 = $6C1
+
+; buffer for various sorts of input
 unk_700 = $700
+unk_701 = $701
+
+; second buffer for various sorts of input
+unk_780 = $780
+
+; max length for command line and search string
+max_command_line_length = 100

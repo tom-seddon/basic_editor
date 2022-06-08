@@ -1,9 +1,6 @@
 ;-------------------------------------------------------------------------
 
 KEEP_DELETE_LINE_MEMSET = false
-KEEP_CLEAR_5B1_TO_600_MEMSET = false
-KEEP_DETOKENIZE_ONE_LINE_MEMSET = false
-KEEP_9E1D_MEMSET = false
 
 ; I strip out the memmove calls one at a time...
 KEEP_B8DB_MEMMOVE = false
@@ -114,7 +111,7 @@ pop_and_copy_addrs: .macro
                 jmp test_atoi   ;+0
 
                 ; random thing I wanted to test.
-                jmp language.clear_5B1_to_600 ;+3
+                jmp language.clear_error_message_buffer ;+3
 
                 ; random thing I wanted to test.
                 jmp test_detokenize_one_line_memset ;+6
@@ -141,7 +138,7 @@ addrs:=(byte_25,byte_26,byte_27,byte_28)
                 .pend
 
 test_loc_9e1d_memset: .proc
-addrs:=(byte_C,byte_D,byte_3A)
+addrs:=(word_C+0,word_C+1,byte_3A)
                 push_addrs addrs
                 lda language.sub_9DEA.loc_9e2e
                 pha
@@ -156,7 +153,7 @@ addrs:=(byte_C,byte_D,byte_3A)
                 .pend
 
 test_detokenize_one_line_memset: .proc
-addrs:=(byte_C,byte_D,byte_2C,byte_3A)
+addrs:=(word_C+0,word_C+1,byte_2C,byte_3A)
                 push_addrs addrs
                 lda #$ff        ;make it just do the memset
                 sta byte_2C
@@ -166,7 +163,7 @@ addrs:=(byte_C,byte_D,byte_2C,byte_3A)
                 .pend
 
 test_memset: .proc
-addrs:=(byte_C,byte_D,byte_3A)
+addrs:=(word_C+0,word_C+1,byte_3A)
                 sta $70
                 push_addrs addrs
                 lda $70
@@ -176,10 +173,10 @@ addrs:=(byte_C,byte_D,byte_3A)
                 .pend
 
 test_atoi: .proc
-addrs:=(byte_C,byte_D,byte_3E,byte_3F)
+addrs:=(word_C+0,word_C+1,byte_3E,byte_3F)
                 push_addrs addrs
-                stx byte_C
-                sty byte_D
+                stx word_C+0
+                sty word_C+1
                 jsr language.atoi
                 php
                 pla
@@ -584,7 +581,7 @@ language_start:
                 STX     is_scroll_on   ; 1=scroll, 0=noscroll
                 LDA     #$E4
                 JSR     osbyte_with_y0
-                JSR     clear_5B1_to_600
+                JSR     clear_error_message_buffer
                 ldx #$ff
                 JSR     get_HIMEM_for_mode_X
                 LDA     #0
@@ -597,7 +594,7 @@ language_start:
                 JSR     find_program
                 BCC     language_start_good_program
                 JSR     clear_program
-                JSR     clear_5B1_to_600
+                JSR     clear_error_message_buffer
 
 language_start_good_program:
 
@@ -705,7 +702,7 @@ command_loop:
                 BNE     command_prompt_loop ; branch taken if command mode already
                 
                 ; leave edit mode
-                LDA     byte_15
+                LDA     last_error_number
                 BEQ     loc_8163
                 
                 LDA     current_line_no_msb
@@ -741,9 +738,9 @@ init_brkv_and_oshwm: .proc
                 CLI
                 CLD
                 LDA     #<brk_handler
-                STA     $202            ; BRKV+0
+                STA     brkv+0
                 LDA     #>brk_handler
-                STA     $203            ; BRKV+1
+                STA     brkv+1
                 LDA     #0
                 STA     oshwm
                 STA     unk_6AD
@@ -799,7 +796,7 @@ print_command_prompt: .proc
 +
 
 
-                LDA     byte_15
+                LDA     last_error_number
                 BEQ     loc_82CB
                 jsr display_error_message
 
@@ -839,21 +836,21 @@ display_error_message: .proc
 
                 JSR     OSNEWL
 
-                LDX     #$4F ; 'O'
-                LDY     #$28 ; '('
+                LDX     #79
+                LDY     #40
 
 loc_82AE:                               
-                LDA     $5D7,Y
-                CMP     #$20 ; ' '
-                BNE     loc_82BA
+                LDA     error_message_buffer+38,Y
+                CMP     #' '
+                BNE     loc_82BA ;taken if not space
                 DEY
                 BNE     loc_82AE
-                LDX     #$27 ; '''
+                LDX     #39
 
 loc_82BA:
                 TXA
-                LDX     #<unk_5B1
-                LDY     #>unk_5B1
+                LDX     #<error_message_buffer
+                LDY     #>error_message_buffer
                 JSR     print_n_chars
                 
                 JSR     OSNEWL
@@ -909,8 +906,8 @@ find_program:
                 LDA     #0
                 STA     is_bad_program
                 STA     byte_38
-                STA     byte_C
-                STA     byte_D
+                STA     word_C+0
+                STA     word_C+1
                 PHA
                 LDA     #$FF
                 PHA
@@ -983,14 +980,14 @@ find_program_good_program:
 ; (seems to be maintaining its own notion of line numbering - not sure what for - it never does anything particular if it encounters a discrepancy)
 
 scan_valid_line:                        
-                LDA     byte_C
+                LDA     word_C+0
                 BMI     loc_8387
                 CLC
-                LDA     byte_D
+                LDA     word_C+1
                 ADC     #10
-                STA     byte_D
+                STA     word_C+1
                 BCC     loc_8387
-                INC     byte_C
+                INC     word_C+0
 
 loc_8387:                               
                                         
@@ -1128,26 +1125,37 @@ loc_8437:
                 LDA     #227
                 JMP     osbyte_with_y0
 
+;-------------------------------------------------------------------------
+
 brk_handler: .proc
-                JSR     clear_5B1_to_600
+                JSR     clear_error_message_buffer
                 LDY     higher_order_address
                 INY
-                BNE     loc_846C
+                BNE     loc_846C ;taken if in 2nd processor
                 LDY     higher_order_address+1
                 INY
-                BNE     loc_846C
+                BNE     loc_846C ;taken if in 2nd processor
+
+                ; Allow error messages in page 1, presumed to be from
+                ; the FS.
                 LDA     $FE
                 CMP     #1
-                BEQ     loc_846C
-                CMP     #$C0
-                BCC     loc_848A
+                BEQ     loc_846C ;taken if page 1 - assumed to be from
+                                 ;DFS or something
 
-loc_846C:                               
+                ; Disallow non-OS error messages.
+                CMP     #$C0
+                BCC     loc_848A ;taken if page 0 or 2-$bf
+
+loc_846C:
+
+                ; skip BRK error number
                 SEI
                 INC     $FD
                 BNE     loc_8473
                 INC     $FE
 
+                ; copy BRK text
 loc_8473:                               
                 LDY     #0
 
@@ -1155,16 +1163,16 @@ loc_8475:
                 LDA     ($FD),Y
                 CMP     #$20 ; ' '
                 BCC     loc_8483
-		STA	$5B1,Y
+		STA	error_message_buffer,Y
 		INY
-		CPY	#$4F ; 'O'
+		CPY	#error_message_buffer_size
 		BCC	loc_8475
 
 loc_8483:				
 		CLI
-		LDA	#-1
-		STA	byte_15
-		BNE	loc_848F
+		LDA	#$ff    ;arbitrary non-0 value
+		STA	last_error_number
+		BNE	loc_848F ;(jmp)
 
 loc_848A:				
 		LDA	#2        ;"Unknown error"
@@ -1191,7 +1199,7 @@ sub_8495:
 
 loc_849F:				
 		LDX	#10
-		LDA	byte_C
+		LDA	word_C+0
 		BPL	loc_84A7
 		LDX	#3
 
@@ -1435,29 +1443,29 @@ locret_85D7:
 
 
 sub_85D8:				
-		STX	byte_C
-		STY	byte_D
+		STX	word_C+0
+		STY	word_C+1
 		LDX	#1
-		STX	byte_E
+		STX	word_E+0
 
 loc_85E0:				
 		LDA	$C,X
 		ASL
-		ROL	byte_E
+		ROL	word_E+0
 		ASL
-		ROL	byte_E
+		ROL	word_E+0
 		SEC
 		ROR
 		LSR
 		STA	$C,X
 		DEX
 		BPL	loc_85E0
-		LDA	byte_E
+		LDA	word_E+0
 		ASL
 		ASL
 		EOR	#$14
-		LDX	byte_D
-		LDY	byte_C
+		LDX	word_C+1
+		LDY	word_C+0
 		RTS
 ; End of function sub_85D8
 ; 0
@@ -1598,12 +1606,12 @@ off:
 ;-------------------------------------------------------------------------
 
 do_command_line .proc		
-		JSR	clear_5B1_to_600
-		LDA	#0
+		JSR	clear_error_message_buffer
+		LDA	#<unk_700
 		STA	readline_ptr_lsb
-		LDA	#7
+		LDA	#>unk_700
 		STA	readline_ptr_msb
-		LDA	#100
+		LDA	#max_command_line_length
 		JSR	read_line
 		BCC got_command_line
                 
@@ -1686,19 +1694,19 @@ byte_8C96:	.byte 9
 parse_command_line:			
 		LDY	#0
 		STY	current_command_id
-		LDA	#0
-		STA	byte_C
-		LDA	#7
-		STA	byte_D
+		LDA	#<unk_700
+		STA	word_C+0
+		LDA	#>unk_700
+		STA	word_C+1
 ; Skip spaces at the start of the command line
 
 skip_initial_spaces_loop:		
-		LDA	(byte_C),Y
+		LDA	(word_C),Y
 		CMP	#32
 		BNE	found_non_space
-		INC	byte_C
+		INC	word_C+0
 		BNE	loc_8CB0
-		INC	byte_D
+		INC	word_C+1
 
 loc_8CB0:				
 		BNE	skip_initial_spaces_loop
@@ -1726,7 +1734,7 @@ try_number:
 		LDY	#0
 
 skip_number_loop:			
-		LDA	(byte_C),Y	; get number char
+		LDA	(word_C),Y	; get number char
 		CMP	#13
 		BEQ	is_line_number	; branch taken if end of command line
 		CMP	#32
@@ -1737,7 +1745,7 @@ skip_number_loop:
 skip_post_number_spaces_loop:		
 					
 		INY
-		LDA	(byte_C),Y	; get whitespace char
+		LDA	(word_C),Y	; get whitespace char
 		CMP	#13		; end of command line?
 		BEQ	is_line_number	; branch taken if end of command line
 		CMP	#32            ; just a space?
@@ -1754,13 +1762,13 @@ is_line_number:
 try_command:				
 		JSR	find_first_non_alpha_char
 		LDA	#<command_table
-		STA	byte_E
+		STA	word_E+0
 		LDA	#>command_table
-		STA	byte_F
+		STA	word_E+1
 
 try_this_command:			
 		LDY	#0
-		LDA	(byte_E),Y	; get next char	from command table
+		LDA	(word_E),Y	; get next char	from command table
 		BMI	invalid_command	; invalid, if reached end of table
 		JSR	compare_cmd_char_to_input_char ; entry:	(unk_C)	points to input	char, (unk_E) points to	command	table char
 					; exit:	C set if matched
@@ -1768,7 +1776,7 @@ try_this_command:
 ; advance to next command in table
 
 find_end_of_command_name_loop:		
-		LDA	(byte_E),Y
+		LDA	(word_E),Y
 		BEQ	found_end_of_command_name
 		INY
 		BNE	find_end_of_command_name_loop
@@ -1780,10 +1788,10 @@ found_end_of_command_name:
 ; add Y to table pointer
 		CLC
 		TYA
-		ADC	byte_E
-		STA	byte_E
+		ADC	word_E+0
+		STA	word_E+0
 		BCC	loc_8D12
-		INC	byte_F
+		INC	word_E+1
 
 loc_8D12:				
 		BNE	try_this_command ; JMP,	in effect
@@ -1796,7 +1804,7 @@ char_matched:
 		STY	byte_3A
 
 find_end_of_command_name_loop_2:	
-		LDA	(byte_E),Y
+		LDA	(word_E),Y
 		BEQ	found_end_of_command_name_2
 		INY
 		BNE	find_end_of_command_name_loop_2
@@ -1804,10 +1812,10 @@ find_end_of_command_name_loop_2:
 found_end_of_command_name_2:		
 		INY			; skip terminating 0
 		STY	byte_39		; $39 =	Y pointing into	data
-		LDA	($E),Y		; get first byte of command data
+		LDA	(word_E),Y		; get first byte of command data
 		STA	byte_49		; $49 =	first byte of command data
 		LDY	byte_3A
-		LDA	($C),Y		; get last matched input char
+		LDA	(word_C),Y		; get last matched input char
 		LDX	#0
 		CMP	#13		; end of line there?
 		BEQ	loc_8D52
@@ -1818,7 +1826,7 @@ found_end_of_command_name_2:
 
 skip_spaces:				
 					
-		LDA	(byte_C),Y
+		LDA	(word_C),Y
 		CMP	#32
 		BNE	spaces_skipped
 		INY
@@ -1831,9 +1839,9 @@ spaces_skipped:
 ; Set (byte_3E) to point to remainder of command line
 		CLC
 		TYA
-		ADC	byte_C
+		ADC	word_C+0
 		STA	byte_3E
-		LDA	byte_D
+		LDA	word_C+1
 		ADC	#0
 		STA	byte_3F
 
@@ -1871,7 +1879,7 @@ loc_8D69:
 
 skip_post_number_spaces:		
 					
-		LDA	(byte_C),Y
+		LDA	(word_C),Y
 		CMP	#32
 		BNE	skipped_post_number_spaces
 		INY
@@ -1921,7 +1929,7 @@ found_end_of_last_argument:
 got_command:				
 		LDY	byte_39		; get index into table (currently pointing at args byte)
 		INY
-		LDA	($E),Y		; get command ID
+		LDA	(word_E),Y		; get command ID
 		JMP	store_current_command
 ; End of function parse_command_line
 
@@ -2016,16 +2024,16 @@ compare_cmd_char_to_input_char:
 		LDY	#0
 
 compare_cmd_char_to_input_char_loop:					
-		LDA	(byte_C),Y	; input	char
-		CMP	#$41 ; 'A'
+		LDA	(word_C),Y	; input	char
+		CMP	#'A'
 		BCC	not_alpha
-		CMP	#$5B ; '['
+		CMP	#'Z'+1
 		BCS	not_alpha
-		LDA	(byte_E),Y	; command table	char
+		LDA	(word_E),Y	; command table	char
 		BEQ	didnt_match	; end of command?
-		LDA	(byte_C),Y	; input	char
-		CMP	#$2E ; '.'      ; abbreviated?
-		BNE	loc_8E35
+		LDA	(word_C),Y	; input	char
+		CMP	#'.'
+		BNE	loc_8E35 ;taken if not abbreviated
 
 not_alpha:				
 					
@@ -2035,7 +2043,7 @@ not_alpha:
 		RTS
 
 loc_8E35:				
-		CMP	(byte_E),Y
+		CMP	(word_E),Y
 		BNE	didnt_match
 		INY
 		BNE	compare_cmd_char_to_input_char_loop		; input	char
@@ -2053,17 +2061,17 @@ find_first_non_alpha_char:
 		LDY	#0
 
 find_first_non_alpha_char_loop:					
-		LDA	($C),Y
-		CMP	#$41 ; 'A'
+		LDA	(word_C),Y
+		CMP	#'A'
 		BCC	locret_8E6B
-		CMP	#$5B ; '['
+		CMP	#'Z'+1
 		BCC	next_char
-		CMP	#$61 ; 'a'
+		CMP	#'a'
 		BCC	locret_8E6B
-		CMP	#$7B ; '{'
+		CMP	#'z'+1
 		BCS	locret_8E6B
-		EOR	#$20 ; ' '
-		STA	($C),Y
+		EOR	#$20
+		STA	(word_C),Y
 
 next_char:				
 		INY
@@ -2074,17 +2082,17 @@ next_char:
 
 
 toggle_case:				
-		CMP	#$41 ; 'A'
+		CMP	#'A'
 		BCC	locret_8E6B
-		CMP	#$5B ; '['
+		CMP	#'Z'+1
 		BCC	loc_8E69
-		CMP	#$61 ; 'a'
+		CMP	#'a'
 		BCC	locret_8E6B
-		CMP	#$7B ; '{'
+		CMP	#'z'+1
 		BCS	locret_8E6B
 
 loc_8E69:				
-		EOR	#$20 ; ' '
+		EOR	#$20
 
 locret_8E6B:				
 					
@@ -2095,7 +2103,7 @@ locret_8E6B:
 
 ; Set memory to	value.
 ;
-; ($C) points to memory	to clear.
+; (word_C) points to memory	to clear.
 ; X holds number of pages to clear.
 ; Y holds number of bytes to clear in Xth page.
 ; A holds value	to write.
@@ -2111,10 +2119,10 @@ memset: .proc
 		BEQ	fill_last_page
 
 fill_pages_loop:			
-		STA	($C),Y		; write	byte
+		STA	(word_C),Y		; write	byte
 		INY			; next byte...
 		BNE	fill_pages_loop	; do a whole page
-		INC	byte_D		; next page
+		INC	word_C+1		; next page
 		DEX			; done all pages?
 		BNE	fill_pages_loop	; taken	if not all pages done yet
 
@@ -2127,7 +2135,7 @@ fill_last_page:
 		LDY	#0
 
 fill_last_page_loop:			
-		STA	($C),Y		; write	byte
+		STA	(word_C),Y		; write	byte
 		INY			; next byte...
 		DEX			; done all bytes?
 		BNE	fill_last_page_loop ; taken if not all bytes done yet
@@ -2170,8 +2178,8 @@ osbyte_with_y0:.proc
 ; move (maybe overlapping) memory regions.
 ;
 ; Entry:
-; (byte_C) points to src
-; (byte_E) points to dest
+; (word_C) points to src
+; (word_E) points to dest
 ; X is MSB of size
 ; Y is LSB of size
 
@@ -2203,8 +2211,8 @@ memmove: .block
                 
                 .endif
                 
-		LDA	byte_D		; get src MSB
-		CMP	byte_F		; compare to dest MSB
+		LDA	word_C+1		; get src MSB
+		CMP	word_E+1		; compare to dest MSB
 		BCC	copy_down	; taken	if src<dest
 		BEQ	copying_same_page ; taken if src MSB==dest MSB
 
@@ -2216,12 +2224,12 @@ copy_up:
 		BEQ	copy_up_last_page ; branch taken if no whole pages to copy
 
 copy_up_pages_loop:			
-		LDA	(byte_C),Y	; load from src...
-		STA	(byte_E),Y	; store	to dest...
+		LDA	(word_C),Y	; load from src...
+		STA	(word_E),Y	; store	to dest...
 		INY
 		BNE	copy_up_pages_loop ; branch taken if not copied	whole page yet
-		INC	byte_D		; next src page
-		INC	byte_F		; next dest page
+		INC	word_C+1		; next src page
+		INC	word_E+1		; next dest page
 		DEX			; one more page	done
 		BNE	copy_up_pages_loop ; branch taken if not done all pages	yet
 
@@ -2232,35 +2240,35 @@ copy_up_last_page:
 		RTS
 
 copy_up_last_page_loop:			
-		LDA	(byte_C),Y	; load from src...
-		STA	(byte_E),Y	; store	to dest...
+		LDA	(word_C),Y	; load from src...
+		STA	(word_E),Y	; store	to dest...
 		INY
 		DEX			; one more byte	done
 		BNE	copy_up_last_page_loop ; branch	taken if not done all bytes yet
 		RTS
 
 copying_same_page:			
-		LDA	byte_C		; get src LSB
-		CMP	byte_E		; compare to dest LSB
+		LDA	word_C+0		; get src LSB
+		CMP	word_E+0		; compare to dest LSB
 		BCS	copy_up		; branch taken if src>=dest
 
 copy_down:				
 		TXA			; get page count
 ; Point src and dest at last page of each
 		CLC
-		ADC	byte_D
-		STA	byte_D
+		ADC	word_C+1
+		STA	word_C+1
 		TXA
 		CLC
-		ADC	byte_F
-		STA	byte_F
+		ADC	word_E+1
+		STA	word_E+1
 		CPY	#0		; any bytes to copy at the end?
 		BEQ	copy_down_pages	; branch taken if no bytes to copy at the end
 
 copy_down_last_page_loop:		
 		DEY
-		LDA	(byte_C),Y	; load from src...
-		STA	(byte_E),Y	; store	to dest...
+		LDA	(word_C),Y	; load from src...
+		STA	(word_E),Y	; store	to dest...
 		CPY	#0		; was that the last byte just copied?
 		BNE	copy_down_last_page_loop ; branch taken	if not on last byte
 
@@ -2269,13 +2277,13 @@ copy_down_pages:
 		BEQ	memmove_done		; branch taken if no pages to copy
 
 copy_down_pages_loop:			
-		DEC	byte_D		; point	to last	whole page in src
-		DEC	byte_F		; point	to last	whole page in dest
+		DEC	word_C+1		; point	to last	whole page in src
+		DEC	word_E+1		; point	to last	whole page in dest
 
 copy_down_page_loop:			
 		DEY
-		LDA	(byte_C),Y	; load from src...
-		STA	(byte_E),Y	; store	to dest...
+		LDA	(word_C),Y	; load from src...
+		STA	(word_E),Y	; store	to dest...
 		CPY	#0		; was that the last byte just copied?
 		BNE	copy_down_page_loop ; branch taken if not on last byte
 		DEX			; one more page	done
@@ -2365,12 +2373,12 @@ print_next_string: .proc
                 jsr prepare_for_print_1_char
 
                 pla
-                sta byte_C
+                sta word_C+0
                 pla
-                sta byte_D
+                sta word_C+1
                 
                 ldy #0
-                ldx #byte_C
+                ldx #word_C+0
                 jsr incz
 
                 ; lda editor_mode_id
@@ -2383,7 +2391,7 @@ print_next_string: .proc
                 beq print_control_chars
 
 loop:
-                lda (byte_C),Y
+                lda (word_C),Y
                 jsr incz
                 cmp #255
                 beq done
@@ -2394,7 +2402,7 @@ done:
                 ; pla
                 ; sta editor_mode_id
                 
-                jmp (byte_C)
+                jmp (word_C)
 
 print_control_chars:
                 jsr incz
@@ -2425,8 +2433,8 @@ print_n_spaces: .proc
 
 print_n_chars: .proc
                 pha
-                stx byte_C
-                sty byte_D
+                stx word_C+0
+                sty word_C+1
                 jsr prepare_for_print_1_char
                 pla
                 pha
@@ -2436,7 +2444,7 @@ print_n_chars: .proc
 
                 ldy #0
 loop:
-                lda (byte_C),Y
+                lda (word_C),Y
                 jsr print_1_char
                 iny
                 dex
@@ -2507,9 +2515,9 @@ loc_8F74:
 atoi_from_command_line:	.proc		
 					
 		LDA	byte_3E
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_3F
-                STA	byte_D
+                STA	word_C+1
 
                 ; fall through
                 .pend
@@ -2526,7 +2534,7 @@ atoi: .proc
                 ; keep going until terminator, non-digit, or too many
                 ; digits.
 count_digits_loop:
-                lda (byte_C),Y
+                lda (word_C),Y
                 cmp #' '
                 beq got_digits  ;taken if space
                 cmp #13
@@ -2553,7 +2561,7 @@ got_digits:
 
 columns_loop:
                 
-                lda (byte_C),Y  ;get digit
+                lda (word_C),Y  ;get digit
 
 add_column_loop:
                 cmp #'0'        
@@ -2720,38 +2728,22 @@ command_ptr_ok:
 
 
 
-clear_5B1_to_600: .proc
+clear_error_message_buffer: .proc
 
-		LDA	#0
-		STA	byte_15
+		LDA	#0      ;indicate no error
+		STA	last_error_number
                 
-                .if KEEP_CLEAR_5B1_TO_600_MEMSET
-		LDA	#<unk_5B1
-		STA	byte_C
-		LDA	#>unk_5B1
-		STA	byte_D
-		LDX	#0
-		LDY	#$4F
-		LDA	#$20
-		JSR	memset		; Set memory to	value.
-					;
-					; ($C) points to memory	to clear.
-					; X holds number of pages to clear.
-					; Y holds number of bytes to clear in Xth page.
-					; A holds value	to write.
-		.else
-                ldx #$4e
+                ldx #error_message_buffer_size-1
                 lda #0
 loop:
-                sta unk_5b1,x
+                sta error_message_buffer,x
                 dex
                 bpl loop
-                .endif
                 
                 rts
                 
                 .pend
-; End of function clear_5B1_to_600
+; End of function clear_error_message_buffer
 
 
 
@@ -2760,35 +2752,35 @@ loop:
 get_error:				
 					
 		PHA
-		LDA	byte_15		; already got an error?
+		LDA	last_error_number		; already got an error?
 		BEQ	copy_error	; taken	if no error yet
 		PLA
 		RTS
 
 copy_error:				
-		JSR	clear_5B1_to_600
+		JSR	clear_error_message_buffer
 		PLA
-		STA	byte_15		; store	error code
+		STA	last_error_number		; store	error code
 		LDA	#<error_messages_table
-		STA	byte_C
+		STA	word_C+0
 		LDA	#>error_messages_table
-		STA	byte_D
+		STA	word_C+1
 		LDY	#0		; offset into errors table
 		LDX	#0		; current error	index
 
 find_error_loop:			
 					
-		LDA	($C),Y		; next byte from table
+		LDA	(word_C),Y		; next byte from table
 		BPL	loc_90C5	; taken	if still looking at the	current	error
 ; hit a negative char, so this means it's looking at the next error, so bump the error index.
 		INX
 
 loc_90C5:				
-		CPX	byte_15		; reached the desired error?
+		CPX	last_error_number		; reached the desired error?
 		BEQ	found_error	; taken	if desired error reached
-		INC	byte_C
+		INC	word_C+0
 		BNE	find_error_loop
-		INC	byte_D
+		INC	word_C+1
 		BNE	find_error_loop
 
 found_error:				
@@ -2796,10 +2788,10 @@ found_error:
 
 copy_error_loop:			
 		AND	#$7F		; mask out top bit (in case)
-		STA	unk_5B1,X	; store	in error message buffer
+		STA	error_message_buffer,X	; store	in error message buffer
 		INY			; next source byte...
 		INX			; next dest byte...
-		LDA	($C),Y		; load next byte from error table
+		LDA	(word_C),Y		; load next byte from error table
                 BPL	copy_error_loop	; taken	if haven't ended up in the next error
                 jsr maybe_verbose_exit_on_error
 		RTS
@@ -2839,7 +2831,7 @@ got_search_string:
 copy_search_string_loop:		
 		DEY
 		LDA	(byte_3E),Y
-		STA	unk_643,Y
+		STA	search_string,Y
 		CPY	#0
 		BNE	copy_search_string_loop
 		LDA	#0
@@ -3023,7 +3015,7 @@ loc_91F5:
 		TXA
 		ASL
 		TAY
-		LDA	$6C1,Y
+		LDA	byte_6C1,Y
 		BNE	loc_91FE
 		TAX
 
@@ -3155,15 +3147,15 @@ loc_9275:
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		CLC
 		ADC	#<byte_400
-		STA	byte_C
+		STA	word_C+0
                 LDA	#0
                 tax
                 tay
 		ADC	#>byte_400
-		STA	byte_D
+		STA	word_C+1
 
 loc_9286:
-                lda (byte_C,X)
+                lda (word_C,X)
                 jsr normalize_search_case
                 sta search_tmp
 
@@ -3173,9 +3165,9 @@ loc_9286:
                 BNE	loc_929A
 next_byte:
 		INY
-		INC	byte_C
+		INC	word_C+0
 		BNE	loc_9293
-		INC	byte_D
+		INC	word_C+1
 
 loc_9293:				
 		CPY	byte_6BE
@@ -3461,14 +3453,14 @@ append_command .proc
 		JSR	find_program
 		BCC	locret_9424
 		JSR	loc_946F
-		STX	byte_C
-		STY	byte_D
+		STX	word_C+0
+		STY	word_C+1
 		LDY	#0
 		LDA	#$D
-		STA	($C),Y
+		STA	(word_C),Y
 		INY
 		LDA	#$FF
-		STA	($C),Y
+		STA	(word_C),Y
 
 locret_9424:				
                 RTS
@@ -3571,13 +3563,13 @@ loc_9497:
 ; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
 
 read_line_700:				
-		LDA	#0
+		LDA	#<unk_700
 		STA	readline_ptr_lsb
 		STA	byte_3E
-		LDA	#7
+		LDA	#>unk_700
 		STA	readline_ptr_msb
 		STA	byte_3F
-		LDA	#$64 ; 'd'
+		LDA	#max_command_line_length
 		JSR	read_line
 		STA	byte_6BE
 		RTS
@@ -3587,13 +3579,13 @@ read_line_700:
 
 
 read_line_780:				
-		LDA	#$80
+		LDA	#<unk_780
 		STA	readline_ptr_lsb
 		STA	unk_6BA
-		LDA	#7
+		LDA	#>unk_780
 		STA	readline_ptr_msb
 		STA	unk_6BB
-		LDA	#$64
+		LDA	#max_command_line_length
 		JSR	read_line
 		STA	unk_6BC
 		RTS
@@ -3672,10 +3664,10 @@ run_star_command:
 		LDX	#7
 		JSR	get_HIMEM_for_mode_X
 		JSR	reset_keys_settings
-		LDX	#0
-		LDY	#7
+		LDX	#<unk_700
+		LDY	#>unk_700
 		JSR	OSCLI
-		JMP	clear_5B1_to_600
+		JMP	clear_error_message_buffer
 ; End of function run_star_command
 
 
@@ -3873,7 +3865,7 @@ loc_96BD:
 		LDX	#$3F ; '?'
 
 loc_96BF:				
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		STA	$700,X
 		DEX
 		BPL	loc_96BF
@@ -3923,7 +3915,7 @@ loc_96F8:
 
 loc_96FB:				
 		LDA	$700,X
-		STA	$6C0,X
+		STA	byte_6C0,X
 		DEX
 		BPL	loc_96FB
 		PLP
@@ -4062,9 +4054,9 @@ loc_9799:
 		BNE	loc_9791
 
 loc_979D:				
-		LDA	#$43 ; 'C'
+		LDA	#<search_string
 		STA	byte_3E
-		LDA	#6
+		LDA	#>search_string
 		STA	byte_3F
 		LDA	search_string_length
 		STA	byte_6BE
@@ -4187,8 +4179,8 @@ loc_9843:
 		LDY	byte_400
 
 loc_9850:				
-		LDA	$400,Y
-		STA	$401,Y
+		LDA	unk_401-1,Y
+		STA	unk_401,Y
 		CPY	cursor_offset	; offset of cursor in detokenized buffer
 		BEQ	loc_985D
 		DEY
@@ -4196,7 +4188,7 @@ loc_9850:
 
 loc_985D:				
 		LDA	#7
-		STA	$400,Y
+		STA	unk_401-1,Y
 		INC	byte_400
 		LDA	#1
 		STA	byte_6B3
@@ -4239,7 +4231,7 @@ loc_98B5:
 		LDY	byte_400
 
 loc_98BB:				
-		LDA	$400,Y
+		LDA	unk_401-1,Y
 		CMP	#7
 		BEQ	loc_98C5
 		DEY
@@ -4249,29 +4241,29 @@ loc_98C5:
 		STY	cursor_offset	; offset of cursor in detokenized buffer
 
 loc_98C7:				
-		LDA	$401,Y
-		STA	$400,Y
+		LDA	unk_401,Y
+		STA	unk_401-1,Y
 		INY
 		CPY	byte_400
 		BNE	loc_98C7
-		LDA	#$20 ; ' '
-		STA	$400,Y
+		LDA	#' '
+		STA	unk_401-1,Y
 		DEC	byte_400
 
 loc_98DB:				
 		PLA
 		STA	byte_36
 		CLC
-		LDA	#0
+		LDA	#<byte_400
 		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		STA	byte_C
-		LDA	#4
+		STA	word_C+0
+		LDA	#>byte_400
 		ADC	#0
-		STA	byte_D
-		LDA	#1
-		STA	byte_E
-		LDA	#7
-		STA	byte_F
+		STA	word_C+1
+		LDA	#<unk_700+1
+		STA	word_E+0
+		LDA	#>unk_700+1
+		STA	word_E+1
 		SEC
 		LDA	byte_400
 		SBC	cursor_offset	; offset of cursor in detokenized buffer
@@ -4282,8 +4274,8 @@ loc_98DB:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
@@ -4300,22 +4292,22 @@ loc_98DB:
 					; Exit:
 					; X = line height
 		STX	byte_35
-		LDA	#0
-		STA	byte_C
-		LDA	#7
-		STA	byte_D
-		LDA	#0
-		STA	byte_E
-		LDA	#4
-		STA	byte_F
-		LDY	unk_700
-		INY
+		LDA	#<unk_700
+		STA	word_C+0
+		LDA	#>unk_700
+		STA	word_C+1
+		LDA	#<byte_400
+		STA	word_E+0
+		LDA	#>byte_400
+		STA	word_E+1
+		LDY	unk_700 ;Y=line length
+		INY             ;+1 to include count byte
 		LDX	#0
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -4382,10 +4374,10 @@ sub_9968:
 		CLC
 		LDA	(byte_2B),Y
 		ADC	byte_2B
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
 		ADC	#0
-		STA	byte_D
+		STA	word_C+1
 		LDX	current_line_no_msb
 		LDY	current_line_no_lsb
 		INY
@@ -4396,11 +4388,11 @@ sub_9968:
 loc_9986:				
 		TYA
 		LDY	#2
-		CMP	(byte_C),Y
+		CMP	(word_C),Y
 		BNE	loc_9997
 		DEY
 		TXA
-		CMP	(byte_C),Y
+		CMP	(word_C),Y
 		BNE	loc_9997
 
 loc_9993:				
@@ -4432,29 +4424,29 @@ loc_99A8:
 		TYA
 		CLC
 		ADC	byte_2B
-		STA	byte_C
-		STA	byte_E
+		STA	word_C+0
+		STA	word_E+0
 		LDA	byte_2C
 		ADC	#0
-		STA	byte_D
-		STA	byte_F
-		INC	byte_C
+		STA	word_C+1
+		STA	word_E+1
+		INC	word_C+0
 		BNE	loc_99BE
-		INC	byte_D
+		INC	word_C+1
 
 loc_99BE:				
 		SEC
 		LDA	TOP
-		SBC	byte_C
+		SBC	word_C+0
 		TAY
 		LDA	TOP+1
-		SBC	byte_D
+		SBC	word_C+1
 		TAX
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDY	#3
@@ -4995,8 +4987,6 @@ kbflush:
 
 detokenize_one_line: .proc
 
-                .if !KEEP_DETOKENIZE_ONE_LINE_MEMSET
-
                 ldx #1
                 lda #$20
 loop400:
@@ -5009,26 +4999,10 @@ loop500:
                 cpx #$25
                 bne loop500
 
-                .endif
-
-                .if KEEP_DETOKENIZE_ONE_LINE_MEMSET
-		LDA	#1
-		STA	byte_C
-		LDA	#4
-		STA	byte_D
-                .endif
-                
 		LDX	#0
 		STX	byte_400
 		STX	byte_6A8
 
-                .if KEEP_DETOKENIZE_ONE_LINE_MEMSET
-		INX			; X=1
-		LDY	#$24 ; '$'
-		LDA	#$20 ; ' '
-		JSR	memset		; Clear	$401 - $525
-                .endif
-                
 		LDX	byte_2C		; get MSB of address
 		INX
 		BNE	loc_9C26	; branch taken if MSB of address wasn't $FF
@@ -5096,14 +5070,14 @@ loc_9C45:
 		BEQ	detokenize_line_done		; branch taken if line is empty
 
 loc_9C59:				
-		LDA	#4
-		STA	byte_F
+		LDA	#>unk_401
+		STA	word_E+1
 		CLC
-		LDA	#1
+		LDA	#<unk_401
 		ADC	byte_400
-		STA	byte_E
+		STA	word_E+0
 		BCC	loc_9C69
-		INC	byte_F
+		INC	word_E+1
 
 loc_9C69:				
 		LDX	byte_24		; get line length
@@ -5117,18 +5091,18 @@ detokenize_line_done:
 loc_9C71:				
 		LDA	byte_25		; in string?
 		BEQ	copy_tokenized	; branch taken if not in string
-; point (byte_C) at byte in program
+; point (word_C) at byte in program
 
 not_token:				
 					
 		LDA	byte_28
-		STA	byte_D
+		STA	word_C+1
 		LDA	byte_23
 		CLC
 		ADC	byte_27
-		STA	byte_C
+		STA	word_C+0
 		BCC	copy_whilst_checking_for_quotes
-		INC	byte_D
+		INC	word_C+1
 
 copy_whilst_checking_for_quotes:	
 		LDY	byte_23
@@ -5174,9 +5148,9 @@ copy_tokenized:
 					; unk_0	holds digit count
 					; unk_1... filled with string
 		LDA	#<unk_1
-		STA	byte_C
+		STA	word_C+0
 		LDA	#>unk_1
-		STA	byte_D
+		STA	word_C+1
 ; Skip 3 bytes (line number data)
 		INC	byte_23
 		INC	byte_23
@@ -5187,15 +5161,15 @@ copy_tokenized:
 token:					
 		STA	byte_26		; ?byte_26 = token being searched for
 		LDA	#<token_table
-		STA	byte_C
+		STA	word_C+0
 		LDA	#>token_table
-		STA	byte_D
+		STA	word_C+1
 
 loc_9CD0:				
 		LDY	#0
 
 find_token_value_loop:			
-		LDA	(byte_C),Y	; get next byte	from token table
+		LDA	(word_C),Y	; get next byte	from token table
 		BMI	found_token_value ; branch taken if it's a token value
 		INY
 		BNE	find_token_value_loop
@@ -5207,13 +5181,13 @@ found_token_value:
 		BEQ	not_token	; ??? -	branch taken if	so
 		INY			; skip token ID
 		INY			; skip other byte
-; advance (byte_C) to next entry in token table
+; advance (word_C) to next entry in token table
 		TYA
 		CLC
-		ADC	byte_C
-		STA	byte_C
+		ADC	word_C+0
+		STA	word_C+0
 		BCC	loc_9CED
-		INC	byte_D
+		INC	word_C+1
 
 loc_9CED:				
 		BNE	loc_9CD0
@@ -5231,8 +5205,8 @@ advance:
 		JSR	copy_detokenized_text ;	copy text whilst detokenizing.
 					;
 					; Entry:
-					; (byte_C) points to source text
-					; (byte_E) points to space in dest buffer
+					; (word_C) points to source text
+					; (word_E) points to space in dest buffer
 					; Y is index of	last byte in each case (bytes are copied until Y<0)
 		INC	byte_23		; next byte in line
 		JMP	loc_9C59
@@ -5244,19 +5218,19 @@ overflow:
 
 copy_detokenized_text:			
 					
-		LDA	(byte_C),Y	; copy text whilst detokenizing.
+		LDA	(word_C),Y	; copy text whilst detokenizing.
 					;
 					; Entry:
-					; (byte_C) points to source text
-					; (byte_E) points to space in dest buffer
+					; (word_C) points to source text
+					; (word_E) points to space in dest buffer
 					; Y is index of	last byte in each case (bytes are copied until Y<0)
-		STA	(byte_E),Y
+		STA	(word_E),Y
 		DEY
 		BPL	copy_detokenized_text ;	copy text whilst detokenizing.
 					;
 					; Entry:
-					; (byte_C) points to source text
-					; (byte_E) points to space in dest buffer
+					; (word_C) points to source text
+					; (word_E) points to space in dest buffer
 					; Y is index of	last byte in each case (bytes are copied until Y<0)
 		RTS
                 .pend
@@ -5487,28 +5461,12 @@ loc_9E19:
 
 loc_9e1d:
 
-                .if KEEP_9E1D_MEMSET
-		LDA	#1
-		STA	byte_C
-		LDA	#4
-		STA	byte_D
-		LDX	#0
-		LDY	#$4F ; 'O'
-		LDA	#$20 ; ' '
-		JSR	memset		; Set memory to	value.
-					;
-					; ($C) points to memory	to clear.
-					; X holds number of pages to clear.
-					; Y holds number of bytes to clear in Xth page.
-					; A holds value	to write.
-                .else
                 lda #$20
                 ldx #$4f
 loc_9e1d_fill_401_loop:
                 sta $400,x
                 dex
                 bne loc_9e1d_fill_401_loop
-                .endif
                 
 loc_9E2E:				
 		LDA	byte_3B
@@ -5519,12 +5477,12 @@ loc_9E2E:
 loc_9E37:				
 		ASL
 		TAY
-		LDA	$6C1,Y
+		LDA	byte_6C1,Y
 		BEQ	loc_9E5D
 		LDX	#0
 		TXA
-		STA	$6C0,Y
-		STA	$6C1,Y
+		STA	byte_6C0,Y
+		STA	byte_6C1,Y
 		LDY	byte_3B
 		JSR	gotoxy
 		CLC
@@ -5564,9 +5522,9 @@ sub_9E5F:
 		ASL
 		TAY
 		LDA	byte_2B
-		STA	$6C0,Y
+		STA	byte_6C0,Y
 		LDA	byte_2C
-		STA	$6C1,Y
+		STA	byte_6C1,Y
 		SEC
 
 locret_9E81:				
@@ -5798,9 +5756,9 @@ insert:
 		TXA
 		PHA
 		LDX	#$FF
-		STX	byte_C
+		STX	word_C+0
 		INX
-		STX	byte_E
+		STX	word_E+0
 		INX
 		TXA
 		JSR	sub_9FB2
@@ -5844,20 +5802,20 @@ sub_9FB2:
 		JMP	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
 adjust_pointer:				
 		CLC
-		LDA	byte_C,X	; get pointer LSB
+		LDA	word_C+0,X	; get pointer LSB
 		ADC	#1		; increment
 		CLC
 		ADC	cursor_offset	; +?byte_10
-		STA	byte_C,X	; store
+		STA	word_C+0,X	; store
 		LDA	#4
-		STA	byte_D,X	; copying in page 4.
+		STA	word_C+1,X	; copying in page 4.
 		RTS
 ; End of function sub_9FB2
 
@@ -6011,10 +5969,10 @@ save_line_number:
 
 get_line_ptr: .proc
 					
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		STA	byte_2C
 		DEX
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		STA	byte_2B
 		RTS
                 .pend
@@ -6275,17 +6233,17 @@ loc_A129:
 		LDA	byte_3B		; get screen Y
 		ASL
 		TAX
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		PHA
-		LDA	$6C1,X
+		LDA	byte_6C1,X
 		PHA
 		TYA
 		ASL
 		TAX
 		PLA
-		STA	$6C1,X
+		STA	byte_6C1,X
 		PLA
-		STA	$6C0,X
+		STA	byte_6C0,X
 		PLA
 		LDX	byte_20
 		LDY	byte_21
@@ -7760,15 +7718,15 @@ loc_A8CC:
 
                 ; copy from $401
 		LDA	#<unk_401
-		STA	byte_C
+		STA	word_C+0
 		LDA	#>unk_401
-		STA	byte_D
+		STA	word_C+1
 
                 ; copy to $504 (unk_503+1, presumably??)
 		LDA	#4
-		STA	byte_E
+		STA	word_E+0
 		LDA	#5
-		STA	byte_F
+		STA	word_E+1
 
                 ; copy 252 bytes - TODO fix
 		LDX	#0
@@ -7776,8 +7734,8 @@ loc_A8CC:
 		JSR	memmove;constant; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -7898,35 +7856,35 @@ loc_A96E:
 
                 ; source = line
 		LDA	byte_2C
-		STA	byte_D
+		STA	word_C+1
 		LDA	byte_2B
-		STA	byte_C
+		STA	word_C+0
 
                 ; dest = 
 		CLC
 		ADC	byte_27
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_2C
 		ADC	byte_28
-		STA	byte_F
+		STA	word_E+1
 		SEC
 		LDA	TOP
-		SBC	byte_C
+		SBC	word_C+0
 		TAY
 		LDA	TOP+1
-		SBC	byte_D
+		SBC	word_C+1
 		TAX
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	#0
-		STA	byte_C
+		STA	word_C+0
 		LDA	#5
-		STA	byte_D
+		STA	word_C+1
 		LDY	#4
 		LDX	byte_25
 		BNE	loc_A9A6
@@ -7934,9 +7892,9 @@ loc_A96E:
 
 loc_A9A6:				
 		LDA	$2B,Y
-		STA	byte_E
+		STA	word_E+0
 		LDA	$2C,Y
-		STA	byte_F
+		STA	word_E+1
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#1
 		BEQ	loc_A9F3
@@ -7946,13 +7904,13 @@ loc_A9A6:
 		TAY
 
 loc_A9BD:				
-		LDA	byte_E
+		LDA	word_E+0
 		STA	byte_2B
-		STA	$6C0,Y
+		STA	byte_6C0,Y
 		INY
-		LDA	byte_F
+		LDA	word_E+1
 		STA	byte_2C
-		STA	$6C0,Y
+		STA	byte_6C0,Y
 		INY
 		DEX
 		BNE	loc_A9BD
@@ -7965,16 +7923,16 @@ loc_A9D0:
 		BCS	loc_A9F3
 
 loc_A9D9:				
-		LDA	$6C1,Y
+		LDA	byte_6C1,Y
 		BEQ	loc_A9F3
 		CLC
-		LDA	$6C0,Y
+		LDA	byte_6C0,Y
 		ADC	byte_27
-		STA	$6C0,Y
+		STA	byte_6C0,Y
 		INY
-		LDA	$6C0,Y
+		LDA	byte_6C0,Y
 		ADC	byte_28
-		STA	$6C0,Y
+		STA	byte_6C0,Y
 		INY
 		BNE	loc_A9D0
 
@@ -7985,8 +7943,8 @@ loc_A9F3:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	byte_6A8
@@ -8144,9 +8102,9 @@ loc_AA97:
 
 loc_AA9A:				
 		LDX	#-1
-		STX	byte_C
+		STX	word_C+0
 		DEX
-		STX	byte_E
+		STX	word_E+0
 		LDA	#1
 		JSR	sub_9FB2
 
@@ -8190,10 +8148,10 @@ loc_AAD8:
 
 loc_AADC:				
 		LDX	#0
-		STX	byte_C
+		STX	word_C+0
 		TXA
 		DEX
-		STX	byte_E
+		STX	word_E+0
 		JSR	sub_9FB2
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_AAA6
@@ -8212,10 +8170,10 @@ delete_to_end_of_line_edit_mode_command: .proc
 		CLC
 		LDA	#1
 		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		STA	byte_C
-		DEC	byte_C
+		STA	word_C+0
+		DEC	word_C+0
 		LDA	#4
-		STA	byte_D
+		STA	word_C+1
 		SEC
 		LDA	byte_400
 		PHA
@@ -8224,9 +8182,9 @@ delete_to_end_of_line_edit_mode_command: .proc
 		INY
 		LDX	#0
 
-                lda byte_C
+                lda word_C+0
                 sta del_C
-                lda byte_D
+                lda word_C+1
                 sta del_D
                 lda byte_400
                 sta del_400
@@ -8236,7 +8194,7 @@ delete_to_end_of_line_edit_mode_command: .proc
 		LDA	#$20 ; ' '
 		JSR	memset		; Set memory to	value.
 					;
-					; ($C) points to memory	to clear.
+					; (word_C) points to memory	to clear.
 					; X holds number of pages to clear.
 					; Y holds number of bytes to clear in Xth page.
 					; A holds value	to write.
@@ -8286,9 +8244,9 @@ loc_AB2E:
 
 loc_AB3C: ;nuts and bolts of the Extend Statement command??
 		LDA	#4
-		STA	byte_D
+		STA	word_C+1
 		LDA	#7
-		STA	byte_F
+		STA	word_E+1
 		JSR	sub_ABDB
 		LDA	screen_chars_in_line+0
 		PHA
@@ -8299,10 +8257,10 @@ loc_AB3C: ;nuts and bolts of the Extend Statement command??
 		LDA	screen_height
 		ASL
 		TAX
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		CMP	byte_2B
 		BNE	loc_AB6A
-		LDA	$6C1,X
+		LDA	byte_6C1,X
 		CMP	byte_2C
 		BNE	loc_AB6A
 		LDA	#1
@@ -8387,9 +8345,9 @@ loc_ABB0:
 					; Y=ending Y
 		STY	byte_2D
 		LDA	#7
-		STA	byte_D
+		STA	word_C+1
 		LDA	#4
-		STA	byte_F
+		STA	word_E+1
 ; End of function sub_AB1E
 
 
@@ -8397,14 +8355,14 @@ loc_ABB0:
 
 sub_ABDB:				
 		LDY	#0
-		STY	byte_C
-		STY	byte_E
+		STY	word_C+0
+		STY	word_E+0
 		LDX	#1
 		JMP	memmove		; move (maybe overlapping) memory regions.
 ; End of function sub_ABDB		;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -8461,17 +8419,17 @@ loc_AC1D:
 loc_AC28:				
 		ASL
 		TAX
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		CMP	byte_2B
 		BNE	loc_AC38
-		LDA	$6C1,X
+		LDA	byte_6C1,X
 		CMP	byte_2C
 		BEQ	loc_AC1D
 
 loc_AC38:				
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		STA	byte_2B
-		LDY	$6C1,X
+		LDY	byte_6C1,X
 		STY	byte_2C
 		BEQ	loc_AC5D
 		INY
@@ -8815,13 +8773,13 @@ loc_ADFC:
 loc_AE0D:				
 		CLC
 		LDA	byte_39
-		STA	byte_C
+		STA	word_C+0
 		ADC	byte_27
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_3A
-		STA	byte_D
+		STA	word_C+1
 		ADC	byte_28
-		STA	byte_F
+		STA	word_E+1
 		SEC
 		LDA	TOP
 		SBC	byte_39
@@ -8832,38 +8790,38 @@ loc_AE0D:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	byte_35
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_36
-		STA	byte_D
+		STA	word_C+1
 		LDA	byte_39
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_3A
-		STA	byte_F
+		STA	word_E+1
 		LDX	byte_28
 		LDY	byte_27
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	current_command_id
 		CMP	#$6D ; 'm'
 		BNE	loc_AE68
 		LDA	unk_37
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_38
-		STA	byte_D
+		STA	word_C+1
 		LDA	byte_35
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_36
-		STA	byte_F
+		STA	word_E+1
 		SEC
 		LDA	unk_33
 		SBC	unk_37
@@ -8874,8 +8832,8 @@ loc_AE0D:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -9018,13 +8976,13 @@ loc_AEFD:
 		JSR	sub_AE93
 		JSR	sub_AEAA
 		LDA	unk_37
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_38
-		STA	byte_D
+		STA	word_C+1
 		LDA	byte_2B
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_2C
-		STA	byte_F
+		STA	word_E+1
 		SEC
 		LDA	TOP
 		SBC	unk_37
@@ -9035,8 +8993,8 @@ loc_AEFD:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		JSR	is_program_empty ; sets	C if no	program
@@ -9899,9 +9857,9 @@ loc_B304:
 		LDX	byte_3E
 		JSR	get_HIMEM_for_mode_X
 		JSR	find_program
-		LDX	byte_15
+		LDX	last_error_number
 		BEQ	locret_B329
-		JSR	clear_5B1_to_600
+		JSR	clear_error_message_buffer
 		LDA	#$E		; "No room for this mode"
 		JMP	loc_859D
 
@@ -9934,7 +9892,7 @@ set_mode:
 ; 		STY	screen_mode
 ; 		JSR	validate_mode
 ; 		JSR	find_program
-; 		LDA	byte_15
+; 		LDA	last_error_number
 ; 		BEQ	loc_B34A
 ; 		JMP	language_entry.loc_814D
 
@@ -10077,13 +10035,13 @@ loc_B3DB:
 					; Exit:
 					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	byte_2B
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
-		STA	byte_D
+		STA	word_C+1
 		LDA	#0
-		STA	byte_E
+		STA	word_E+0
 		LDA	#5
-		STA	byte_F
+		STA	word_E+1
 		LDX	#0
 		LDY	#3
 		LDA	(byte_2B),Y
@@ -10096,8 +10054,8 @@ loc_B3F9:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDX	#0
@@ -10218,7 +10176,7 @@ loc_B49E:
 
 sub_B4A0:				
 		LDY	#1
-		LDA	($C),Y
+		LDA	(word_C),Y
 		JMP	sub_B484
 ; End of function sub_B4A0
 
@@ -10242,9 +10200,9 @@ sub_B4A7: .block
 
 loc_B4B7: .proc
 		LDA	unk_1F
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_20
-		STA	byte_D
+		STA	word_C+1
 		JSR	sub_B4A0
 		BCS	loc_B4C7
 
@@ -10354,14 +10312,14 @@ loc_B53E:
 		CLC
 		LDA	unk_1F
 		ADC	byte_35
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_20
-		STA	byte_D
-		STA	byte_F
+		STA	word_C+1
+		STA	word_E+1
 		CLC
 		LDA	unk_1F
 		ADC	#4
-		STA	byte_E
+		STA	word_E+0
 		SEC
 		LDA	unk_503
 		SBC	cursor_offset	
@@ -10372,8 +10330,8 @@ loc_B53E:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDY	#1
@@ -10552,13 +10510,13 @@ loc_B621:
 
 loc_B65A: .proc
 		LDA	byte_2B
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
-		STA	byte_D
+		STA	word_C+1
 		LDA	#0
-		STA	byte_E
+		STA	word_E+0
 		LDA	#5
-		STA	byte_F
+		STA	word_E+1
 		LDX	#0
 		LDY	#3
 		LDA	(byte_2B),Y
@@ -10571,8 +10529,8 @@ loc_B675:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDY	#0
@@ -10729,14 +10687,14 @@ loc_B745:
 		CLC
 		LDA	unk_1F
 		ADC	#4
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_20
-		STA	byte_D
-		STA	byte_F
+		STA	word_C+1
+		STA	word_E+1
 		CLC
 		LDA	unk_1F
 		ADC	byte_36
-		STA	byte_E
+		STA	word_E+0
 		SEC
 		LDA	unk_503
 		SBC	byte_36
@@ -10747,25 +10705,25 @@ loc_B745:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	unk_2F
-		STA	byte_C
+		STA	word_C+0
 		LDA	unk_30
-		STA	byte_D
+		STA	word_C+1
 		LDA	unk_1F
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_20
-		STA	byte_F
+		STA	word_E+1
 		LDY	byte_36
 		LDX	#0
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDX	byte_36
@@ -10843,12 +10801,12 @@ loc_B7DD:
 		CLC
 		LDA	byte_2B
 		ADC	(byte_2B),Y
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
 		ADC	#0
-		STA	byte_D
+		STA	word_C+1
 		LDY	#1
-		LDA	($C),Y
+		LDA	(word_C),Y
 		BMI	loc_B7B7
 		LDA	byte_2D
 		STA	unk_34
@@ -10983,7 +10941,7 @@ loc_B89D:
 		ASL
 		TAX
 		INX
-		LDY	$6C0,X
+		LDY	byte_6C0,X
 		BNE	loc_B8AE
 		DEY
 		STY	current_line_no_msb
@@ -11027,11 +10985,11 @@ sub_B8BD: .proc
 loc_B8C5:				
 		INY
 		INY
-		LDA	$6C0,X
-		CMP	$6C0,Y
+		LDA	byte_6C0,X
+		CMP	byte_6C0,Y
 		BNE	loc_B8DB
-		LDA	$6C1,X
-		CMP	$6C1,Y
+		LDA	byte_6C1,X
+		CMP	byte_6C1,Y
 		BNE	loc_B8DB
 		INC	unk_37
 		BNE	loc_B8C5
@@ -11042,13 +11000,13 @@ loc_B8DB:
 		CLC
 		TYA
 		ADC	#$c0
-		STA	byte_C  ;src LSB
+		STA	word_C+0  ;src LSB
 		LDA	#6
-		STA	byte_F  ;dest MSB
+		STA	word_E+1  ;dest MSB
 		ADC	#0
-		STA	byte_D  ;src MSB
+		STA	word_C+1  ;src MSB
 		LDA	#$c0
-		STA	byte_E  ;dest LSB
+		STA	word_E+0  ;dest LSB
 
                 ; copy (screen_height+1-unk_37)*2
 		CLC
@@ -11066,8 +11024,8 @@ loc_B8DB:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -11077,8 +11035,8 @@ loc_B8DB:
                 beq copy_rows_table_done
                 ldy #0
 copy_rows_table_loop:
-                lda (byte_C),y
-                sta (byte_E),y
+                lda (word_C),y
+                sta (word_E),y
                 iny
                 dex
                 bne copy_rows_table_loop
@@ -11117,16 +11075,16 @@ loc_B927:
 
 loc_B92A:				
 		LDY	#3
-; set (byte_C) to point at next line
+; set (word_C) to point at next line
 		CLC
 		LDA	(byte_2B),Y
 		ADC	byte_2B
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
 		ADC	#0
-		STA	byte_D
+		STA	word_C+1
 		LDY	#1
-		LDA	(byte_C),Y
+		LDA	(word_C),Y
 		BMI	loc_B927	; branch taken if next line is end of program
 		JSR	sub_A8C0
 		LDA	byte_2B
@@ -11146,36 +11104,36 @@ loc_B92A:
 		LDA	byte_400
 		STA	unk_700
 		BEQ	loc_B987
-		LDA	#1
-		STA	byte_C
-		LDA	#4
-		STA	byte_D
+		LDA	#<unk_401
+		STA	word_C+0
+		LDA	#>unk_401
+		STA	word_C+1
 		LDY	#0
 
 loc_B966:				
-		LDA	($C),Y
-		CMP	#$20 ; ' '
+		LDA	(word_C),Y
+		CMP	#' '
 		BNE	loc_B977
 		DEC	unk_700
-		INC	byte_C
+		INC	word_C+0
 		BNE	loc_B975
-		INC	byte_D
+		INC	word_C+1
 
 loc_B975:				
 		BNE	loc_B966
 
 loc_B977:				
-		LDA	#1
-		STA	byte_E
-		LDA	#7
-		STA	byte_F
+		LDA	#<unk_701
+		STA	word_E+0
+		LDA	#>unk_701
+		STA	word_E+1
 		LDX	#0
 		LDY	unk_700
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 
@@ -11215,28 +11173,28 @@ loc_B9B2:
 		STA	unk_37
 		LDA	#$3A ; ':'
 		LDY	byte_400
-		STA	$401,Y
+		STA	unk_401,Y
 		INY
 		STY	byte_400
 
 loc_B9C4:				
 		CLC
 		LDA	byte_400
-		ADC	#1
-		STA	byte_E
-		LDA	#4
-		STA	byte_F
-		LDA	#1
-		STA	byte_C
-		LDA	#7
-		STA	byte_D
+		ADC	#<unk_401
+		STA	word_E+0
+		LDA	#>unk_401
+		STA	word_E+1
+		LDA	#<unk_701
+		STA	word_C+0
+		LDA	#>unk_701
+		STA	word_C+1
 		LDX	#0
 		LDY	unk_700
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		LDA	unk_37
@@ -11253,26 +11211,26 @@ loc_B9E5:
 		JSR	find_program
 		JSR	advance_2b_to_next_line
 		LDA	byte_2B
-		STA	byte_E
+		STA	word_E+0
 		LDA	byte_2C
-		STA	byte_F
+		STA	word_E+1
 		JSR	advance_2b_to_next_line
 		LDA	byte_2B
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_2C
-		STA	byte_D
+		STA	word_C+1
 		SEC
 		LDA	TOP
-		SBC	byte_C
+		SBC	word_C+0
 		TAY
 		LDA	TOP+1
-		SBC	byte_D
+		SBC	word_C+1
 		TAX
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		JSR	calculate_screen_chars_in_line
@@ -11348,11 +11306,11 @@ sub_BA69: .proc
 		LDX	#0
 
 loc_BA71:				
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		CMP	byte_2B
 		BNE	loc_BA82
 		INX
-		LDA	$6C0,X
+		LDA	byte_6C0,X
 		CMP	byte_2C
 		BNE	loc_BA83
 		DEX
@@ -11682,8 +11640,8 @@ loc_BC0B:
 loc_BC37:				
 		LDA	#aLastSearchEnd-aLastSearch
 		JSR	print_n_chars
-		LDX	#<unk_643
-		LDY	#>unk_643
+		LDX	#<search_string
+		LDY	#>search_string
 		LDA	search_string_length
 
 loc_BC42:				
@@ -11697,7 +11655,7 @@ loc_BC42:
 		LDX	tab_value
 		LDY	#0
 		JSR	print_number
-                JSR	sub_BD83
+                JSR	move_to_column_21
                 jsr print_next_string
                 .text "No.of lines: ",255
 		LDA	is_bad_program
@@ -11742,7 +11700,7 @@ loc_BCA4:
                 .text "First line  : ",255
                 
 		JSR	sub_BD8D
-		JSR	sub_BD83
+		JSR	move_to_column_21
                 jsr print_next_string
                 .text "Last line  : ",255
 		LDA	#-1
@@ -11768,7 +11726,7 @@ loc_BCA4:
 		LDX	current_line_no_lsb
 		LDY	current_line_no_msb
 		JSR	print_number
-		JSR	sub_BD83
+		JSR	move_to_column_21
 		JSR	sub_B37B
 		PHP
 		LDX	#<aMarkedLine
@@ -11869,13 +11827,11 @@ loc_BD7B:
 
 
 
-sub_BD83:				
-					
-		LDA	#$86 ; -$7A ;	'�'
+move_to_column_21:
+		LDA	#$86    ;read POS/VPOS (AUG p158)
 		JSR	OSBYTE
-		LDX	#$15
+		LDX	#21
 		JMP	gotoxy
-; End of function sub_BD83
 
 
 
@@ -11998,15 +11954,15 @@ loc_BE23:
 
 loc_BE2B:				
 		CLC
-		LDA	#0
+		LDA	#<unk_401-1
 		ADC	cursor_offset	; offset of cursor in detokenized buffer
 		ADC	byte_6BE
-		STA	byte_C
+		STA	word_C+0
 		ADC	unk_6AE
-		STA	byte_E
-		LDA	#4
-		STA	byte_D
-		STA	byte_F
+		STA	word_E+0
+		LDA	#>unk_401-1
+		STA	word_C+1
+		STA	word_E+1
 		LDX	#0
 		CLC
 		LDA	byte_400
@@ -12019,8 +11975,8 @@ loc_BE2B:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		PLA
@@ -12028,15 +11984,15 @@ loc_BE2B:
 
 loc_BE57:				
 		LDA	byte_3E
-		STA	byte_C
+		STA	word_C+0
 		LDA	byte_3F
-		STA	byte_D
+		STA	word_C+1
 		CLC
-		LDA	#0
+		LDA	#<unk_401-1
 		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		STA	byte_E
-		LDA	#4
-		STA	byte_F
+		STA	word_E+0
+		LDA	#>unk_401-1
+		STA	word_E+1
 		LDX	#0
 		LDY	unk_6BC
 		CLC
@@ -12047,8 +12003,8 @@ loc_BE57:
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
 		PLA
@@ -12198,19 +12154,19 @@ loc_BF0E:
 		TAX            
 		TAY            
 		INX            
-		LDA	$6C0,X 
+		LDA	byte_6C0,X 
 		BEQ	loc_BF5B
 		DEY
-		CMP	$6C0,Y
+		CMP	byte_6C0,Y
 		BNE	loc_BF4F
 		DEX
 		DEY
-		LDA	$6C0,X
-		CMP	$6C0,Y
+		LDA	byte_6C0,X
+		CMP	byte_6C0,Y
 		BNE	loc_BF4F
 		LDA	#0
-		STA	$6C0,X
-		STA	$6C1,X
+		STA	byte_6C0,X
+		STA	byte_6C1,X
 		DEC	byte_36
 
                 ; gotoxy (0,y)
@@ -12239,25 +12195,25 @@ loc_BF4F:
 		ASL
 		TAX
 		LDA	#0
-		STA	$6C0,X
-		STA	$6C1,X
+		STA	byte_6C0,X
+		STA	byte_6C1,X
 
 loc_BF5B:
 		LDA	byte_2D ;Y coord
 		ASL             ;*2
-		STA	byte_E
+		STA	word_E+0
 
                 ; copy from $6c0 to $6c0+y - must copy down
-		LDA	#6
-		STA	byte_D  ;src MSB
-		STA	byte_F  ;dest MSB
-		LDA	#$C0
-		STA	byte_C  ;src LSB
+		LDA	#>byte_6c0
+		STA	word_C+1  ;src MSB
+		STA	word_E+1  ;dest MSB
+		LDA	#<byte_6c0
+		STA	word_C+0  ;src LSB
 		CLC
-		ADC	byte_E  ;dest LSB
-		STA	byte_E  ;dest LSB
+		ADC	word_E+0  ;dest LSB
+		STA	word_E+0  ;dest LSB
 		BCC	loc_BF73
-		INC	byte_F
+		INC	word_E+1
 
 loc_BF73:				
 		CLC
@@ -12276,8 +12232,8 @@ loc_BF73:
 		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
 					;
 					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
+					; (word_C) points to src
+					; (word_E) points to dest
 					; X is MSB of size
 					; Y is LSB of size
                                         
@@ -12287,8 +12243,8 @@ loc_BF73:
                 beq copy_rows_table_done
                 dey              ;Y is offset
 copy_rows_table_loop:
-                lda (byte_C),y
-                sta (byte_E),y
+                lda (word_C),y
+                sta (word_E),y
                 dey
                 cpy #$ff
                 bne copy_rows_table_loop
@@ -12307,9 +12263,9 @@ copy_rows_table_done:
 		ASL
 		TAX
 		LDA	byte_2B
-		STA	$6C0,X
+		STA	byte_6C0,X
 		LDA	byte_2C
-		STA	$6C1,X
+		STA	byte_6C1,X
 		JSR	save_line_number ; saves line number from program.
 					;
 					; Entry:

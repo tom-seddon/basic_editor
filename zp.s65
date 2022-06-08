@@ -18,15 +18,11 @@ screen_chars_in_line:
 background_colour:
                 .fill 1 
 foreground_colour:
-                .fill 1 
-byte_C:
-                .fill 1	
-byte_D:
-                .fill 1	
-byte_E:
-                .fill 1	
-byte_F:
-                .fill 1	
+                .fill 1
+word_C:
+                .fill 2
+word_E:
+                .fill 2
 cursor_offset:
                 .fill 1
 
@@ -41,8 +37,8 @@ TOP:
                 .fill 1
                 .fill 1		
 spare_14:
-                .fill 1	
-byte_15:
+                .fill 1
+last_error_number:
                 .fill 1	
 is_bad_program:
                 .fill 1 
