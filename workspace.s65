@@ -1,7 +1,8 @@
 ; detokenized line buffer - length (1 byte), then text
 byte_400 = $400
 unk_401 = $401
-                
+
+; used as a buffer for tokenized line?                
 unk_500 = $500
 unk_501 = $501
 unk_502 = $502
@@ -15,7 +16,7 @@ error_message_buffer_size=$600-error_message_buffer
 search_string = $643
                 
 byte_6A7 = $6A7
-byte_6A8 = $6A8
+line_was_truncated = $6A8
 old_stack_ptr = $6A9
 unk_6AA = $6AA
 byte_6AB = $6Ab
@@ -31,11 +32,10 @@ code_area_width = $6B6
 editor_mode_id = $6B7
 unk_6B8 = $6B8
 unk_6B9 = $6B9
-unk_6BA = $6BA
-unk_6BB = $6BB
-unk_6BC = $6BC
+replace_text_ptr = $6ba
+replace_text_length = $6bc
 current_command_id = $6BD
-byte_6BE = $6BE
+input_length = $6be
 screen_height = $6BF
 
 ; lines table, indexed by screen Y coordinare

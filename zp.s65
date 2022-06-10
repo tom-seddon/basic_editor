@@ -19,9 +19,9 @@ background_colour:
                 .fill 1 
 foreground_colour:
                 .fill 1
-word_C:
+ptr0:
                 .fill 2
-word_E:
+ptr1:
                 .fill 2
 cursor_offset:
                 .fill 1
@@ -119,10 +119,8 @@ is_insert_mode:
                 .fill 1 
 is_scroll_on:
                 .fill 1	
-byte_3E:
-                .fill 1	
-byte_3F:
-                .fill 1	
+input_ptr:
+                .fill 2
 byte_40:
                 .fill 1	
 byte_41:
