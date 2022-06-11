@@ -68,15 +68,16 @@ byte_22:
 byte_23:
                 .fill 1	
 byte_24:
-                .fill 1	
-byte_25:
-                .fill 1	
-byte_26:
-                .fill 1	
-byte_27:
-                .fill 1	
-byte_28:
-                .fill 1	
+                .fill 1
+
+; Two pointers used while tokenizing and examining BASIC code.
+;
+; Names need improving...
+basic_ptr_0:
+                .fill 2
+basic_ptr_1:
+                .fill 2
+                
 unk_29:
                 .fill 1 
 unk_2A:
@@ -139,7 +140,7 @@ byte_47:
                 .fill 1	
 byte_48:
                 .fill 1	
-byte_49:
+command_flags:
                 .fill 1	
 current_line_no_msb:
                 .fill 1 

@@ -129,7 +129,7 @@ pop_and_copy_addrs: .macro
                 jmp test_B0BB   ;+15
 
 test_B0BB: .proc
-addrs:=(byte_25,byte_26,byte_27,byte_28)
+addrs:=(basic_ptr_0+0,basic_ptr_0+1,basic_ptr_1+0,basic_ptr_1+1)
                 push_and_copy_addrs addrs,$70
                 txa
                 jsr language.sub_B0BB
@@ -1207,19 +1207,19 @@ loc_84A7:
 		STX	byte_3A
 		LDA	oshwm
 		STA	unk_33
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	oshwm+1
-		STA	byte_28
+		STA	basic_ptr_1+1
 
 loc_84B3:				
 		LDY	#1
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		BPL	loc_84BC
 		JMP	loc_854F
 
 loc_84BC:				
 		LDY	#3
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		STA	unk_37
 		LDA	#0
 		STA	byte_38
@@ -1246,7 +1246,7 @@ loc_84DC:
 		JMP	loc_852E
 
 loc_84DF:				
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		CMP	#$8D
 		BNE	loc_84DC
 		JSR	decode_line_number ; decode line number	from program.
@@ -1260,15 +1260,15 @@ loc_84DF:
 
 loc_84EB:				
 		LDY	#1
-		LDA	(byte_25),Y
+		LDA	(basic_ptr_0),Y
 		BPL	loc_8505
 		LDX	#4
 		STX	unk_33
 		LDY	unk_34
-		LDA	#$40 ; '@'
+		LDA	#'@'
 
 loc_84F9:				
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 		INY
 		DEX
 		BNE	loc_84F9
@@ -1282,7 +1282,7 @@ loc_8505:
 		CMP	byte_21
 		BNE	loc_8529
 		INY
-		LDA	(byte_25),Y
+		LDA	(basic_ptr_0),Y
 		CMP	byte_22
 		BNE	loc_8529
 		LDX	byte_35
@@ -1295,8 +1295,8 @@ loc_8505:
 
 loc_851F:				
 		INY
-		STA	(byte_27),Y
-		LDA	$34,X
+		STA	(basic_ptr_1),Y
+		LDA	unk_34,X
 		DEX
 		BPL	loc_851F
 		BMI	loc_8500
@@ -1306,7 +1306,7 @@ loc_8529:
 		BNE	loc_84EB
 
 loc_852E:				
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		CMP	#$22 ; '"'
 		BNE	loc_853A
 		LDA	byte_38
@@ -1320,11 +1320,11 @@ loc_853A:
 loc_853F:				
 		LDY	#3
 		CLC
-		LDA	(byte_27),Y
-		ADC	byte_27
-		STA	byte_27
+		LDA	(basic_ptr_1),Y
+		ADC	basic_ptr_1+0
+		STA	basic_ptr_1+0
 		BCC	loc_854C
-		INC	byte_28
+		INC	basic_ptr_1+1
 
 loc_854C:				
 		JMP	loc_84B3
@@ -1334,26 +1334,26 @@ loc_854F:
 
 loc_8552:				
 		LDY	#1
-		LDA	(byte_25),Y
+		LDA	(basic_ptr_0),Y
 		BMI	loc_858A
 		LDX	#$11
 
 loc_855A:				
 		LDY	#2
-		LDA	$40,X
-		CMP	(byte_25),Y
+		LDA	byte_40,X
+		CMP	(basic_ptr_0),Y
 		BNE	loc_8575
 		DEX
 		DEY
-		LDA	$40,X
-		CMP	(byte_25),Y
+		LDA	byte_40,X
+		CMP	(basic_ptr_0),Y
 		BNE	loc_8576
 		LDA	byte_35
 		ORA	#$80 ; '�'
-		STA	$40,X
+		STA	byte_40,X
 		INX
 		LDA	byte_36
-		STA	$40,X
+		STA	byte_40,X
 
 loc_8575:				
 		DEX
@@ -1364,10 +1364,10 @@ loc_8576:
 		BPL	loc_855A
 		LDY	#1
 		LDA	byte_35
-		STA	(byte_25),Y
+		STA	(basic_ptr_0),Y
 		INY
 		LDA	byte_36
-		STA	(byte_25),Y
+		STA	(basic_ptr_0),Y
 		JSR	sub_85BF
 		BNE	loc_8552
 
@@ -1375,9 +1375,9 @@ loc_858A:
 		LDX	#$10
 
 loc_858C:				
-		LDA	$40,X
+		LDA	byte_40,X
 		AND	#$7F ; ''
-		STA	$40,X
+		STA	byte_40,X
 		DEX
 		DEX
 		DEX
@@ -1403,9 +1403,9 @@ loc_85A6:
 
 sub_85AC:				
 		LDA	oshwm
-		STA	byte_25
+		STA	basic_ptr_0+0
 		LDA	oshwm+1
-		STA	byte_26
+		STA	basic_ptr_0+1
 		LDA	unk_6B8
 		STA	byte_35
 		LDA	unk_6B9
@@ -1421,11 +1421,11 @@ locret_85BE:
 sub_85BF:				
 		LDY	#3
 		CLC
-		LDA	(byte_25),Y
-		ADC	byte_25
-		STA	byte_25
+		LDA	(basic_ptr_0),Y
+		ADC	basic_ptr_0+0
+		STA	basic_ptr_0+0
 		BCC	loc_85CC
-		INC	byte_26
+		INC	basic_ptr_0+1
 
 loc_85CC:				
 		CLC
@@ -1691,7 +1691,7 @@ byte_8C96:	.byte 9
 
 ;-------------------------------------------------------------------------
 
-parse_command_line:			
+parse_command_line: .proc		
 		LDY	#0
 		STY	current_command_id
 		LDA	#<unk_700
@@ -1702,17 +1702,16 @@ parse_command_line:
 
 skip_initial_spaces_loop:		
 		LDA	(ptr0),Y
-		CMP	#32
+		CMP	#' '
 		BNE	found_non_space
 		INC	ptr0+0
-		BNE	loc_8CB0
+		BNE	+
 		INC	ptr0+1
-
-loc_8CB0:				
++
 		BNE	skip_initial_spaces_loop
 
 found_non_space:			
-		CMP	#$D
+		CMP	#13
 		BEQ	done2
 
 try_star:				; is it	looking	like a * command?
@@ -1728,9 +1727,11 @@ done2:
 		RTS
 
 try_number:				
-		JSR	atoi		; entry: (unk_C) points	to text;
-					; exit:	C set if error,	or (input_ptr) holds value
-		BCS	try_command	; branch taken if it doesn't look like a number
+		JSR	atoi    ; entry: (unk_C) points to text; exit:
+                                ; C set if error, or (input_ptr) holds
+                                ; value
+		BCS	try_command ; branch taken if command doesn't look like
+                                    ; a number
 		LDY	#0
 
 skip_number_loop:			
@@ -1751,7 +1752,7 @@ skip_post_number_spaces_loop:
 		CMP	#32            ; just a space?
 		BEQ	skip_post_number_spaces_loop ; keep going if so
 ; any non-space chars after the line number are invalid.
-		LDA	#$16		; "Invalid line	number"
+		LDA	#22		; "Bad line number"
 		JMP	raise_error
 
 is_line_number:				
@@ -1797,7 +1798,7 @@ loc_8D12:
 		BNE	try_this_command ; JMP,	in effect
 
 invalid_command:			
-		LDA	#9		; "Invalid command"
+		LDA	#9		; "Bad command"
 		JMP	raise_error
 
 char_matched:				
@@ -1813,7 +1814,7 @@ found_end_of_command_name_2:
 		INY			; skip terminating 0
 		STY	byte_39		; $39 =	Y pointing into	data
 		LDA	(ptr1),Y		; get first byte of command data
-		STA	byte_49		; $49 =	first byte of command data
+		STA	command_flags		; $49 =	first byte of command data
 		LDY	byte_3A
 		LDA	(ptr0),Y		; get last matched input char
 		LDX	#0
@@ -1848,10 +1849,10 @@ spaces_skipped:
 loc_8D52:				
 					
 		TXA			; get 0	(no args entered) or 1 (args entered)
-		EOR	byte_49		; Set bit 0 if state differs from command's requirements
+		EOR	command_flags		; Set bit 0 if state differs from command's requirements
 		AND	#1		; Extract bit 0
 		BEQ	loc_8D69	; Branch taken if command wants	args and some were entered/it doesn't and there weren't
-		LDA	byte_49
+		LDA	command_flags
 		AND	#4		; String arg?
 		BNE	loc_8D69	; branch taken if string arg wanted but	one wasn't supplied
 ; "Invalid argument" if an unnecessary one was specified; "Argument missing" if a necessary one wasn't.
@@ -1867,7 +1868,7 @@ loc_8D69:
 					
 		TXA			; get 0	(no args entered) or 1 (args entered)
 		BEQ	no_args_entered	; branch taken if no args entered
-		LDA	byte_49		; get args byte
+		LDA	command_flags		; get args byte
 		AND	#2		; test bit 1 (single numeric arg)
 		BEQ	loc_8D94	; branch taken if command wants	something else
 ; command wants single numeric argument
@@ -1931,9 +1932,8 @@ got_command:
 		INY
 		LDA	(ptr1),Y		; get command ID
 		JMP	store_current_command
-; End of function parse_command_line
 
-
+                .endproc
 
 ; Gets string representation of	16-bit number.
 ;
@@ -2609,7 +2609,7 @@ execute_command:
 loc_8FEF:				
 		LDY	#0
 		LDA	(byte_39),Y	; get control byte
-		STA	byte_49		; ?unk_49 = control byte
+		STA	command_flags		; ?unk_49 = control byte
 		CMP	#$FF		; end of table?
 		BNE	loc_8FFA	; branch taken if not end of table
 
@@ -2634,12 +2634,12 @@ loc_9005:
 		INY
 		LDA	(byte_39),Y		; get command routine ptr MSB
 		STA	unk_6B2		; store	JMP target MSB
-		LDA	byte_49		; get control byte
+		LDA	command_flags		; get control byte
 		AND	#1		; extract bit 0
 		STA	byte_6AB	; ?unk_6AB = unknown byte bit 1
 
 check_bit_1:				; get control byte
-		LDA	byte_49
+		LDA	command_flags
 		AND	#2		; extract bit 1
 		BNE	check_bit_2	; branch taken if bit 1	reset
 ; bit 1 set
@@ -2647,7 +2647,7 @@ check_bit_1:				; get control byte
 		BNE	execute_command_done
 
 check_bit_2:				
-		LDA	byte_49		; get control byte
+		LDA	command_flags		; get control byte
 		AND	#4		; extract bit 2
 		BEQ	check_bit_3	; branch taken if bit 2	reset
 ; bit 2 set
@@ -2656,7 +2656,7 @@ check_bit_2:
 		BEQ	check_bit_3	; branch taken if edit mode
 ; not in edit mode
 		JSR	init_edit_mode
-		LDA	byte_49		; get control byte
+		LDA	command_flags		; get control byte
 		AND	#$10		; extract bit 4
 		BEQ	check_bit_6	; branch taken if bit 4	reset
 ; bit 4 set
@@ -2669,7 +2669,7 @@ check_bit_3:
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#2		; edit mode?
 		BNE	check_bit_6     ;taken if command mode
-		LDA	byte_49         ;get control byte
+		LDA	command_flags         ;get control byte
 		AND	#8              ;test bit 3
 		BEQ	check_bit_4     ;taken if bit 3 reset
 		JSR	is_line_empty	; determines whether current line is empty.
@@ -2684,7 +2684,7 @@ check_bit_3:
 
 check_bit_4:				
 					
-		LDA	byte_49
+		LDA	command_flags
 		AND	#$10
 		BEQ	check_bit_5
 		JSR	is_line_empty	; determines whether current line is empty.
@@ -2699,7 +2699,7 @@ check_bit_4:
 
 check_bit_5:				
 					
-		LDA	byte_49
+		LDA	command_flags
 		AND	#$20 ; ' '
 		BEQ	check_bit_6
 		STA	byte_6B3
@@ -2707,9 +2707,9 @@ check_bit_5:
 
 check_bit_6:				
 					
-		LDA	byte_49
-		AND	#$40 ; '@'
-		EOR	#$40 ; '@'
+		LDA	command_flags
+		AND	#$40
+		EOR	#$40
 		STA	byte_6A7
 		JMP	unk_6B0
 
@@ -3496,9 +3496,9 @@ locret_9424:
 
 save_command
 		LDA	TOP
-		STA	byte_27		; save end address LSB
+		STA	basic_ptr_1+0		; save end address LSB
 		LDA	TOP+1
-		STA	byte_28		; save end address MSB
+		STA	basic_ptr_1+1		; save end address MSB
 		LDA	#0		; OSFILE save memory block
 
 do_osfile_from_oshwm:				
@@ -3521,12 +3521,12 @@ do_osfile .proc
 		LDA	higher_order_address
 		STA	unk_1D		; load address bits 16...23
 		STA	byte_21		; exec address bits 16...23
-		STA	byte_25		; save start address bits 16...23
+		STA	basic_ptr_0+0		; save start address bits 16...23
 		STA	unk_29		; save end address bits	16...23
 		LDA	higher_order_address+1
 		STA	unk_1E		; load address bits 24...31
 		STA	byte_22		; exec address bits 24...31
-		STA	byte_26		; save start address bits 24...31
+		STA	basic_ptr_0+1		; save start address bits 24...31
 		STA	unk_2A		; save end address bits	24...31
 		PLA			; get OSFILE code
 		TAX			; OSFILE code in X
@@ -3732,7 +3732,8 @@ escape_key_command: .proc
 ;
 ; $04 - enter edit mode
 ; $08 - if in edit mode, tokenize line before executing
-; $10 - program must be non-empty
+; $10 - program must be non-empty - do a NEW first if $04 set
+; 
 
 command_jump: .macro flags,id,addr
                 .byte \flags
@@ -3863,14 +3864,14 @@ loc_9695:
 
 sub_9698:				
 		LDA	byte_6C0
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	byte_6C1
-		STA	byte_28
+		STA	basic_ptr_1+1
 		CMP	#-1
 		BEQ	loc_96BB
 		LDY	#1
 		LDA	current_line_no_msb
-		CMP	(byte_27),Y
+		CMP	(basic_ptr_1),Y
 		BCS	loc_96B0
 
 loc_96AE:				
@@ -3881,7 +3882,7 @@ loc_96B0:
 		BNE	loc_96BD
 		INY
 		LDA	current_line_no_lsb
-		CMP	(byte_27),Y
+		CMP	(basic_ptr_1),Y
 		BCC	loc_96AE
 		BNE	loc_96BD
 
@@ -3894,7 +3895,7 @@ loc_96BD:
 
 loc_96BF:				
 		LDA	byte_6C0,X
-		STA	$700,X
+		STA	unk_700,X
 		DEX
 		BPL	loc_96BF
 		LDA	current_line_no_msb
@@ -3942,7 +3943,7 @@ loc_96F8:
 		LDX	#$3F ; '?'
 
 loc_96FB:				
-		LDA	$700,X
+		LDA	unk_700,X
 		STA	byte_6C0,X
 		DEX
 		BPL	loc_96FB
@@ -5076,20 +5077,20 @@ loc_9C26:
 detokenize_line: .proc
 					
 		CLC
-; Point (unk_27) at start of data of current line
+; Point (basic_ptr_1) at start of data of current line
 		LDA	byte_2B
 		ADC	#4		; +4 - skip 13,	line MSB, line LSB, line length.
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	byte_2C
-		STA	byte_28
-		BCC	loc_9C45
-		INC	byte_28
+		STA	basic_ptr_1+1
+		BCC	+
+		INC	basic_ptr_1+1
++
 
-loc_9C45:				
 		LDA	#0
-		STA	byte_400
+		STA	byte_400      ;reset line length count
 		STA	byte_23		; index	in body	of line
-		STA	byte_25		; not inside quotes
+		STA	basic_ptr_0+0		; not inside quotes
 		LDY	#3		; index	of line	length
 		LDA	(byte_2B),Y	; get total line length
 		SEC
@@ -5097,17 +5098,17 @@ loc_9C45:
 		STA	byte_24		; ?unk_24 = length of body of line
 		BEQ	detokenize_line_done		; branch taken if line is empty
 
-loc_9C59:				
+loc_9C59:
+                ; point (ptr1) at eol
 		LDA	#>unk_401
 		STA	ptr1+1
 		CLC
 		LDA	#<unk_401
 		ADC	byte_400
 		STA	ptr1+0
-		BCC	loc_9C69
+		BCC	+
 		INC	ptr1+1
-
-loc_9C69:				
++
 		LDX	byte_24		; get line length
 		DEX			; -1 to	get index of last byte
 		CPX	byte_23		; compare to current index
@@ -5117,30 +5118,30 @@ detokenize_line_done:
 		RTS
 
 loc_9C71:				
-		LDA	byte_25		; in string?
+		LDA	basic_ptr_0+0		; in string?
 		BEQ	copy_tokenized	; branch taken if not in string
 ; point (ptr0) at byte in program
 
 not_token:				
 					
-		LDA	byte_28
+		LDA	basic_ptr_1+1
 		STA	ptr0+1
 		LDA	byte_23
 		CLC
-		ADC	byte_27
+		ADC	basic_ptr_1+0
 		STA	ptr0+0
 		BCC	copy_whilst_checking_for_quotes
 		INC	ptr0+1
 
 copy_whilst_checking_for_quotes:	
 		LDY	byte_23
-		LDA	(byte_27),Y	; get next byte
-		CMP	#34            ; quotes?
+		LDA	(basic_ptr_1),Y	; get next byte
+		CMP	#'"'            ; quotes?
 		BNE	read_byte
 ; toggle 'in quotes' flag
-		LDA	byte_25
+		LDA	basic_ptr_0+0
 		EOR	#1
-		STA	byte_25
+		STA	basic_ptr_0+0
 
 read_byte:				
 		LDY	#1
@@ -5148,9 +5149,9 @@ read_byte:
 
 copy_tokenized:				
 		LDY	byte_23
-		LDA	(byte_27),Y	; get next byte	from line
+		LDA	(basic_ptr_1),Y	; get next byte	from line
 		BPL	not_token	; if positive, not a taken
-		CMP	#$8D		; is this a line number?
+		CMP	#LINE_NUMBER_TOKEN
 		BNE	token		; branch taken if not a	line number
 		TYA
 		CLC
@@ -5175,6 +5176,9 @@ copy_tokenized:
 					; Exit:
 					; unk_0	holds digit count
 					; unk_1... filled with string
+
+                ; point the detokenized text pointer/length at the
+                ; itoa result, then proceed to copy it.
 		LDA	#<unk_1
 		STA	ptr0+0
 		LDA	#>unk_1
@@ -5186,14 +5190,14 @@ copy_tokenized:
 		LDY	byte_0
 		BNE	advance		; JMP, in effect, I think...
 
-token:					
-		STA	byte_26		; ?byte_26 = token being searched for
+token:
+		STA	basic_ptr_0+1		; ?basic_ptr_0+1 = token being searched for
 		LDA	#<token_table
 		STA	ptr0+0
 		LDA	#>token_table
 		STA	ptr0+1
 
-loc_9CD0:				
+loc_9CD0:
 		LDY	#0
 
 find_token_value_loop:			
@@ -5203,7 +5207,7 @@ find_token_value_loop:
 		BNE	find_token_value_loop
 
 found_token_value:			
-		CMP	byte_26		; is it	the desired token?
+		CMP	basic_ptr_0+1		; is it	the desired token?
 		BEQ	advance		; branch taken if token	found
 		CMP	#$D3		; HIMEM, statement version?
 		BEQ	not_token	; ??? -	branch taken if	so
@@ -5214,14 +5218,12 @@ found_token_value:
 		CLC
 		ADC	ptr0+0
 		STA	ptr0+0
-		BCC	loc_9CED
+		BCC	+
 		INC	ptr0+1
-
-loc_9CED:				
++
 		BNE	loc_9CD0
 
 advance:				
-					
 		TYA			; get length of	token
 		CLC
 		ADC	byte_400	; add to current length
@@ -5276,7 +5278,7 @@ copy_detokenized_text:
 decode_line_number: .proc		
 					
 		INY
-		LDA	(byte_27),Y	; get first line number	byte
+		LDA	(basic_ptr_1),Y	; get first line number	byte
 		PHA			; store
 		LDX	#1
 
@@ -5287,7 +5289,7 @@ decode_line_number_loop:
 		PHA			; save
 		AND	#%11000000
 		INY
-		EOR	(byte_27),Y
+		EOR	(basic_ptr_1),Y
 		STA	byte_21,X
 		DEX
 		BPL	decode_line_number_loop
@@ -5395,7 +5397,7 @@ enter_edit_mode:
 		STA	current_line_no_msb
 		JMP	loc_9DE4
 
-loc_9DA8:				
+loc_9DA8:
 					
 		JSR	is_program_empty ; sets	C if no	program
 		BCC	loc_9DC9
@@ -5879,15 +5881,15 @@ locret_9FF1:
 
 ;-------------------------------------------------------------------------
 
-; check if there's room to store (byte_27) bytes past TOP. Causes a
+; check if there's room to store (basic_ptr_1) bytes past TOP. Causes a
 ; 'No room' error if not.
 check_for_room: .proc
 		CLC
 		LDA	TOP     ;get TOP LSB
-		ADC	byte_27 ;add size of update LSB
+		ADC	basic_ptr_1+0 ;add size of update LSB
 		TAX             ;save new TOP LSB
 		LDA	TOP+1   ;get TOP MSB
-		ADC	byte_28 ;add size of update MSB
+		ADC	basic_ptr_1+1 ;add size of update MSB
 		CMP	HIMEM+1 ;has new TOP MSB gone past HIMEM MSB?
 		BCC	locret_A00D ;taken if definitely not
 		BEQ	loc_A007    ;taken if it's equal
@@ -6155,11 +6157,11 @@ sub_A0B1:
 		RTS
 
 loc_A0B6:				
-		STA	byte_28
-		DEC	byte_28
-		STY	byte_27
+		STA	basic_ptr_1+1
+		DEC	basic_ptr_1+1
+		STY	basic_ptr_1+0
 		DEX
-		STX	byte_26
+		STX	basic_ptr_0+1
 		JSR	make_cursor_invisible
 		LDA	#$FF
 		STA	byte_24
@@ -6167,13 +6169,13 @@ loc_A0B6:
 		LDA	#0
 		SEC
 		SBC	code_area_width
-		STA	byte_25
+		STA	basic_ptr_0+0
 
 loc_A0D0:				
 		CLC
-		LDA	byte_25
+		LDA	basic_ptr_0+0
 		ADC	code_area_width
-		STA	byte_25
+		STA	basic_ptr_0+0
 		CLC
 		LDA	byte_23
 		ADC	code_area_width
@@ -6189,16 +6191,16 @@ loc_A0E4:
 ; (byte_20) points at detokenized line
 		LDA	byte_24
 		BNE	loc_A0F8
-		LDA	byte_28
+		LDA	basic_ptr_1+1
 		CMP	byte_23
 		BEQ	loc_A0F8
 		BCS	loc_A0D0
 
 loc_A0F8:				
-		LDA	byte_28
-		CMP	byte_25
+		LDA	basic_ptr_1+1
+		CMP	basic_ptr_0+0
 		BCS	loc_A100
-		LDA	byte_25
+		LDA	basic_ptr_0+0
 
 loc_A100:				
 		STA	byte_22
@@ -6209,22 +6211,22 @@ loc_A100:
 		INC	byte_21
 
 loc_A10B:				
-		LDA	byte_27
+		LDA	basic_ptr_1+0
 		BNE	loc_A115
-		LDA	byte_26
-		CMP	byte_25
+		LDA	basic_ptr_0+1
+		CMP	basic_ptr_0+0
 		BCC	locret_A16C
 
 loc_A115:				
 		LDX	#0
-		LDA	byte_27
+		LDA	basic_ptr_1+0
 		CMP	byte_24
 		BEQ	loc_A121
 		BCS	loc_A129
 		BCC	loc_A127
 
 loc_A121:				
-		LDA	byte_26
+		LDA	basic_ptr_0+1
 		CMP	byte_23
 		BCS	loc_A129
 
@@ -6394,7 +6396,7 @@ goto_start_of_line:
 
 print_line_command_chars:		
 					
-		LDA	$40,X		; fetch	control	byte
+		LDA	byte_40,X		; fetch	control	byte
 		CMP	#$20 ; ' '
 		BEQ	locret_A1D8	; branch taken if no line command here
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
@@ -6472,11 +6474,11 @@ use_slot:
 		LDA	current_command_id
 		CLC
 		ADC	#$40		; make letter from command ID -- 'C', 'D' or 'M'
-		LDY	$40,X		; get old command
+		LDY	byte_40,X		; get old command
 		CPY	#$20 ; ' '      ; no command?
 		BEQ	set_line_command ; branch taken	if no command.
 					; just set command if taken.
-		CMP	$40,X		; is this the command that's there already?
+		CMP	byte_40,X		; is this the command that's there already?
 		BNE	set_line_command ; branch taken	if not same command.
 					; overwrite old	command	with new one if	taken.
 		CLC
@@ -6484,11 +6486,11 @@ use_slot:
 
 set_line_command:			
 					
-		STA	$40,X		; store	command
+		STA	byte_40,X		; store	command
 		LDA	current_line_no_msb
-		STA	$41,X		; store	line no	LSB
+		STA	byte_41,X ; store	line no	LSB
 		LDA	current_line_no_lsb
-		STA	$42,X		; store	line no	MSB
+		STA	byte_42,X		; store	line no	MSB
 
 loc_A216:				
 		JSR	redraw_line_number ; update line number	with new commands
@@ -6511,10 +6513,10 @@ is_current_line:
 					
 		PHA
 		LDA	current_line_no_msb
-		CMP	$41,X
+		CMP	byte_41,X
 		BNE	loc_A22C
 		LDA	current_line_no_lsb
-		CMP	$42,X
+		CMP	byte_42,X
 		BNE	loc_A22C
 		SEC
 		BCS	loc_A22D
@@ -6543,7 +6545,7 @@ locret_A22E:
 
 is_line_command_slot_free:		
 					
-		LDA	$40,X		; get line command flag
+		LDA	byte_40,X		; get line command flag
 		CMP	#$20 ; ' '      ; is it free?
 		BEQ	locret_A22E	; branch taken if slot free.
 					; return with C	set if taken.
@@ -6609,7 +6611,7 @@ loc_A276:
 
 
 sub_A280:				
-		LDA	$40,X
+		LDA	byte_40,X
 		CMP	#$20 ; ' '
 		BEQ	locret_A2A0
 		JSR	is_current_line	; checks if the	given line command is set on the current line.
@@ -6627,15 +6629,15 @@ sub_A280:
 		LDX	#3
 
 loc_A291:				
-		LDA	$42,X
-		STA	$3F,X
+		LDA     byte_43-1,X
+		STA	byte_40-1,X
 		DEX
 		BNE	loc_A291
 		LDX	#3
 
 loc_A29A:				
 		LDA	#$20 ; ' '
-		STA	$40,X
+		STA	byte_40,X
 		INC	readline_ptr_msb
 
 locret_A2A0:				
@@ -7742,6 +7744,7 @@ loc_A8CC:
 		LDA	current_line_no_lsb
 		STA	unk_502 ;line header, bye 2
 
+                ; prepare image of final line at unk_500...
                 ldx #0
 copy_loop:
                 lda unk_401,x
@@ -7752,7 +7755,7 @@ copy_loop:
                                         
 		JMP	loc_A905
                 
-loc_A8FF:				
+loc_A8FF:
 		LDA	#0
 		STA	line_was_truncated ;line isn't too long
 		PHA
@@ -7820,7 +7823,7 @@ loc_A943:
 loc_A947:				
 		LDX	byte_2C
 		INX
-		STX	byte_25
+		STX	basic_ptr_0+0
 		LDA	unk_503
 		CPX	#0
 		BEQ	loc_A958
@@ -7829,10 +7832,10 @@ loc_A947:
 		SBC	(byte_2B),Y
 
 loc_A958:				
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	#0
 		SBC	#0
-		STA	byte_28
+		STA	basic_ptr_1+1
 		JSR	find_program
 		JSR	check_for_room
 		LDX	current_line_no_lsb
@@ -7861,10 +7864,10 @@ loc_A96E:
 
                 ; dest = 
 		CLC
-		ADC	byte_27
+		ADC	basic_ptr_1+0
 		STA	ptr1+0
 		LDA	byte_2C
-		ADC	byte_28
+		ADC	basic_ptr_1+1
 		STA	ptr1+1
 		SEC
 		LDA	TOP
@@ -7885,14 +7888,14 @@ loc_A96E:
 		LDA	#5
 		STA	ptr0+1
 		LDY	#4
-		LDX	byte_25
+		LDX	basic_ptr_0+0
 		BNE	loc_A9A6
 		LDY	#0
 
 loc_A9A6:				
-		LDA	$2B,Y
+		LDA	byte_2B,Y
 		STA	ptr1+0
-		LDA	$2C,Y
+		LDA	byte_2C,Y
 		STA	ptr1+1
 		LDA	editor_mode_id	; 1=command mode, 2=edit mode
 		CMP	#1
@@ -7926,11 +7929,11 @@ loc_A9D9:
 		BEQ	loc_A9F3
 		CLC
 		LDA	byte_6C0,Y
-		ADC	byte_27
+		ADC	basic_ptr_1+0
 		STA	byte_6C0,Y
 		INY
 		LDA	byte_6C0,Y
-		ADC	byte_28
+		ADC	basic_ptr_1+1
 		STA	byte_6C0,Y
 		INY
 		BNE	loc_A9D0
@@ -8595,13 +8598,13 @@ loc_AD09:
 
 sub_AD0E:				
 					
-		CMP	$41,X
+		CMP	byte_41,X
 		BEQ	loc_AD13
 		RTS
 
 loc_AD13:				
 		TYA
-		CMP	$42,X
+		CMP	byte_42,X
 		BNE	locret_AD19
 		CLC
 
@@ -8703,10 +8706,10 @@ loc_AD87:
 		SEC
 		LDA	unk_37
 		SBC	byte_35
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	byte_38
 		SBC	byte_36
-		STA	byte_28
+		STA	basic_ptr_1+1
 		PLA
 		TAY
 		PLA
@@ -8762,12 +8765,12 @@ loc_ADFA:
 
 loc_ADFC:				
 		CLC
-		LDA	byte_27
-		ADC	$35,X
-		STA	$35,X
-		LDA	byte_28
-		ADC	$36,X
-		STA	$36,X
+		LDA	basic_ptr_1+0
+		ADC	byte_35,X
+		STA	byte_35,X
+		LDA	basic_ptr_1+1
+		ADC	byte_36,X
+		STA	byte_36,X
 		DEX
 		DEX
 		BPL	loc_ADFC
@@ -8776,11 +8779,11 @@ loc_AE0D:
 		CLC
 		LDA	byte_39
 		STA	ptr0+0
-		ADC	byte_27
+		ADC	basic_ptr_1+0
 		STA	ptr1+0
 		LDA	byte_3A
 		STA	ptr0+1
-		ADC	byte_28
+		ADC	basic_ptr_1+1
 		STA	ptr1+1
 		SEC
 		LDA	TOP
@@ -8804,8 +8807,8 @@ loc_AE0D:
 		STA	ptr1+0
 		LDA	byte_3A
 		STA	ptr1+1
-		LDX	byte_28
-		LDY	byte_27
+		LDX	basic_ptr_1+1
+		LDY	basic_ptr_1+0
 		JSR	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
@@ -8877,9 +8880,9 @@ locret_AE92:
 
 
 sub_AE93:				
-		LDY	$41,X
+		LDY	byte_41,X
 		STY	byte_2B
-		LDY	$42,X
+		LDY	byte_42,X
 		STY	byte_2C
 		JMP	find_line_by_number ; finds a line, given a line number
 ; End of function sub_AE93		;
@@ -8895,10 +8898,10 @@ sub_AE93:
 sub_AE9E:				
 		CLC
 		ADC	byte_2B
-		STA	$35,X
+		STA	byte_35,X
 		LDA	#0
 		ADC	byte_2C
-		STA	$36,X
+		STA	byte_36,X
 
 locret_AEA9:				
 		RTS
@@ -9296,9 +9299,9 @@ tokenize_line: .proc
 		TSX
 		STX	old_stack_ptr
 		LDA	#<unk_401
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	#>unk_401
-		STA	byte_28
+		STA	basic_ptr_1+1
 		JMP	sub_B196
                 .pend
 
@@ -9308,31 +9311,31 @@ tokenize_line: .proc
 ;
 ; A = replacement byte.
 ; Y = number of bytes to remove - 1
-; (byte_27) points to where to remove them from.
+; (basic_ptr_1) points to where to remove them from.
                 
 sub_B0BB: .proc
 					
 		PHA             ;save original A
 
-                ; (byte_25) is source pointer: (byte_27)+Y
+                ; (basic_ptr_0) is source pointer: (basic_ptr_1)+Y
 		CLC            
 		TYA             
-		ADC	byte_27 
-		STA	byte_25 
+		ADC	basic_ptr_1+0 
+		STA	basic_ptr_0+0 
 		LDY	#0      
 		TYA             
-		ADC	byte_28
-		STA	byte_26
+		ADC	basic_ptr_1+1
+		STA	basic_ptr_0+1
 		PLA
                 
                 ; store original A in program
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 
                 ; keep moving bytes from source to dest until eol.
 loc_B0CC:				
 		INY
-		LDA	(byte_25),Y
-		STA	(byte_27),Y
+		LDA	(basic_ptr_0),Y
+		STA	(basic_ptr_1),Y
 		CMP	#$D
 		BNE	loc_B0CC
                 
@@ -9350,7 +9353,7 @@ sub_B0D6: .proc
 
 loc_B0DC:				
 		INY                 ;next byte
-		LDA	(byte_27),Y ;get next byte from input
+		LDA	(basic_ptr_1),Y ;get next byte from input
 		CMP	#'9'+1      ;is it a digit?
 		BCS	loc_B119    ;taken if not a digit
 		CMP	#'0'        ;is it a digit?
@@ -9403,27 +9406,27 @@ loc_B119:
 		DEY
 		LDA	#LINE_NUMBER_TOKEN
 		JSR	sub_B0BB
-		LDA	byte_27
+		LDA	basic_ptr_1+0
 		ADC	#2
-		STA	byte_25
-		LDA	byte_28
+		STA	basic_ptr_0+0
+		LDA	basic_ptr_1+1
 		ADC	#0
-		STA	byte_26
+		STA	basic_ptr_0+1
 
 loc_B12E:				
-		LDA	(byte_27),Y
-		STA	(byte_25),Y
+		LDA	(basic_ptr_1),Y
+		STA	(basic_ptr_0),Y
 		DEY
 		BNE	loc_B12E
 		LDY	#3
 		LDA	byte_22
 		ORA	#$40 ; '@'
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 		DEY
 		LDA	byte_21
 		AND	#$3F ; '?'
 		ORA	#$40 ; '@'
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 		DEY
 		LDA	byte_21
 		AND	#-$40 ;	'�'
@@ -9436,7 +9439,7 @@ loc_B12E:
 		LSR
 		LSR
 		EOR	#$54 ; 'T'
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 		JSR	increment_27
 		JSR	increment_27
 		JSR	increment_27
@@ -9501,9 +9504,9 @@ isnumchar:
 
 increment_27:				
 		JSR	ensure_1_byte_spare
-		INC	byte_27
+		INC	basic_ptr_1+0
 		BNE	isdigit.done
-		INC	byte_28
+		INC	basic_ptr_1+1
 		RTS
 ; End of function increment_27
 
@@ -9512,21 +9515,21 @@ increment_27:
 
 fetch_next_byte:			
 		JSR	increment_27
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		RTS
 ; End of function fetch_next_byte
 
 
 
 
-; (byte_27) always points to unk_401 - the input buffer.
+; (basic_ptr_1) always points to unk_401 - the input buffer.
 sub_B196: .proc
 		LDY	#0
 		STY	byte_23
 		STY	byte_24
 
 sub_B196_scan_line:				
-		LDA	(byte_27),Y   ;get byte from input
+		LDA	(basic_ptr_1),Y   ;get byte from input
 		CMP	#$D           ;end of line?
 		BEQ	isdigit.done   ;taken if end of line
 		CMP	#' '          ;
@@ -9599,7 +9602,7 @@ check_for_dot:
                                  ;carry set...?
 
 got_dot:				
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		JSR	isnumchar	;sets C if A is a number char (0-9 or '.')
 		BCC	loc_B207        ;taken if not number char
 		JSR	increment_27    ;next input byte
@@ -9620,7 +9623,7 @@ loc_B215:
 
 loc_B217:
                 ; find next non-symbol char
-		LDA	(byte_27),Y
+		LDA	(basic_ptr_1),Y
 		JSR	issymchar	;sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	�)
 		BCC	loc_B207        ;taken if not valid symbol char
 		JSR	increment_27    ;next input char
@@ -9643,12 +9646,12 @@ check_for_token_2:
 		BCS	loc_B210 ; bail if >=X, since no tokens start
                                  ; with X, Y or Z
 		LDX	#<token_table
-		STX	byte_25
+		STX	basic_ptr_0+0
 		LDX	#>token_table
-		STX	byte_26
+		STX	basic_ptr_0+1
 
 loc_B23D:				
-		CMP	(byte_25),Y	; compare first char to char
+		CMP	(basic_ptr_0),Y	; compare first char to char
                                         ; in table
 		BCC	loc_B217	; taken if A<char in table -
                                         ; the tokens are sorted at
@@ -9660,19 +9663,19 @@ loc_B23D:
 
 compare_chars_loop:
 		INY			; next char
-		LDA	(byte_25),Y	; get next char	from table
+		LDA	(basic_ptr_0),Y	; get next char	from table
 		BMI	found_token	; taken	if token value found
-		CMP	(byte_27),Y	; compare to byte in input
+		CMP	(basic_ptr_1),Y	; compare to byte in input
 		BEQ	compare_chars_loop
 
                 ; input differs - is it abbreviated?
-		LDA	(byte_27),Y	; get byte from	input
+		LDA	(basic_ptr_1),Y	; get byte from	input
 		CMP	#'.'            ; is it an abbreviation?
 		BEQ	skip_dot	; taken	if abbreviated
 
 find_token_byte:			
 		INY
-		LDA	(byte_25),Y
+		LDA	(basic_ptr_0),Y
 		BPL	find_token_byte
 
                 ; after token $FE come the LHS tokens for PAGE, PTR,
@@ -9686,35 +9689,35 @@ skip_dot:
 		INY
 
 find_token_end:				
-		LDA	(byte_25),Y
+		LDA	(basic_ptr_0),Y
 		BMI	found_token ;found the token number
                 ; add 1 to address
-		INC	byte_25
+		INC	basic_ptr_0+0
 		BNE	find_token_end
-		INC	byte_26
+		INC	basic_ptr_0+1
 		BNE	find_token_end
 
 next_token_in_table:
-                ; add Y+2 to (byte_25) - skip token byte and flags
+                ; add Y+2 to (basic_ptr_0) - skip token byte and flags
                 ; byte.
 		SEC             
 		INY             
 		TYA
-		ADC	byte_25
-		STA	byte_25
+		ADC	basic_ptr_0+0
+		STA	basic_ptr_0+0
 		BCC	loc_B275
-		INC	byte_26
+		INC	basic_ptr_0+1
 
 loc_B275:		
 		LDY	#0          ;reset Y
-		LDA	(byte_27),Y ;restore input byte
+		LDA	(basic_ptr_1),Y ;restore input byte
 		JMP	loc_B23D    ;back to the tokenization
                                     ;process...
 
 found_token:				
 		TAX                 ;store token number
 		INY                 ;next table byte
-		LDA	(byte_25),Y ;get flags
+		LDA	(basic_ptr_0),Y ;get flags
 		STA	byte_21     ;
 		DEY                 ;restore Y
 		LSR                 ;get bit 0
@@ -9722,7 +9725,7 @@ found_token:
                                     ;is definitely a token
 
                 ; check if this is actually a variable name
-		LDA	(byte_27),Y ;get input byte
+		LDA	(basic_ptr_1),Y ;get input byte
 		JSR	issymchar ; sets C if A is a valid symbol char
                                   ; (A-Z, a-z, 0-9, _, �)
 		BCS	loc_B215  ;taken if valid symbol char - this
@@ -9769,7 +9772,7 @@ loc_B2B2:
 		INY              ;Y=1
 
 PROC_or_FN_name:				
-		LDA	(byte_27),Y ;get next input byte
+		LDA	(basic_ptr_1),Y ;get next input byte
 		JSR	issymchar ; sets C if A is a valid symbol char
                                   ; (A-Z, a-z, 0-9, _, �)
 		BCC	PROC_or_FN_name_done  ;taken if not a valid symbol char
@@ -9814,7 +9817,7 @@ ensure_4_bytes_spare:
 
 loc_B2DC:				
 		CLC
-		ADC	byte_27
+		ADC	basic_ptr_1+0
 		BCS	longjmp ;taken if carry - which means
                                 ;definitely no space
 		CMP	#256-4
@@ -9830,7 +9833,7 @@ longjmp:
 					
 		LDY	#0
 		LDA	#$D
-		STA	(byte_27),Y
+		STA	(basic_ptr_1),Y
 		STA	line_was_truncated
 		LDX	old_stack_ptr
 		TXS
@@ -9982,12 +9985,12 @@ locret_B39A:
 
 goto_command:				
 		JSR	sub_B37B
-		BNE	loc_B3A6
+		BNE	raise_no_marked_line_error
 		JSR	init_edit_mode
 		JMP	loc_B370
 
-loc_B3A6:				
-		LDA	#$22 ; '"'
+raise_no_marked_line_error:
+		LDA	#34     ;No marked line
 		JMP	raise_error
 
 number_command:				
@@ -10575,9 +10578,9 @@ loc_B6AD:
 		CMP	#$8d ; -$73 ;	'�'
 		BNE	loc_B6AA
 		LDA	unk_1F
-		STA	byte_27
+		STA	basic_ptr_1+0
 		LDA	byte_20
-		STA	byte_28
+		STA	basic_ptr_1+1
 		LDY	#0
 		JSR	decode_line_number ; decode line number	from program.
 					;
@@ -11791,7 +11794,7 @@ loc_BD4A:
 		LDX	byte_39
 		CPX	#7
 		BCS	loc_BD1F
-		LDA	$40,X
+		LDA	byte_40,X
 		CMP	#$20 ; ' '
 		BEQ	loc_BD7B
 		CMP	#$60 ; '`'
@@ -11804,9 +11807,9 @@ loc_BD60:
 		JSR	OSWRCH
 		LDA	#$20 ; ' '
 		JSR	OSWRCH
-		LDA	$41,X
+		LDA	byte_41,X
 		TAY
-		LDA	$42,X
+		LDA	byte_42,X
 		TAX
 		JSR	print_number
 		LDX	#3
