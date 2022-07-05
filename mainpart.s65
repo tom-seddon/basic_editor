@@ -3,7 +3,6 @@
 KEEP_DELETE_LINE_MEMSET = false
 
 ; I strip out the memmove calls one at a time...
-KEEP_B8DB_MEMMOVE = false
 KEEP_BF73_MEMMOVE = false
 KEEP_A8C0_MEMMOVE = false
 
@@ -2803,7 +2802,7 @@ ifind_command:
 find_command:
                 lda #$00        ;case-sensitive
                 ; fall through
-find_or_ifind_command:
+find_or_ifind_command: .proc
                 sta case_insensitive_search        
 		LDA	current_line_no_msb
 		PHA
@@ -2961,31 +2960,34 @@ loc_91A6:
 		LDA	#0
 		STA	byte_3B
 
-loc_91AA:				
-					
+find_mode_loop:
+
+                ; position cursor appropriately		
 		LDX	#0
 		LDY	byte_3B
 		JSR	gotoxy
                 JSR	find_mode_getch
 
-		CMP	#$1B
-		BNE	loc_91BB
-		JMP	loc_912C
+		CMP	#27     ;Escape?
+		BNE	check_for_top_screen
+		JMP	loc_912C ;leave find mode
 
-loc_91BB:				
-		CMP	#$A7 ; -$59 ;	'�'
-                beq edit_found_line
+check_for_top_screen:
+		CMP	#CMD_TOP_SCREEN ;f7
+                beq edit_found_line ;
                 cmp #13
-                bne loc_91C5
+                bne check_for_up
 edit_found_line:
 		JSR	sub_9247
 		JMP	loc_9DA8
 
-loc_91C5:				
-		CMP	#$AF ; -$51 ;	'�'
-		BNE	loc_91E3
-		LDA	byte_3B
-		BNE	loc_91DE
+check_for_up:
+		CMP	#CMD_UP
+		BNE	check_for_down
+
+                ; Move up
+		LDA	byte_3B ;get Y coordinate
+		BNE	decrement_Y_coordinate ;taken if >0
 		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
 		STA	byte_2B
 		STA	byte_2C
@@ -2995,16 +2997,16 @@ loc_91C5:
 		STA	byte_3B
 		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
 
-loc_91DE:				
-		DEC	byte_3B
-		JMP	loc_91AA
+decrement_Y_coordinate:
+		DEC	byte_3B ;decrement Y
+		JMP	find_mode_loop
 
-loc_91E3:				
-		CMP	#$AE
-		BNE	loc_9203
+check_for_down:
+		CMP	#CMD_DOWN
+		BNE	check_for_continue
 		LDX	byte_3B
 		INX
-		CPX	screen_height
+		CPX	text_window_bottom_y
 		BEQ	loc_91F5
 		BCC	loc_91F5
 		LDX	#0
@@ -3023,27 +3025,27 @@ loc_91FE:
 					
 		STX	byte_3B
 
-loc_9200:				
-		JMP	loc_91AA
+jmp_find_mode_loop:
+		JMP	find_mode_loop
 
-loc_9203:				
-		CMP	#$A5
-		BNE	loc_920A
+check_for_continue:
+		CMP	#CMD_CONTINUE
+		BNE	check_for_top_key
 		JMP	loc_910F
 
-loc_920A:				
-		CMP	#$A2
-		BNE	loc_9211
+check_for_top_key:
+		CMP	#CMD_TOP_KEY
+		BNE	check_for_end_key
 		JMP	top_edit_mode_command
 
-loc_9211:				
-		CMP	#$A3
-		BNE	loc_9218
+check_for_end_key:
+		CMP	#CMD_END_KEY
+		BNE	check_for_goto_key
 		JMP	end_edit_mode_command
 
-loc_9218:				
-		CMP	#$C1
-		BNE	loc_922E
+check_for_goto_key:
+		CMP	#CMD_GOTO_KEY
+		BNE	check_for_mark
 		LDA	byte_2B
 		PHA
 		LDA	byte_2C
@@ -3053,11 +3055,11 @@ loc_9218:
 		STA	byte_2C
 		PLA
 		STA	byte_2B
-		JMP	loc_91AA
+		JMP	find_mode_loop
 
-loc_922E:				
-		CMP	#$C0
-		BNE	loc_9200
+check_for_mark:
+		CMP	#CMD_MARK
+		BNE	jmp_find_mode_loop
 		LDA	byte_2B
 		PHA
 		LDA	byte_2C
@@ -3068,8 +3070,9 @@ loc_922E:
 		STA	byte_2C
 		PLA
 		STA	byte_2B
-		JMP	loc_91AA
+		JMP	find_mode_loop
 ; End of function find_command
+                .endproc
 
 
 
@@ -3096,7 +3099,7 @@ sub_9247:
 					; Exit:
 					; current_line_no_msb, current_line_no_lsb = the line number
 
-
+;-------------------------------------------------------------------------
 
 advance_2b_to_next_line:		
 					
@@ -3105,13 +3108,13 @@ advance_2b_to_next_line:
 		LDA	(byte_2B),Y		; get line length
 		ADC	byte_2B
 		STA	byte_2B
-		BCC	advance_2b_to_next_line_done
+		BCC	+
 		INC	byte_2C
-
-advance_2b_to_next_line_done:					
++
 		RTS
-                ; End of function advance_2b_to_next_line
-                
+
+;-------------------------------------------------------------------------
+
 normalize_search_case .proc
                 bit case_insensitive_search
                 bpl done
@@ -3535,8 +3538,8 @@ do_osfile .proc
 		STX	unk_1F		; when loading - use load address provided, not	file's default
 
 call_osfile				
-		LDX	#$19
-		LDY	#0
+		LDX	#<readline_ptr_lsb
+		LDY	#>readline_ptr_lsb
                 JMP	OSFILE		; OSFILE
 .pend
 ; End of function save_command
@@ -3931,7 +3934,7 @@ loc_96BF:
 		JSR	sub_BA69
 		TXA
 		LSR
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_96F7
 		BCS	loc_96F8
 
@@ -4141,7 +4144,7 @@ loc_97EA:
 		JMP	position_edit_mode_cursor
 
 loc_97ED:				
-		JMP	loc_9163
+		JMP	find_or_ifind_command.loc_9163
 
 loc_97F0:				
 		JSR	advance_2b_to_next_line
@@ -4169,16 +4172,16 @@ loc_9811:
 		LDY	#0
 
 loc_9813:				
-		LDA	$400,Y
-		STA	$700,Y
+		LDA	byte_400,Y
+		STA	unk_700,Y
 		DEY
 		BNE	loc_9813
 		JSR	sub_A8C0
 		LDY	#0
 
 loc_9821:				
-		LDA	$700,Y
-		STA	$400,Y
+		LDA	unk_700,Y
+		STA	byte_400,Y
 		DEY
 		BNE	loc_9821
 		JSR	sub_9968
@@ -4200,7 +4203,7 @@ loc_9840:
 		LDY	byte_400
 
 loc_9843:				
-		LDA	$400,Y
+		LDA	unk_401-1,Y
 		CMP	#7
 		BEQ	loc_983C
 		DEY
@@ -5013,15 +5016,28 @@ kbflush:
 
 
 ;-------------------------------------------------------------------------
-
+; 
+; Detokenize one line of the program.
+;
+; entry:
+; (byte_2B) - pointer to line data
+;
+; exit:
+;
+; ?byte_400 - length of detokenized text
+; unk_401... - detokenized text
+                
 detokenize_one_line: .proc
 
+                ; Clear $401...$4ff inclusive
                 ldx #1
                 lda #$20
 loop400:
                 sta byte_400,x
                 inx
                 bne loop400
+
+                ; Clear $500...$524 inclusive
 loop500:
                 sta unk_500,x
                 inx
@@ -5029,12 +5045,13 @@ loop500:
                 bne loop500
 
 		LDX	#0
-		STX	byte_400
-		STX	line_was_truncated
+		STX	byte_400 ;reset line length
+		STX	line_was_truncated ;line was not truncated
 
 		LDX	byte_2C		; get MSB of address
 		INX
-		BNE	loc_9C26	; branch taken if MSB of address wasn't $FF
+		BNE	loc_9C26 ; branch taken if MSB of address wasn't
+                                 ; $FF...???
 
 locret_9C25:				
 		RTS
@@ -5090,13 +5107,14 @@ detokenize_line: .proc
 		LDA	#0
 		STA	byte_400      ;reset line length count
 		STA	byte_23		; index	in body	of line
-		STA	basic_ptr_0+0		; not inside quotes
+		STA	basic_ptr_0+0   ; not inside quotes
 		LDY	#3		; index	of line	length
 		LDA	(byte_2B),Y	; get total line length
 		SEC
-		SBC	#4		; subtract 4 as	the metadata is	already	considered
-		STA	byte_24		; ?unk_24 = length of body of line
-		BEQ	detokenize_line_done		; branch taken if line is empty
+		SBC	#4 ; subtract 4 as the metadata is already
+                           ; considered
+		STA	byte_24 ; ?unk_24 = length of body of line
+		BEQ	detokenize_line_done ; branch taken if line is empty
 
 loc_9C59:
                 ; point (ptr1) at eol
@@ -5124,36 +5142,40 @@ loc_9C71:
 
 not_token:				
 					
-		LDA	basic_ptr_1+1
-		STA	ptr0+1
-		LDA	byte_23
+		LDA	basic_ptr_1+1 ;data ptr MSB
+		STA	ptr0+1        ;data ptr MSB
+		LDA	byte_23       ;index in body of line
 		CLC
-		ADC	basic_ptr_1+0
-		STA	ptr0+0
-		BCC	copy_whilst_checking_for_quotes
-		INC	ptr0+1
+		ADC	basic_ptr_1+0 ;add data ptr LSB
+		STA	ptr0+0        ;data ptr LSB
+		BCC +
+		INC	ptr0+1  ;update data ptr MSB
++
 
-copy_whilst_checking_for_quotes:	
-		LDY	byte_23
+                ; Copy quoted data
+		LDY	byte_23         ;index in body of line
 		LDA	(basic_ptr_1),Y	; get next byte
 		CMP	#'"'            ; quotes?
-		BNE	read_byte
-; toggle 'in quotes' flag
+		BNE	copy_quoted_byte
+                
+                ; Toggle quotes flag. Also still copy the quote char.
 		LDA	basic_ptr_0+0
 		EOR	#1
 		STA	basic_ptr_0+0
 
-read_byte:				
-		LDY	#1
-		BNE	advance
+copy_quoted_byte:
+		LDY	#1        ;copy 1 byte
+		BNE	copy_data ;JMP, in effect
 
 copy_tokenized:				
-		LDY	byte_23
+		LDY	byte_23         ;index in body of line
 		LDA	(basic_ptr_1),Y	; get next byte	from line
 		BPL	not_token	; if positive, not a taken
 		CMP	#LINE_NUMBER_TOKEN
 		BNE	token		; branch taken if not a	line number
-		TYA
+
+                ; Handle line number
+		TYA             ;index in body of line
 		CLC
 		ADC	#3		; +3 - skip line number	data
 		BCS	not_token	; if carry set,	assume end of line
@@ -5166,8 +5188,8 @@ copy_tokenized:
 					;
 					; Exit:
 					; unk_21.w is line number.
-		LDX	byte_22
-		LDY	byte_21
+		LDX	byte_22         ;line number MSB
+		LDY	byte_21         ;line number LSB
 		JSR	itoa		; Gets string representation of	16-bit number.
 					;
 					; Entry:
@@ -5178,7 +5200,7 @@ copy_tokenized:
 					; unk_1... filled with string
 
                 ; point the detokenized text pointer/length at the
-                ; itoa result, then proceed to copy it.
+                ; itoa result, then copy it.
 		LDA	#<unk_1
 		STA	ptr0+0
 		LDA	#>unk_1
@@ -5187,32 +5209,39 @@ copy_tokenized:
 		INC	byte_23
 		INC	byte_23
 		INC	byte_23
-		LDY	byte_0
-		BNE	advance		; JMP, in effect, I think...
+		LDY	byte_0    ;length of number
+		BNE	copy_data		; JMP, in effect, I think...
 
 token:
-		STA	basic_ptr_0+1		; ?basic_ptr_0+1 = token being searched for
+                ; Handle a token
+		STA	basic_ptr_0+1 ; basic_ptr_0?1 = token being searched for
+
+                ; (ptr0) points into the token table, ready for
+                ; copy_data
 		LDA	#<token_table
 		STA	ptr0+0
 		LDA	#>token_table
 		STA	ptr0+1
 
-loc_9CD0:
+find_token_in_table_loop:
 		LDY	#0
 
-find_token_value_loop:			
+find_token_value_loop:
+                ; Work through the token name to find its length (in
+                ; Y) and value.
 		LDA	(ptr0),Y	; get next byte	from token table
 		BMI	found_token_value ; branch taken if it's a token value
 		INY
 		BNE	find_token_value_loop
 
 found_token_value:			
-		CMP	basic_ptr_0+1		; is it	the desired token?
-		BEQ	advance		; branch taken if token	found
-		CMP	#$D3		; HIMEM, statement version?
-		BEQ	not_token	; ??? -	branch taken if	so
+		CMP	basic_ptr_0+1 ; is it	the desired token?
+		BEQ	copy_data     ; branch taken if token found
+		CMP	#$D3 ;was that entry token $D3
+		BEQ	not_token ; branch taken if so - $D3 is the last entry
+                                  ; in the table
 		INY			; skip token ID
-		INY			; skip other byte
+		INY			; skip flags byte
 ; advance (ptr0) to next entry in token table
 		TYA
 		CLC
@@ -5221,10 +5250,12 @@ found_token_value:
 		BCC	+
 		INC	ptr0+1
 +
-		BNE	loc_9CD0
+		BNE	find_token_in_table_loop ;jmp, in effect
 
-advance:				
-		TYA			; get length of	token
+copy_data:
+                ; Copy data into detokenized buffer, making sure
+                ; there's space.
+		TYA			; get length of	data
 		CLC
 		ADC	byte_400	; add to current length
 		BCS	overflow	; branch taken if line too long...
@@ -5246,22 +5277,18 @@ overflow:
 		INC	line_was_truncated
 		RTS
 
+; copy text whilst detokenizing.
+;
+; Entry:
+; (ptr0) points to source text
+; (ptr1) points to space in dest buffer
+; Y is index of	last byte in each case (bytes are copied until Y<0)
+                
 copy_detokenized_text:			
-					
-		LDA	(ptr0),Y	; copy text whilst detokenizing.
-					;
-					; Entry:
-					; (ptr0) points to source text
-					; (ptr1) points to space in dest buffer
-					; Y is index of	last byte in each case (bytes are copied until Y<0)
+		LDA	(ptr0),Y	
 		STA	(ptr1),Y
 		DEY
-		BPL	copy_detokenized_text ;	copy text whilst detokenizing.
-					;
-					; Entry:
-					; (ptr0) points to source text
-					; (ptr1) points to space in dest buffer
-					; Y is index of	last byte in each case (bytes are copied until Y<0)
+		BPL	copy_detokenized_text
 		RTS
                 .pend
 
@@ -5270,7 +5297,7 @@ copy_detokenized_text:
 ; decode line number from program.
 ;
 ; Entry:
-; (unk_27),Y points to 8D token
+; (basic_ptr_1),Y points to 8D token
 ;
 ; Exit:
 ; unk_21.w is line number.
@@ -5319,7 +5346,7 @@ loc_9D3F:
 		JSR	OSWRCH
 		LDX	#9		; VDU variable 9 - text	window coordinates, bottom (X) + right (Y) (AUG	p275)
                 jsr read_vdu_variable
-		STX	screen_height	; store	screen height
+		STX	text_window_bottom_y	; store	screen height
 		TYA			; get screen width in A
 		SEC
 		SBC	#6		; subtract 6 to	account	for line number	display
@@ -5446,7 +5473,13 @@ loc_9DE4:
 		JMP	edit_mode_loop
 
 ;-------------------------------------------------------------------------
-
+;
+; entry:
+; C = ???
+; ?byte_2B = top line number MSB
+; ?byte_2C = top line number LSB
+;
+; 
 sub_9DEA: .proc
 					
 		PHP
@@ -5460,11 +5493,11 @@ sub_9DEA: .proc
 					; Exit:
 					; (byte_2B) points to most suitable line
 
-loc_9DF1:				
+loc_9DF1:
 		LDY	#1
-		LDA	(byte_2B),Y
-		BMI	loc_9E19
-		JSR	detokenize_one_line
+		LDA	(byte_2B),Y ;get line no MSB
+		BMI	loc_9E19    ;taken if end of program
+		JSR	detokenize_one_line ;detokenize this line
 		JSR	sub_9E5F
 		BCC	loc_9E19
 		PLP
@@ -5491,47 +5524,50 @@ loc_9E19:
 
 loc_9e1d:
 
-                lda #$20
-                ldx #$4f
+                lda #' '
+                ldx #79
 loc_9e1d_fill_401_loop:
-                sta $400,x
+                sta unk_401-1,x
                 dex
                 bne loc_9e1d_fill_401_loop
                 
 loc_9E2E:				
 		LDA	byte_3B
-		CMP	screen_height
-		BEQ	loc_9E37
-		BCS	loc_9E5D
+		CMP	text_window_bottom_y
+		BEQ	loc_9E37 ;ok if exactly at bottom
+		BCS	loc_9E5D ;taken if off bottom of screen
 
 loc_9E37:				
-		ASL
-		TAY
-		LDA	byte_6C1,Y
-		BEQ	loc_9E5D
+		ASL             ;line number*2
+		TAY             ;Y=line number*2
+		LDA	byte_6C1,Y ;get MSB of address
+		BEQ	loc_9E5D   ;done if no line there
 		LDX	#0
 		TXA
-		STA	byte_6C0,Y
-		STA	byte_6C1,Y
-		LDY	byte_3B
-		JSR	gotoxy
+		STA	byte_6C0,Y ;clear LSB
+		STA	byte_6C1,Y ;clear MSB
+		LDY	byte_3B    ;get Y coordinate
+		JSR	gotoxy     ;go to (0,Y)
+
+                ; TODO - this could be a loop 
 		CLC
 		LDA	code_area_width
 		ADC	#6
 		LDX	#<unk_401
 		LDY	#>unk_401
 		JSR	print_n_chars
-		INC	byte_3B
-		BNE	loc_9E2E
+		INC	byte_3B ;next Y coordinate
+		BNE	loc_9E2E ;jmp, in effect
 
 loc_9E5D:				
-		PLA
+		PLA             ;discard saved P
 		RTS
                 .pend
 
 
+;-------------------------------------------------------------------------
 
-sub_9E5F:				
+sub_9E5F: .proc
 					
 		JSR	calculate_screen_chars_in_line
 		JSR	save_line_number ; saves line number from program.
@@ -5541,7 +5577,7 @@ sub_9E5F:
 					;
 					; Exit:
 					; current_line_no_msb, current_line_no_lsb = the line number
-		LDA	screen_height
+		LDA	text_window_bottom_y
 		SEC
 		SBC	byte_3B
 		CLC
@@ -5559,9 +5595,9 @@ sub_9E5F:
 
 locret_9E81:				
 		RTS
-; End of function sub_9E5F
+                .endproc
 
-
+;-------------------------------------------------------------------------
 
 
 sub_9E82:				
@@ -5683,6 +5719,8 @@ set_palette_entry:
                 ; the extra chars are no problem
                 jmp print_xy000000
 
+;-------------------------------------------------------------------------
+
 sub_9F00:				
 		JSR	make_cursor_invisible
 		LDA	#1
@@ -5709,15 +5747,16 @@ loc_9F26:
 		CMP	byte_2D
 		BNE	loc_9F10
 		JMP	redraw_line_number
-; End of function sub_9F00
 
-
-
-; treats command ID as ASCII char and puts that	char into the current line as appropriate.
+;-------------------------------------------------------------------------
+; 
+; treats command ID as ASCII char and puts that char into the current
+; line as appropriate.
+;
 
 execute_key_command: .proc
 		LDA	cursor_offset_msb
-		BNE	beep
+		BNE	beep    ;can't insert past 256th char
 		JSR	sub_AB1E
 		LDX	byte_400	; X = line length
 		LDA	is_insert_mode	; 0=overtype 1=insert
@@ -5731,7 +5770,7 @@ loc_9F48:
 		LDY	byte_400	; get line length
 		BEQ	loc_9F55
 		DEY
-		LDA	$401,Y
+		LDA	unk_401,Y
 		CMP	#$20 ; ' '
 		BEQ	sub_9F6F
 
@@ -5754,26 +5793,34 @@ loc_9F65:
 					
 		CPX	#LINE_LENGTH_LIMIT
 		BCC	sub_9F6F
-                ; fall through
+                ; fall through to beep
                 .pend
 
 beep: .block
 					
 		LDA	#7
 		JMP	OSWRCH
-                .bend
+                .endblock
 ; End of function beep
 
 
+;-------------------------------------------------------------------------
+;
+; 
+; 
+; Entry:
+;
+; X = line length
+; ?cursor_offset = where to insert char
+; ?current_command_id = char to insert
 
-
-sub_9F6F:				
+sub_9F6F: .proc
 					
 		TXA
-		PHA
+		PHA                   ; X
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		PHA
-		PHA
+		PHA                     ; c_o X
+		PHA                     ; c_o c_o X
 		LDA	is_insert_mode	; 0=overtype 1=insert
 		BEQ	store_char	; branch taken if overtype
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
@@ -5782,53 +5829,64 @@ sub_9F6F:
 		BCS	store_char	; branch taken if past end of line
 
 insert:					
-		PLA
-		TXA
-		PHA
-		LDX	#$FF
+		PLA             ; A=cursor_offset
+		TXA             ; X=cursor_offset
+		PHA             ; c_o c_o X
+
+                ; ptr0.w = 255
+		LDX	#-1    ;src offset=cursor_offset-1
 		STX	ptr0+0
-		INX
-		STX	ptr1+0
+		INX             ;X=0
+		STX	ptr1+0  ;dest offset=cursor_offset
+
+                ; rather involved lda#1 - make_space_in_line doesn't use X
 		INX
 		TXA
-		JSR	sub_9FB2
+		JSR	make_space_in_line
 
 store_char:				
 		LDA	current_command_id ; get char to write
 		LDY	cursor_offset	; offset of cursor in detokenized buffer
-		DEY			; make relative	to tex
-		STA	$401,Y		; store
+		DEY			; make relative	to text
+		STA	unk_401,Y       ; store char
 		LDA	#1
 		STA	byte_6B3
-		PLA
-		TAX
-		PLA
-		TAY
-		PLA
-		STA	byte_400
-		TYA
+		PLA              ;A = c_o
+		TAX              ;X = c_o
+		PLA              ;A = c_o
+		TAY              ;Y = c_o
+		PLA              ;A = X
+		STA	byte_400 ;
+		TYA              ;A = c_o
 		LDY	#0
 		INC	cursor_offset	; advance to next char
 		JSR	sub_A0B1
 		JMP	position_edit_mode_cursor
-; End of function sub_9F6F
+                .endproc
 
+;-------------------------------------------------------------------------
+;
+; Make space in line to insert data at cursor position.
+;
+; Entry:
+;
+; A = number of bytes of space required
+; ptr0?0 = cursor-relative signed offset of source
+; ptr1?0 = cursor-relative signed offset of dest
 
-
-
-sub_9FB2:				
+make_space_in_line: .proc	
 		PHA
 		LDX	#2
-		JSR	adjust_pointer
+		JSR	adjust_pointer ;adjust ptr1
 		LDX	#0
-		JSR	adjust_pointer
+		JSR	adjust_pointer ;adjust ptr0
 ; X=0
-		PLA
+		PLA             ;restore original A
 		CLC
 		ADC	byte_400	; add line length
 		SEC
 		SBC	cursor_offset	; subtract cursor offset
-		TAY			; LSB of size
+		TAY			; LSB of size (X=0)
 		JMP	memmove		; move (maybe overlapping) memory regions.
 					;
 					; Entry:
@@ -5837,20 +5895,22 @@ sub_9FB2:
 					; X is MSB of size
 					; Y is LSB of size
 
-adjust_pointer:				
+adjust_pointer:
+                ; add 1+cursor offset to ptr and set up MSB of address.
+                ;
+                ; X=0 for ptr0, X=2 for ptr1.
 		CLC
 		LDA	ptr0+0,X	; get pointer LSB
 		ADC	#1		; increment
 		CLC
-		ADC	cursor_offset	; +?byte_10
+		ADC	cursor_offset
 		STA	ptr0+0,X	; store
-		LDA	#4
+		LDA	#>byte_400
 		STA	ptr0+1,X	; copying in page 4.
 		RTS
-; End of function sub_9FB2
+                .endproc
 
-
-
+;-------------------------------------------------------------------------
 
 sub_9FD8:				
 		JSR	sub_A069
@@ -5927,12 +5987,14 @@ loc_A017:
 
 
 ;-------------------------------------------------------------------------
-
+;
+; Calculate on screen area of line.
+; 
 ; entry:
 ; detokenized line in byte_400
 ;
 ; exit:
-; screen_chars_in_line.w = count
+; screen_chars_in_line.w = line height * code area width
                 
 calculate_screen_chars_in_line: .proc
 		JSR	get_line_height	; get height of	current	line
@@ -5956,10 +6018,9 @@ loc_A029:
 		CLC
 		ADC	screen_chars_in_line+0
 		STA	screen_chars_in_line+0
-		BCC	loc_A035
+		BCC	+
 		INC	screen_chars_in_line+1
-
-loc_A035:				
++
 		DEX
 		BNE	loc_A029
 		RTS
@@ -6025,7 +6086,7 @@ is_line_empty: .proc
 		BEQ	is_empty
 
 loc_A05B:				
-		LDA	$400,Y
+		LDA	unk_401-1,Y
 		CMP	#$20 ; ' '
 		BNE	is_not_empty
 		DEY
@@ -6051,9 +6112,9 @@ sub_A069: .proc
 loc_A06B:				
 		TXA
 		LSR			; A = true screen line index
-		CMP	screen_height	; check	against	height of screen
+		CMP	text_window_bottom_y	; check	against	height of screen
 
-                ; end loop if A>screen_height
+                ; end loop if A>text_window_bottom_y
 		BEQ	+
 		BCS	loc_A093
 +
@@ -6149,72 +6210,97 @@ get_line_ptr_retainingX:
 ; End of function get_line_ptr_retainingX
 
 
+;-------------------------------------------------------------------------
+;
+; ?? Redraw screen after line is updated??
+; 
+                
+sub_A0B1: .proc
 
-
-sub_A0B1:				
+current_offset=basic_ptr_0+0
+update_offset=basic_ptr_1+1
+                
 		CPX	#0
 		BNE	loc_A0B6
 		RTS
 
-loc_A0B6:				
-		STA	basic_ptr_1+1
-		DEC	basic_ptr_1+1
+loc_A0B6:
+                ; update_offset = A-1 - offset in line
+		STA	update_offset
+		DEC	update_offset
+
+                ; basic_ptr_1?0 = Y
 		STY	basic_ptr_1+0
+
+                ; basic_ptr_0?1 = X-1
 		DEX
 		STX	basic_ptr_0+1
+                
 		JSR	make_cursor_invisible
+                
+                ; byte_23.w = -1
 		LDA	#$FF
 		STA	byte_24
 		STA	byte_23
 		LDA	#0
 		SEC
 		SBC	code_area_width
-		STA	basic_ptr_0+0
+		STA	current_offset ;basic_ptr_0?0=-code_area_width
 
-loc_A0D0:				
+loc_A0D0:
+                ; current_offset += code_area_width        
 		CLC
-		LDA	basic_ptr_0+0
+		LDA	current_offset
 		ADC	code_area_width
-		STA	basic_ptr_0+0
+		STA	current_offset
+
+                ; byte_23.w += code_area_width
 		CLC
 		LDA	byte_23
 		ADC	code_area_width
 		STA	byte_23
-		BCC	loc_A0E4
+		BCC	+
 		INC	byte_24
++
 
-loc_A0E4:				
-		LDA	#1
+                ; byte_20.w = $401
+		LDA	#<unk_401
 		STA	byte_20
-		LDA	#4
+		LDA	#>unk_401
 		STA	byte_21
-; (byte_20) points at detokenized line
+                
+                ; (byte_20) points at detokenized line
+
 		LDA	byte_24
-		BNE	loc_A0F8
-		LDA	basic_ptr_1+1
+		BNE	loc_A0F8 ;taken if HI(byte_23.w)>=256
+		LDA	update_offset
 		CMP	byte_23
-		BEQ	loc_A0F8
-		BCS	loc_A0D0
-
-loc_A0F8:				
-		LDA	basic_ptr_1+1
-		CMP	basic_ptr_0+0
-		BCS	loc_A100
-		LDA	basic_ptr_0+0
-
-loc_A100:				
+		BEQ	loc_A0F8 ;taken if byte_23.w==entry A-1
+		BCS	loc_A0D0 ;taken if byte_23.w>=entry A-1
+                ; byte_23.w <= entry A-1
+                
+loc_A0F8:
+                ; ?byte_22=max(update_offset,current_offset)
+		LDA	update_offset
+		CMP	current_offset
+		BCS	+
+		LDA	current_offset
++
 		STA	byte_22
+
+                ; byte_20.w+=max(update_offset,current_offset)
 		CLC
 		ADC	byte_20
 		STA	byte_20
-		BCC	loc_A10B
+		BCC	+
 		INC	byte_21
++
 
-loc_A10B:				
+                ; 
 		LDA	basic_ptr_1+0
 		BNE	loc_A115
 		LDA	basic_ptr_0+1
-		CMP	basic_ptr_0+0
+		CMP	current_offset
 		BCC	locret_A16C
 
 loc_A115:				
@@ -6259,7 +6345,7 @@ loc_A129:
 		TYA			; get Y	coordinate
 		ADC	byte_3B		; add base Y
 		TAY			; back in Y
-		JSR	gotoxy		; positino cursor
+		JSR	gotoxy		; position cursor
 		LDA	byte_3B		; get screen Y
 		ASL
 		TAX
@@ -6284,9 +6370,7 @@ loc_A129:
 
 locret_A16C:				
 		RTS
-; End of function sub_A0B1
-
-
+                .endproc
 
 
 redraw_line_number:			
@@ -7080,14 +7164,14 @@ swap_case_edit_mode_command: .proc
 		DEX
 		BEQ	loc_A715
 		LDX	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	$400,X
+		LDA	unk_401-1,X
 		JSR	toggle_case
-		STA	$400,X
+		STA	unk_401-1,X
 		LDA	#1
 		STA	byte_6B3
 		TXA
 		LDY	#0
-		JSR	sub_A0B1
+		JSR	sub_A0B1 ;A=offset X=offset Y=0
 
 loc_A715:				
 		JMP	cursor_right_edit_mode_command
@@ -7920,7 +8004,7 @@ loc_A9BD:
 loc_A9D0:				
 		TYA
 		LSR
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_A9D9
 		BCS	loc_A9F3
 
@@ -8034,7 +8118,7 @@ loc_AA4B:
 		TXA			; A = line height
 		CLC
 		ADC	unk_2E		; Add to current coordinate
-		CMP	screen_height	; Reached height of screen?
+		CMP	text_window_bottom_y	; Reached height of screen?
 		BEQ	loc_AA5C	; taken	if reached screen height exactly
 		BCS	loc_AA71	; taken	if gone	past screen height
 
@@ -8108,7 +8192,7 @@ loc_AA9A:
 		DEX
 		STX	ptr1+0
 		LDA	#1
-		JSR	sub_9FB2
+		JSR	make_space_in_line
 
 loc_AAA6:				
 		LDA	byte_400
@@ -8154,7 +8238,7 @@ loc_AADC:
 		TXA
 		DEX
 		STX	ptr1+0
-		JSR	sub_9FB2
+		JSR	make_space_in_line
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_AAA6
 
@@ -8207,9 +8291,9 @@ delete_to_end_of_line_edit_mode_command: .proc
                 pha
 
                 ldx cursor_offset
-                lda #$20
+                lda #' '
 delete_loop:
-                sta $400,X
+                sta unk_401-1,X
                 inx
                 cpx byte_400
                 bcc delete_loop
@@ -8224,47 +8308,57 @@ delete_loop:
 
                 .pend
 
-sub_AB1E:				
+;-------------------------------------------------------------------------
+
+sub_AB1E:
 		LDA	screen_chars_in_line+1
-		BNE	locret_AB2D
+		BNE	locret_AB2D ;bail if length>=256
 		LDA	screen_chars_in_line+0
 		CMP	cursor_offset	; offset of cursor in detokenized buffer
-		BEQ	loc_AB3C
+		BEQ	loc_AB3C ; taken if update will increase line bounding
+                                 ; box
 		CMP	byte_400
-		BEQ	loc_AB2E
+		BEQ	loc_AB2E ;taken if eol
 
 locret_AB2D:				
 		RTS
 
 loc_AB2E:				
 		LDA	is_insert_mode	; 0=overtype 1=insert
-		BEQ	locret_AB2D
+		BEQ	locret_AB2D     ;bail if overtype
 		LDX	byte_400
-		LDA	$400,X
-		CMP	#$20 ; ' '
-		BEQ	locret_AB2D
+		LDA	unk_401-1,X
+		CMP	#' '
+		BEQ	locret_AB2D ;bail if cursor is on a ' '
 
-loc_AB3C: ;nuts and bolts of the Extend Statement command??
-		LDA	#4
+loc_AB3C:
+                ; copy page 4 to page 7
+		LDA	#>unk_401
 		STA	ptr0+1
-		LDA	#7
+		LDA	#>unk_700
 		STA	ptr1+1
-		JSR	sub_ABDB
+		JSR	copy_256_bytes
+
+                
 		LDA	screen_chars_in_line+0
-		PHA
+		PHA             ;scil
 		LDA	current_line_no_msb
-		PHA
+		PHA             ;clnH scil
 		LDA	current_line_no_lsb
-		PHA
-		LDA	screen_height
+		PHA             ;clnL clnH scil
+                
+		LDA	text_window_bottom_y
 		ASL
 		TAX
+
+                ; Is this the bottom line?
 		LDA	byte_6C0,X
 		CMP	byte_2B
-		BNE	loc_AB6A
+		BNE	loc_AB6A ;taken if not bottom line
 		LDA	byte_6C1,X
 		CMP	byte_2C
-		BNE	loc_AB6A
+		BNE	loc_AB6A ;taken if not bottom line
+
 		LDA	#1
 		STA	unk_37
 		JSR	sub_B8BD
@@ -8292,7 +8386,7 @@ loc_AB6A:
 		ADC	#1
 		JSR	sub_A0B1
 		PLA
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_ABB0
 		STA	byte_3B
 		INC	byte_3B
@@ -8350,24 +8444,19 @@ loc_ABB0:
 		STA	ptr0+1
 		LDA	#4
 		STA	ptr1+1
-; End of function sub_AB1E
 
-
-
-
-sub_ABDB:				
+copy_256_bytes:
 		LDY	#0
 		STY	ptr0+0
 		STY	ptr1+0
 		LDX	#1
 		JMP	memmove		; move (maybe overlapping) memory regions.
-; End of function sub_ABDB		;
+		                        ;
 					; Entry:
 					; (ptr0) points to src
 					; (ptr1) points to dest
 					; X is MSB of size
 					; Y is LSB of size
-
 
 ;-------------------------------------------------------------------------
 ;
@@ -8417,7 +8506,7 @@ loc_AC08:
 loc_AC1D:				
 		INC	byte_3B
 		LDA	byte_3B
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_AC28
 		BCS	loc_AC5D
 
@@ -9146,7 +9235,7 @@ loc_AFE9:
 		ADC	byte_36
 		SEC
 		SBC	#1
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_B025
 		BCC	loc_B025
 		PLA
@@ -10844,7 +10933,7 @@ loc_B7DD:
 		SEC
 		SBC	#1
 		SEC
-		SBC	screen_height
+		SBC	text_window_bottom_y
 		STA	unk_37
 		BEQ	loc_B826
 		BPL	loc_B829
@@ -10977,6 +11066,13 @@ loc_B8BA:
                 .pend
 
 
+;-------------------------------------------------------------------------
+;
+; Scroll screen down
+;
+; Entry:
+;
+; ?
 sub_B8BD: .proc
 		SEC
 		LDA	unk_37
@@ -10985,55 +11081,42 @@ sub_B8BD: .proc
 		TAX
 		TAY
 
-loc_B8C5:				
+                ; find index of next screen row with a different line
+                ; on it
+find_next_line_loop:
 		INY
 		INY
 		LDA	byte_6C0,X
 		CMP	byte_6C0,Y
-		BNE	loc_B8DB
+		BNE	found_next_line
 		LDA	byte_6C1,X
 		CMP	byte_6C1,Y
-		BNE	loc_B8DB
-		INC	unk_37
-		BNE	loc_B8C5
+		BNE	found_next_line
+		INC	unk_37  ;inc Y coordinate
+		BNE	find_next_line_loop
 
-loc_B8DB:
+found_next_line:
 
                 ; copy from $6c0+Y to $6c0 - ok to copy up
 		CLC
 		TYA
-		ADC	#$c0
+		ADC	#<byte_6c0
 		STA	ptr0+0  ;src LSB
-		LDA	#6
+		LDA	#>byte_6c0
 		STA	ptr1+1  ;dest MSB
-		ADC	#0
+		ADC	#0      ;??do we want this??
 		STA	ptr0+1  ;src MSB
-		LDA	#$c0
+		LDA	#<byte_6c0
 		STA	ptr1+0  ;dest LSB
 
-                ; copy (screen_height+1-unk_37)*2
+                ; copy (text_window_bottom_y+1-?unk_37)*2
 		CLC
-		LDA	screen_height
+		LDA	text_window_bottom_y
 		ADC	#1
 		SEC
 		SBC	unk_37
 		ASL
                 
-                .if KEEP_B8DB_MEMMOVE
-                
-		TAY
-		LDX	#0
-                ; called when scrolling down
-		JSR	memmove_8bit   ; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (ptr0) points to src
-					; (ptr1) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-
-                .else
-
                 tax
                 beq copy_rows_table_done
                 ldy #0
@@ -11044,17 +11127,16 @@ copy_rows_table_loop:
                 dex
                 bne copy_rows_table_loop
 copy_rows_table_done:
-                
-                .endif
                                         
 		JSR	make_cursor_invisible
 		LDX	#0
-		LDY	screen_height
+		LDY	text_window_bottom_y
 		STY	byte_6AB
 		JSR	gotoxy
 		LDA	#19
 		JSR	OSBYTE
-		LDY	unk_37
+                
+		LDY	unk_37  ;number of rows to scroll
 		LDA	#$A
 
 loc_B914:				
@@ -11242,7 +11324,7 @@ loc_B9E5:
 		ADC	byte_2D
 		SEC
 		SBC	#1
-		CMP	screen_height
+		CMP	text_window_bottom_y
 		BEQ	loc_BA47
 		BCC	loc_BA47
 		LDA	current_line_no_msb
@@ -11299,23 +11381,35 @@ loc_BA65:
 ; End of function rstrip_detokenized_line
 
 
-
+;-------------------------------------------------------------------------
+;
+; Find line in lines table.
+;
+; entry:
+; 
+; byte_2B.w - line to search for
+;
+; exit:
+;
+; X = Y coordinate * 2
+; (if line not found, the Y coordinate is the bottom of the screen)
 
 sub_BA69: .proc
 					
-		LDA	screen_height
+		LDA	text_window_bottom_y
 		ASL
-		STA	byte_3A
+		STA	byte_3A ;
 		LDX	#0
 
 loc_BA71:				
 		LDA	byte_6C0,X
 		CMP	byte_2B
-		BNE	loc_BA82
+		BNE	loc_BA82 ;taken if line doesn't match
 		INX
 		LDA	byte_6C0,X
 		CMP	byte_2C
-		BNE	loc_BA83
+		BNE	loc_BA83 ;taken if line doesn't match
+                ; return with C=1
 		DEX
 		RTS
 
@@ -11330,8 +11424,7 @@ loc_BA83:
 		RTS
                 .pend
 
-
-
+;-------------------------------------------------------------------------
 
 back_command:				
 		LDX	#0		; load colour index (0=background)
@@ -12150,9 +12243,9 @@ loc_BEF7:
 
 loc_BF04:
 
-                ; ?byte_36 = (screen_height - line_height) + 1
+                ; ?byte_36 = (text_window_bottom_y - line_height) + 1
 		SEC
-		LDA	screen_height
+		LDA	text_window_bottom_y
 		SBC	byte_2D      
 		STA	byte_36
 		INC	byte_36
@@ -12228,7 +12321,7 @@ loc_BF5B:
 
 loc_BF73:				
 		CLC
-		LDA	screen_height
+		LDA	text_window_bottom_y
 		ADC	#1
 		SEC
 		SBC	byte_2D

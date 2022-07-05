@@ -45,6 +45,8 @@ is_bad_program:
 oshwm:
                 .fill 1
                 .fill 1
+
+; Also used as OSFILE block when loading or saving.
 readline_ptr_lsb:
                 .fill 1 
 readline_ptr_msb:

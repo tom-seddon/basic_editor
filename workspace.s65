@@ -36,7 +36,7 @@ replace_text_ptr = $6ba
 replace_text_length = $6bc
 current_command_id = $6BD
 input_length = $6be
-screen_height = $6BF
+text_window_bottom_y = $6BF
 
 ; lines table, indexed by screen Y coordinare
 byte_6C0 = $6C0
