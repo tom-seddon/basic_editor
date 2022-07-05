@@ -4891,13 +4891,18 @@ make_cursor_invisible:
 ; Y = value
 
 write_crtc:
+                pha
+                
                 lda #23
                 jsr oswrch
 
                 lda #0
                 jsr oswrch
 
-                jmp print_xy000000
+                jsr print_xy000000
+
+                pla
+                rts
 
 ; End of function write_crtc
 
