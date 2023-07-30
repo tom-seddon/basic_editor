@@ -1,6 +1,27 @@
+ifeq ($(OS),Windows_NT)
+TASS?=tools\64tass.exe
+PYTHON?=py -3
+else
+TASS?=64tass
+PYTHON?=python3
+endif
+
+##########################################################################
+##########################################################################
+
+ifeq ($(VERBOSE),1)
+_V:=
+else
+_V:=@
+endif
+
+##########################################################################
+##########################################################################
+
 DEST:=.build
 RELEASES:=./releases
 DRIVE:=./beeb/0
+SHELLCMD:=$(PYTHON) submodules/shellcmd.py/shellcmd.py
 
 ##########################################################################
 ##########################################################################
@@ -8,59 +29,61 @@ DRIVE:=./beeb/0
 TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 
 .PHONY:build
-build: VER?=$(shell date '+%Y-%m-%d %H:%M:%S')
+#build: VER?=$(shell date '+%Y-%m-%d %H:%M:%S')
+build: VER?=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
 build:
-	mkdir -p $(DEST) $(DRIVE)
+	$(_V)$(SHELLCMD) mkdir $(DEST)
+	$(_V)$(SHELLCMD) mkdir $(DRIVE)
 
-	@$(MAKE) _assemble BUILD_TYPE=0 VER=_ STEM=basiced_
-	@$(MAKE) _assemble BUILD_TYPE=4 VER=_ STEM=basiced_type4
-	@$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
-	@$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
-	@$(MAKE) _assemble BUILD_TYPE=8 "VER=$(VER)" STEM=elkbasiced
-	@$(MAKE) _assemble BUILD_TYPE=9 "VER=$(VER)" STEM=elkhibasiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=0 VER=_ STEM=basiced_
+	$(_V)$(MAKE) _assemble BUILD_TYPE=4 VER=_ STEM=basiced_type4
+	$(_V)$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=8 "VER=$(VER)" STEM=elkbasiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=9 "VER=$(VER)" STEM=elkhibasiced
 
-	@$(MAKE) _copy STEM=basiced DRIVE=$(DRIVE) BBC=R.BETOM
-	@$(MAKE) _copy STEM=hibasiced DRIVE=$(DRIVE) BBC=R.HBETOM
-	@$(MAKE) _copy STEM=elkbasiced DRIVE=$(DRIVE) BBC=R.EBETOM
-	@$(MAKE) _copy STEM=elkhibasiced DRIVE=$(DRIVE) BBC=R.EHBETOM
-	@$(MAKE) _copy STEM=basiced_type4 DRIVE=$(DRIVE) BBC=R.BE4TOM
+	$(_V)$(MAKE) _copy STEM=basiced DRIVE=$(DRIVE) BBC=R.BETOM
+	$(_V)$(MAKE) _copy STEM=hibasiced DRIVE=$(DRIVE) BBC=R.HBETOM
+	$(_V)$(MAKE) _copy STEM=elkbasiced DRIVE=$(DRIVE) BBC=R.EBETOM
+	$(_V)$(MAKE) _copy STEM=elkhibasiced DRIVE=$(DRIVE) BBC=R.EHBETOM
+	$(_V)$(MAKE) _copy STEM=basiced_type4 DRIVE=$(DRIVE) BBC=R.BE4TOM
 
-	@python tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom
+	$(_V)$(PYTHON) tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom
 
-	@sha1sum $(DEST)/basiced_.rom
+	$(_V)$(SHELLCMD) sha1 $(DEST)/basiced_.rom
 
 ##########################################################################
 ##########################################################################
 
 .PHONY:_copy
 _copy:
-	cp -v $(DEST)/$(STEM).rom $(DRIVE)/$(BBC)
-	touch $(DRIVE)/$(BBC).inf
+	$(_V)$(SHELLCMD) copy-file $(DEST)/$(STEM).rom $(DRIVE)/$(BBC)
+	$(_V)$(SHELLCMD) touch $(DRIVE)/$(BBC).inf
 
 ##########################################################################
 ##########################################################################
 
 .PHONY:_assemble
 _assemble:
-	$(TASS) -D BUILD_TYPE=$(BUILD_TYPE) -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/$(STEM).lst -o$(DEST)/$(STEM).rom -l$(DEST)/$(STEM).sym
+	$(_V)$(TASS) -D BUILD_TYPE=$(BUILD_TYPE) -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/$(STEM).lst -o$(DEST)/$(STEM).rom -l$(DEST)/$(STEM).sym
 
 ##########################################################################
 ##########################################################################
 
 .PHONY:release
 release:
-	test -n "$(VER)" # VER variable must be set.
-	rm -Rvf $(RELEASES)/$(VER)
-	mkdir -p $(RELEASES)/$(VER)
-	$(MAKE) build
-	cp $(DEST)/basiced.rom $(RELEASES)/$(VER)/
-	cp $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
-	cp $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
-	cp $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) test-n "$(VER)" # VER variable must be set.
+	$(_V)$(SHELLCMD) rm-tree $(RELEASES)/$(VER)
+	$(_V)$(SHELLCMD) mkdir $(RELEASES)/$(VER)
+	$(_V)$(MAKE) build
+	$(_V)$(SHELLCMD) copy-file $(DEST)/basiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) copy-file $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) copy-file $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) copy-file $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
 
 ##########################################################################
 ##########################################################################
 
 .PHONY:clean
 clean:
-	rm -Rf $(DEST)
+	$(_V)$(SHELLCMD) rm-tree $(DEST)

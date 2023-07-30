@@ -1,11 +1,14 @@
 # Building
 
-Prerequisites:
+Prerequisites (Unix):
 
-* Some kind of Unix with all the usual Unix stuff
 * GNU Make
 * [64tass](https://sourceforge.net/projects/tass64/)
-* Recent Python 2.x
+* Python 3.x
+
+Prerequisites (Windows):
+
+* Python 3.x
 
 To build, type `make`.
 
