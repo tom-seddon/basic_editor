@@ -31,8 +31,7 @@ TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 .PHONY:build
 build: VER:=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
 build:
-	$(_V)$(SHELLCMD) mkdir $(DEST)
-	$(_V)$(SHELLCMD) mkdir $(DRIVE)
+	$(_V)$(SHELLCMD) mkdir $(DEST) $(DRIVE)
 
 	$(_V)$(MAKE) _assemble BUILD_TYPE=4 VER= STEM=basiced_type4
 	$(_V)$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
