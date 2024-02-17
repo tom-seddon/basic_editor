@@ -48,7 +48,7 @@ build:
 	$(_V)$(MAKE) _copy STEM=elkhibasiced DRIVE=$(DRIVE) BBC=R.EHBETOM
 	$(_V)$(MAKE) _copy STEM=basiced_type4 DRIVE=$(DRIVE) BBC=R.BE4TOM
 
-	$(_V)$(PYTHON) tools/checksize.py $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom
+	$(_V)$(SHELLCMD) stat --size-budget=16384 $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom
 
 	$(_V)$(SHELLCMD) sha1 $(DEST)/basiced_.rom
 
@@ -71,8 +71,8 @@ _assemble:
 ##########################################################################
 
 .PHONY:release
+release: VER=$(error must set VER)
 release:
-	$(_V)$(SHELLCMD) test-n "$(VER)" # VER variable must be set.
 	$(_V)$(SHELLCMD) rm-tree $(RELEASES)/$(VER)
 	$(_V)$(SHELLCMD) mkdir $(RELEASES)/$(VER)
 	$(_V)$(MAKE) build
