@@ -29,14 +29,12 @@ SHELLCMD:=$(PYTHON) submodules/shellcmd.py/shellcmd.py
 TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 
 .PHONY:build
-#build: VER?=$(shell date '+%Y-%m-%d %H:%M:%S')
-build: VER?=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
+build: VER:=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
 build:
 	$(_V)$(SHELLCMD) mkdir $(DEST)
 	$(_V)$(SHELLCMD) mkdir $(DRIVE)
 
-	$(_V)$(MAKE) _assemble BUILD_TYPE=0 VER=_ STEM=basiced_
-	$(_V)$(MAKE) _assemble BUILD_TYPE=4 VER=_ STEM=basiced_type4
+	$(_V)$(MAKE) _assemble BUILD_TYPE=4 VER= STEM=basiced_type4
 	$(_V)$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
 	$(_V)$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
 	$(_V)$(MAKE) _assemble BUILD_TYPE=8 "VER=$(VER)" STEM=elkbasiced
@@ -50,7 +48,7 @@ build:
 
 	$(_V)$(SHELLCMD) stat --size-budget=16384 $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom
 
-	$(_V)$(SHELLCMD) sha1 $(DEST)/basiced_.rom
+	$(_V)$(SHELLCMD) sha1 "--ignore=$(VER)" $(DEST)/basiced.rom
 
 ##########################################################################
 ##########################################################################
@@ -58,7 +56,6 @@ build:
 .PHONY:_copy
 _copy:
 	$(_V)$(SHELLCMD) copy-file $(DEST)/$(STEM).rom $(DRIVE)/$(BBC)
-	$(_V)$(SHELLCMD) touch $(DRIVE)/$(BBC).inf
 
 ##########################################################################
 ##########################################################################
