@@ -9,7 +9,8 @@ every file, but the naming scheme is consistent:
 
 (To download a file from GitHub, click on it, then go for one of the
 download links on the resulting page. Don't right click on its name
-and do `Save As...` or whatever - that doesn't work.)
+and do `Save As...` or whatever - that doesn't work.
+[I do intend to improve this](https://github.com/tom-seddon/basic_editor/issues/29).)
 
 # New in 1.45
 
