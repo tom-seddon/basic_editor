@@ -220,11 +220,17 @@ copyright:
 aC1984Acornsoft:
                 ; was "(C) 1984 Acornsoft". Sorry, Acornsoft!
                 .text "(C)",0
-                .if HI||RELOCATABLE
-                ; this address gets fixed up by make_reloc, based on
-                ; the relocation value in the altrom.
+                .if HI
+                .dword LANG_BASE
+                .elsif RELOCATABLE
+                .cerror (LANG_BASE&$ffff0000)!=0
                 .word LANG_BASE
-                .word 0
+                .word relocation_descriptor
+
+relocation_descriptor:
+                .word 0         ; pointer to bitmap end
+                .byte 0         ; ROM number
+                .byte 0         ; reserved
                 .endif
                 
 ; A = code, X = ROM number, Y = parameter.

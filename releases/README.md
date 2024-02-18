@@ -1,3 +1,16 @@
+Each release has its own folder, named after its version number. Files
+for each release are named as follows. Not all releases will have
+every file, but the naming scheme is consistent:
+
+* `basiced.rom` - standard ROM for BBC B/B+/Master
+* `hibasiced.rom` - HI ROM for BBC B/B+/Master + 6502 second processor
+* `elkbasiced.rom` - standard ROM for Electron
+* `elkhibasiced.rom` - HI ROM for Electron + 6502 second processor
+
+(To download a file from GitHub, click on it, then go for one of the
+download links on the resulting page. Don't right click on its name
+and do `Save As...` or whatever - that doesn't work.)
+
 # New in 1.45
 
 - Electron version, thanks to https://github.com/mincebert

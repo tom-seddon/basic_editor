@@ -10,16 +10,32 @@ wordv=$20c
 brkv=$202
                 
 ;-------------------------------------------------------------------------
-                
-; BUILD_TYPE==0: standard
-; BUILD_TYPE==1: HI
-; BUILD_TYPE==2: Relocatable ($8000 version)
-; BUILD_TYPE==3: Relocatable ($b800 version)
-; BUILD_TYPE==4: assembled at $3800, for testing routines from BASIC
-; BUILD_TYPE==8: Electron
-; BUILD_TYPE==9: Electron HI (untested)
 
-; Only build types 0+1 and 8+9 are valid ROMs!
+; Valid ROMs:
+                
+; BUILD_TYPE==0: BBC Micro
+
+; BUILD_TYPE==1: BBC Micro HI
+
+; BUILD_TYPE==2: BBC Master MOS 3.50 relocatable ($8000 version) (runs
+; as-is, but only really makes sense in conjunction with a bit of DIY
+; so that the MOS can find its relocation bitmap)
+
+; BUILD_TYPE==8: Electron
+
+; BUILD_TYPE==9: Electron HI (untested)
+                
+;-------------------------------------------------------------------------
+
+; Not valid ROMs:
+
+; BUILD_TYPE==3: BBC Master MOS 3.50 relocatable ($b800 version) (only
+; used to generate the relocation bitmap)
+
+; BUILD_TYPE==4: assembled at $3800 (useable for testing routines from
+; BASIC in the host processor)
+
+;-------------------------------------------------------------------------
 
 HI_ADDRESS = $b800
 

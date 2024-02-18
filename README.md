@@ -8,9 +8,7 @@ Extra functionality, improved usability, better performance, shadow
 RAM compatibility, a new HIBASIC Editor for use with the 6502 Second
 Processor, and a new Electron version.
 
-[Releases](./releases/) - pick the folder with the biggest version
-number version, click ROM image of interest, then click `Download` to
-download it.
+[Releases](./releases/)
 
 [Instructions](./docs/doc.md), plus link to original manual.
 

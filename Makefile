@@ -38,14 +38,19 @@ build:
 	$(_V)$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
 	$(_V)$(MAKE) _assemble BUILD_TYPE=8 "VER=$(VER)" STEM=elkbasiced
 	$(_V)$(MAKE) _assemble BUILD_TYPE=9 "VER=$(VER)" STEM=elkhibasiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=2 "VER=$(VER)" STEM=rbasiced
+	$(_V)$(MAKE) _assemble BUILD_TYPE=3 "VER=$(VER)" STEM=rbasiced2
 
 	$(_V)$(MAKE) _copy STEM=basiced DRIVE=$(DRIVE) BBC=R.BETOM
 	$(_V)$(MAKE) _copy STEM=hibasiced DRIVE=$(DRIVE) BBC=R.HBETOM
 	$(_V)$(MAKE) _copy STEM=elkbasiced DRIVE=$(DRIVE) BBC=R.EBETOM
 	$(_V)$(MAKE) _copy STEM=elkhibasiced DRIVE=$(DRIVE) BBC=R.EHBETOM
 	$(_V)$(MAKE) _copy STEM=basiced_type4 DRIVE=$(DRIVE) BBC=R.BE4TOM
+#	$(_V)$(MAKE) _copy STEM=rbasiced DRIVE=$(DRIVE) BBC=R.BE4TOMR
 
-	$(_V)$(SHELLCMD) stat --size-budget=16384 $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom
+	$(_V)$(PYTHON) submodules/beeb/bin/tube_relocation.py create -o $(DEST)/rbasiced.relocation.dat $(DEST)/rbasiced.rom $(DEST)/rbasiced2.rom 
+
+	$(_V)$(SHELLCMD) stat --size-budget=16384 $(DEST)/basiced_.rom $(DEST)/basiced.rom $(DEST)/hibasiced.rom $(DEST)/elkbasiced.rom $(DEST)/elkhibasiced.rom $(DEST)/rbasiced.rom
 
 	$(_V)$(SHELLCMD) sha1 "--ignore=$(VER)" $(DEST)/basiced.rom
 
@@ -76,6 +81,8 @@ release:
 	$(_V)$(SHELLCMD) copy-file $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.rom $(RELEASES)/$(VER)/
+	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.relocation.dat $(RELEASES)/$(VER)/
 
 ##########################################################################
 ##########################################################################
