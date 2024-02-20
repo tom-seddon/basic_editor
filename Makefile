@@ -90,3 +90,22 @@ release:
 .PHONY:clean
 clean:
 	$(_V)$(SHELLCMD) rm-tree $(DEST)
+
+##########################################################################
+##########################################################################
+
+# Test the relocating version. For me, on my Windows laptop. Build DFS
+# 2.45 for MOS 3.50r with relocation tables for BASIC, EDIT, and BASIC
+# Editor.
+
+.PHONY:tom_rtest
+tom_rtest: _MOS320=../mos320
+tom_rtest: _DEST=$(DEST)/rbasiced
+tom_rtest: build
+	$(_V)cd $(_MOS320) && make
+	$(_V)$(SHELLCMD) mkdir "$(_DEST)"
+	$(_V)$(SHELLCMD) copy-file "$(_MOS320)/orig/350/basic.4r32.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(_MOS320)/orig/350/edit.1.50r.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(_MOS320)/orig/350/dfs.2.45.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/rbasiced.rom" "$(_DEST)/"
+	$(_V)$(PYTHON) submodules/beeb/bin/tube_relocation.py --verbose set-multi --bitmap-rom "$(_DEST)/dfs.2.45.rom" 9 --begin 0xaf00 --end 0xb800 --rom "$(_DEST)/basic.4r32.rom" "$(_MOS320)/build/basic.4r32.relocation.dat" --rom "$(_DEST)/edit.1.50r.rom" "$(_MOS320)/build/edit.1.50r.relocation.dat" --rom "$(_DEST)/rbasiced.rom" "$(DEST)/rbasiced.relocation.dat" --set-multi

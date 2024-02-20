@@ -223,8 +223,10 @@ aC1984Acornsoft:
                 .if HI
                 .dword LANG_BASE
                 .elsif RELOCATABLE
-                .cerror (LANG_BASE&$ffff0000)!=0
-                .word LANG_BASE
+                ; the relocation address wants to be the HI address
+                ; in all cases.
+                .cerror (HI_ADDRESS&$ffff0000)!=0
+                .word HI_ADDRESS
                 .word relocation_descriptor
 
 relocation_descriptor:
