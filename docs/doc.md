@@ -221,3 +221,23 @@ FUNC + various letters and punctuation characters:
 Note that these shortcuts prevent you from using FUNC + the letter keys to
 obtain the keyword firmkeys that you would normally get in BASIC on the
 Electron.
+
+# The BASIC Editor (relocatable) (MOS 3.50 only) (DIY required)
+
+The BASIC Editor (relocatable) is an ordinary-looking sideways ROM
+containing The BASIC Editor. But, in conjunction with its relocation
+bitmap (supplied), and a bit of elbow grease (this part is up to you,
+sorry!), it can also act as The HIBASIC Editor when used with a 6502
+second processor. Both ROMs in 1 ROM bank!
+
+These files can be used with my `tube_relocation` Python 3.x script:
+https://github.com/tom-seddon/beeb/tree/master/bin#tube_relocation -
+the script will insert the relocation bitmap into a spare region in
+some other ROM, and update the ROM image updated to refer to it.
+
+You should be able to make this work with standard MOS 3.50, but my
+refreshed MOS 3.50 versions will give you more options (and noticeably
+improve the relocation speed):
+https://github.com/tom-seddon/acorn_mos_disassembly/blob/master/docs/refresh.md
+
+Setting this up is currently a DIY job.
