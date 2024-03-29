@@ -1,3 +1,19 @@
+# git clone
+
+This repo has submodules. Clone it with `--recursive`:
+
+    git clone --recursive https://github.com/tom-seddon/basic_editor
+	
+Alternatively, if you already cloned it non-recursively, you can do
+the following from inside the working copy:
+
+    git submodule init
+	git submodule update
+
+(The code won't build without fiddling around if you download one of
+the archive files from GitHub - a GitHub limitation. It's easiest to
+clone it as above.)
+
 # Building
 
 Prerequisites (Unix):
