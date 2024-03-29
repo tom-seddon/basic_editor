@@ -2744,7 +2744,7 @@ loop:
                 .pend
 ; End of function clear_error_message_buffer
 
-
+;-------------------------------------------------------------------------
 
 ; A = error code
 
@@ -2795,6 +2795,8 @@ copy_error_loop:
                 jsr maybe_verbose_exit_on_error
 		RTS
 ; End of function get_error
+
+;-------------------------------------------------------------------------
 
 ifind_command:
                 lda #$80        ;case-insensitive
@@ -2852,7 +2854,7 @@ loc_9113:
 ; reached end of program
 		LDA	byte_3B		; was anything found?
 		BEQ	loc_9122	; branch taken if nothing was found
-		JMP	loc_91A6
+		JMP	find_mode_ui
 
 loc_9122:				
 		LDA	byte_6AF
@@ -2944,7 +2946,7 @@ loc_918A:
 
 loc_9191:				
 		JSR	sub_9E5F
-		BCC	loc_91A6
+		BCC	find_mode_ui
 		JSR	sub_9E82
 		CLC
 		LDA	byte_3B
@@ -2955,10 +2957,10 @@ loc_91A0:
 		JSR	advance_2b_to_next_line
 		JMP	loc_9113
 
-loc_91A6:				
+find_mode_ui:
 					
 		LDA	#0
-		STA	byte_3B
+		STA	byte_3B ;reset Y coordinate
 
 find_mode_loop:
 
@@ -2978,7 +2980,7 @@ check_for_top_screen:
                 cmp #13
                 bne check_for_up
 edit_found_line:
-		JSR	sub_9247
+		JSR	save_line_number_for_current_line
 		JMP	loc_9DA8
 
 check_for_up:
@@ -2987,10 +2989,15 @@ check_for_up:
 
                 ; Move up
 		LDA	byte_3B ;get Y coordinate
-		BNE	decrement_Y_coordinate ;taken if >0
+		BNE	decrement_Y_coordinate ;taken if A!=0
+                ; A=0
 		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
-		STA	byte_2B
-		STA	byte_2C
+
+                ; search for the $0000 padding, either finding the
+                ; bottom of the screen (padding not found) or the
+                ; bottom of the visible lines (padding found).
+		STA	byte_2B ;A=0
+		STA	byte_2C ;A=0
 		JSR	sub_BA69
 		TXA
 		LSR
@@ -3004,22 +3011,22 @@ decrement_Y_coordinate:
 check_for_down:
 		CMP	#CMD_DOWN
 		BNE	check_for_continue
-		LDX	byte_3B
-		INX
-		CPX	text_window_bottom_y
-		BEQ	loc_91F5
-		BCC	loc_91F5
-		LDX	#0
-		BEQ	loc_91FE
+		LDX	byte_3B ;Y coord
+		INX             ;next Y coord
+		CPX	text_window_bottom_y ;bottom of screen?
+		BEQ	loc_91F5             ;taken if on last line
+		BCC	loc_91F5             ;taken if on screen
+		LDX	#0                   ;go back to Y=0
+		BEQ	loc_91FE             ;jmp, in effect
 
 loc_91F5:				
 					
-		TXA
-		ASL
-		TAY
-		LDA	byte_6C1,Y
-		BNE	loc_91FE
-		TAX
+		TXA                ;A=Y coord
+		ASL                ;A=Y coord*2
+		TAY                ;Y=Y coord*2
+		LDA	byte_6C1,Y ;get MSB of address of line on that row
+		BNE	loc_91FE   ;taken if valid line
+		TAX                ;
 
 loc_91FE:				
 					
@@ -3064,7 +3071,7 @@ check_for_mark:
 		PHA
 		LDA	byte_2C
 		PHA
-		JSR	sub_9247
+		JSR	save_line_number_for_current_line
 		JSR	mark_edit_mode_command
 		PLA
 		STA	byte_2C
@@ -3075,9 +3082,12 @@ check_for_mark:
                 .endproc
 
 
-
-
-sub_9247:				
+;-------------------------------------------------------------------------
+;
+; Find current line selected in FIND/QCHANGE mode, and call
+; save_line_number on it.
+;
+save_line_number_for_current_line: .proc
 					
 		LDA	byte_3B
 		ASL
@@ -3092,12 +3102,12 @@ sub_9247:
 					; (byte_2B) points to BASIC line
 					; X decremented
 		JMP	save_line_number ; saves line number from program.
-; End of function sub_9247		;
 					; Entry:
 					; (byte_2b) points to current line
 					;
 					; Exit:
 					; current_line_no_msb, current_line_no_lsb = the line number
+                .endproc
 
 ;-------------------------------------------------------------------------
 
@@ -5584,11 +5594,11 @@ sub_9E5F: .proc
 					; current_line_no_msb, current_line_no_lsb = the line number
 		LDA	text_window_bottom_y
 		SEC
-		SBC	byte_3B
+		SBC	byte_3B ;text_window_bottom_y-y
 		CLC
-		ADC	#1
-		CMP	byte_2D
-		BCC	locret_9E81
+		ADC	#1      ;text_window_bottom_y-y+1
+		CMP	byte_2D ;height of line
+		BCC	locret_9E81 ;taken if y+height<=text_window_bottom_y
 		LDA	byte_3B
 		ASL
 		TAY
@@ -11392,7 +11402,7 @@ loc_BA65:
 ;
 ; entry:
 ; 
-; byte_2B.w - line to search for
+; byte_2B.w - address of line to search for
 ;
 ; exit:
 ;
