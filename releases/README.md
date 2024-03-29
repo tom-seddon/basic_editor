@@ -6,11 +6,19 @@ every file, but the naming scheme is consistent:
 * `hibasiced.rom` - HI ROM for BBC B/B+/Master + 6502 second processor
 * `elkbasiced.rom` - standard ROM for Electron
 * `elkhibasiced.rom` - HI ROM for Electron + 6502 second processor
+* `rbasiced.rom`, `rbasiced.relocation.dat` - relocatable ROM for Master 128 with MOS 3.50
 
 (To download a file from GitHub, click on it, then go for one of the
 download links on the resulting page. Don't right click on its name
 and do `Save As...` or whatever - that doesn't work.
 [I do intend to improve this](https://github.com/tom-seddon/basic_editor/issues/29).)
+
+# New in 1.46
+
+- MOS 3.50-friendly relocatable version
+- Improve support for OSWRCH drivers with non-standard modes
+- Select MODE 135 on startup if in a mode with <= 20 columns
+- Improve build process so the ROM can be built on Windows
 
 # New in 1.45
 
