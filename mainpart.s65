@@ -301,6 +301,7 @@ check_command:
                 ; *B?|M
                 dey
                 lda ($f2),y
+                and #$df
                 
                 ldx #LANGUAGE_MODE_NORMAL
                 cmp #"E"
