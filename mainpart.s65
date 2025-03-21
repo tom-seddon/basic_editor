@@ -11157,8 +11157,8 @@ copy_rows_table_done:
 		LDY	text_window_bottom_y
 		STY	byte_6AB
 		JSR	gotoxy
-		LDA	#19
-		JSR	OSBYTE
+		; LDA	#19
+		; JSR	OSBYTE
                 
 		LDY	unk_37  ;number of rows to scroll
 		LDA	#$A
