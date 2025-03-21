@@ -54,6 +54,9 @@ You can save the program to this file using the new `ZSAVE` command
 (abbrevation `Z`), or save it to this file and then run it using the
 new `ZRUN` command (abbrevation `ZR`).
 
+A `No REM>` error will be issued if `ZSAVE` or `ZRUN` can't find the
+`REM>`.
+
 ## SHIFT+ESCAPE (in The BASIC Editor)
 
 You can press SHIFT+ESCAPE at the command prompt or in edit mode to
@@ -125,9 +128,9 @@ of a line, after a `:`, or just after the end of a line.
 (The search is not intelligent. If there's a `:` in the line, it will
 be found, even if it's in a string or a comment.)
 
-(The previous CTRL+left/right functionality - move cursor between
-lines - is replaced by the new CTRL+up/down shortcut. Not exactly the
-same, just very similar.)
+(The original manual describes this shortcut as moving between
+statements, but in fact it moved the cursor between lines. That
+functionality is now gone.)
 
 ## SHIFT+f9, CTRL+f9
 
