@@ -1,0 +1,125 @@
+* Variants
+
+** Variant 1
+
+*** Remove *FX19
+
+https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L833
+
+#+begin_src diff
+  @@ -32,7 +32,7 @@
+  -00000220: a9 07 85 28 a9 13 20 f4 ff a2 69 a0 89 a9 45 20 ...(.. ...i...E
+  +00000220: a9 07 85 28 ea ea ea ea ea a2 69 a0 89 a9 45 20 ...(......i...E
+                         ^^ ^^ ^^ ^^ ^^
+#+end_src
+
+Not sure what the reasoning behind this is?
+
+*** Write bogus stuff to $fe16?
+
+Modifies write_crtc routine: https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L5025
+
+#+begin_src diff
+  @@ -441,7 +441,7 @@
+  -00001BB0: 98 48 8a a8 a2 00 a9 97 20 f4 ff 68 a8 a2 01 a9 .H...... ..h....
+  +00001BB0: 98 48 ea ea a2 16 a9 97 20 f4 ff 68 a8 a2 0a a9 .H...... ..h....
+                   ^^ ^^    ^^                         ^^
+#+end_src
+
+New code:
+
+#+begin_example
+  write_crtc: ; X=CRTC register, Y=value
+  pha
+  tya
+  pha
+  nop        ; was txa - A = CRTC register
+  nop        ; was tay - Y = CRTC register
+  ldx #$16   ; was ldx #$00  ; store to $FE16... ???
+  lda #$97
+  jsr $fff4
+  pla
+  tay
+  ldx #$0a   ; was ldx #$01
+  lda #$97   ; write to $FE0A... ???
+#+end_example
+
+I... don't understand.
+
+*** Remove FX19
+
+This routine scrolls the screen down:
+
+https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L10936
+
+#+begin_src diff
+  @@ -910,7 +910,7 @@
+  -00003900: a2 00 ac bf 06 8c ab 06 20 01 8f a9 13 20 f4 ff ........ .... ..
+  +00003900: a2 00 ac bf 06 8c ab 06 20 01 8f ea ea ea ea ea ........ .......
+                                              ^^ ^^ ^^ ^^ ^^
+#+end_src
+
+Maybe this speeds up the scrolling?
+
+** Variant 2
+
+https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L5849
+
+#+begin_src diff
+  -00001F70: 48 a5 10 48 48 a5 3c f0 18 a5 10 cd 00 04 f0 02 H..HH.<.........
+  +00001F70: 48 a5 10 48 48 a5 3c f0 18 a5 31 cd 00 04 f0 02 H..HH.<...1.....
+                                           ^^
+#+end_src
+
+Changes LDA cursor_offset into LDA unk_31 - but unk_31 is apparently
+unused?
+
+** Variant 3
+
+https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L3519
+
+#+begin_src diff
+  -000013F0: 3e c9 0d f0 08 99 52 00 c8 c0 0f d0 f2 4c 14 83 >.....R......L..
+  +000013F0: 3e c9 0d f0 08 99 52 00 c8 c0 0f d0 f2 4c 00 83 >.....R......L..
+                                                       ^^
+#+end_src
+
+Changes JMP $8314 into JMP $8300 - looks like a bad image as $8300 is
+in the middle of an instruction.
+
+** Variant 4
+
+This is the same as my original ROM
+
+** Variant 5
+
+https://github.com/tom-seddon/basic_editor/blob/fa65f35727f65558b1155e748c550aa3f002c648/releases/1.32_original/basiced.lst#L627
+
+#+begin_src diff
+  -000000E0: 20 91 8e a2 60 86 31 a2 00 86 3c 86 62 e8 86 3d  ...`.1...<.b..=
+  +000000E0: 20 91 8e a2 60 86 31 a2 00 86 62 e8 86 3c 86 3d  ...`.1...b..<.=
+                                           ^^ ^^ ^^ ^^
+#+end_src
+
+Activate insert mode on startup. Before:
+
+a2 00  ldx #0
+86 3c  stx $3c ; 0=overtype, 1=insert
+86 62  stx $62
+e8     inx
+
+After:
+
+a2 00  ldx #0
+86 62  stx $62
+e8     inx
+86 3c  stx $3c ; 0=overtype, 1/insert
+
+#+begin_src diff
+  -00003FF0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ................
+  +00003FF0: 76 20 31 2e 33 32 2b 20 28 49 4e 53 45 52 54 29 v 1.32+ (INSERT)
+             ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^ ^^
+#+end_src
+
+1.32+ indeed! This single change makes a huge improvement. I don't
+know what they were thinking, making overtype the default.
