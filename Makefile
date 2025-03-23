@@ -101,9 +101,14 @@ clean:
 ##########################################################################
 
 .PHONY:_pres_stuff
+_pres_stuff: _TASS:=$(TASS) --case-sensitive -Wall --nostart
 _pres_stuff: _make_output_folders
-	$(_V)$(TASS) --case-sensitive -Wall --nostart "./pres/butils.s65" "-o$(DEST)/butils.rom" "-L$(DEST)/butils.lst"
-	$(_V)$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON2"
+	$(_V)$(_TASS) "./pres/butils.s65" "-Dbaseds1_all_version=true" "-o$(DEST)/butils2.rom" "-L$(DEST)/butils2.lst"
+	$(_V)$(_TASS) "./pres/butils.s65" "-Dbaseds1_version=true" "-o$(DEST)/butils.rom" "-L$(DEST)/butils.rom"
+	$(_V)$(_TASS) "./pres/butils.s65" "-Dbaseds1_elk_version=true" "-o$(DEST)/butils_elk.rom" "-L$(DEST)/butils_elk.lst"
+	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
+	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
+# Don't compare butils_elk.rom. It won't match.
 
 ##########################################################################
 ##########################################################################
@@ -112,7 +117,7 @@ _pres_stuff: _make_output_folders
 _pres_stuff_2: _make_output_folders
 	$(_V)$(PYTHON) "submodules/beeb/bin/convert_ddtmass.py" "./beeb/1/$$.!MAKROM" -o "$(DEST)/butils_conv.s65"
 	$(_V)$(TASS) --case-sensitive -Wall --nostart "$(DEST)/butils_conv.s65" "-o$(DEST)/butils_conv.rom" "-L$(DEST)/butils_conv.lst"
-	$(_V)$(SHELLCMD) cmp "$(DEST)/butils_conv.rom" "./beeb/1/$$.ELECTRON2"
+	$(SHELLCMD) cmp "$(DEST)/butils_conv.rom" "./beeb/1/$$.ELECTRON2"
 
 ##########################################################################
 ##########################################################################

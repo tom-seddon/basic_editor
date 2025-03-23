@@ -5,7 +5,43 @@
 *= $8000
                 ; $ORGV $8000
 
-                ; $ATD ELECTRON
+;-------------------------------------------------------------------------
+
+; BASEDS1 refers to BASEDS1.SSD from Dave H's diski mages.
+                
+                .weak
+
+; If true, exclude ROMID, MEMEDIT and TXCOPY. As per the code supplied
+; on BASEDS1.
+baseds1_version=false
+
+; If true, include ROMID, MEMEDIT and TXCOPY, but don't follow through
+; to fix up anything else. As per the code on BASEDS1, but with the
+; relevant $INCLUDEs in !MAKROM uncommented.
+;
+; (this is included just because I built this particular configuration
+; on the Beeb, so it's an additional test case for the code
+; conversion)
+baseds1_all_version=false
+
+; If true, build ROM matching the prefix of ELK from BASEDS1.
+;
+; Presumably ELK is a 16 KB dump from reused sideways RAM. The output
+; is from this is $29e5 bytes, matching the first $29e5 bytes of ELK.
+; Then what looks like some code around CR_3: sta $af, sta Quote, jsr
+; Byte_1 - and so on.
+baseds1_elk_version=false
+                .endweak
+
+;-------------------------------------------------------------------------
+
+include_ROMID=!baseds1_version&&!baseds1_elk_version
+include_MEMEDIT=!baseds1_version&&!baseds1_elk_version
+include_TXCOPY=!baseds1_version&&!baseds1_elk_version
+
+;-------------------------------------------------------------------------
+
+; $ATD ELECTRON
 ;  $ORGS &F00
 
                 ; $ERROR 7,0,W
@@ -69,7 +105,12 @@ OSCLI=$FFF7
                 .byte Offset_0-$8000; Offset to 0(C)
                 .byte 6         ; Version#
 
-Romname:        .text "Altra BasicEd (Electron) "
+Romname:
+                .if baseds1_elk_version
+                .text "Altra Electron BasicEd DEMO 2"
+                .else
+                .text "Altra BasicEd (Electron) "
+                .endif
                 .byte 0
                 .text "1.60"    ; Version$
 
@@ -2415,10 +2456,10 @@ UpB:                            ; Update (B) pointer
                 clc
                 adc $B
                 sta $B
-                bcc x
+                bcc x_
                 inc$C
                 clc
-x:              rts
+x_:             rts
 
 StartB:         lda $18         ; Page
                 sta $C
@@ -5222,7 +5263,7 @@ UB2:            lda Addr
                 ; include_end: UNPACK
 
                 ; include_start: ROMID
-
+                .if include_ROMID
 
 
 ;  ****************************************************
@@ -5458,7 +5499,9 @@ Ram:            ldy #0
                 rts
 
 
+                .endif
                 ; include_end: ROMID
+                
                 ; include_start: MOVE
 
 P_0=$A8                         ; Page 0 use..
@@ -6531,6 +6574,7 @@ Nokey:          jmp OSNEWL
 
                 ; include_end: FKEYS
                 ; include_start: MEMEDIT
+                .if include_MEMEDIT
 
 
 ;  ********************************
@@ -7175,8 +7219,11 @@ Copymid:
 Copyend:
 
 
+                .endif
                 ; include_end: MEMEDIT
+
                 ; include_start: TXCOPY
+                .if include_TXCOPY
 
 ;  *******************************************
 ;  * TXCOPY - Copy text screen to printer    *
@@ -7252,7 +7299,7 @@ Copied:
                 lda #3
                 jmp OSWRCH      ; printer off, RTS
 
-
+                .endif
                 ; include_end: TXCOPY
 
 
