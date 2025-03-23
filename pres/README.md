@@ -16,7 +16,7 @@ it's apparently related to the Acornsoft BASIC Editor, it'd be nice to
 have an updated version of it too, based on the updated BASIC Editor,
 if that would be easy to do!
 
-# Source files
+# Original source files
 
 Disk image posted here:
 https://stardot.org.uk/forums/viewtopic.php?f=3&t=7719&start=30#p108512
@@ -53,12 +53,16 @@ match either of the above, and I haven't tested it.
 # 64tass format source files
 
 There's a 64tass format source file converted from the BBC files in
-`butils.s65`.
+`butils.s65`, with some flags and updates so it can be built to match
+some of the existing ROMs.
 
-To build it, ensure 64tass is on the path, then do `make pres_stuff`
-from the root of the working copy. This will assemble the code and
-check it matches `$.ELECTRON2` (see above) - the build will fail if it
-doesn't.
+To build it, ensure the prerequisites for building are available (see
+[the build instructions](../docs/build.md)), then do `make
+_pres_stuff` from the root of the working copy. This will assemble
+each different version of the code and (when appropriate) check it
+matches the original. The build will fail if there's a problem.
+
+Consult `butils.s65` for more info about the different versions..
 
 # Original ROMs
 

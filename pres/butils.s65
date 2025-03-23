@@ -28,17 +28,51 @@ baseds1_all_version=false
 ;
 ; Presumably ELK is a 16 KB dump from reused sideways RAM. The output
 ; is from this is $29e5 bytes, matching the first $29e5 bytes of ELK.
-; Then what looks like some code around CR_3: sta $af, sta Quote, jsr
-; Byte_1 - and so on.
+; 
+; At offset $29e5 of ELK, there's what looks like some of the code
+; from around CR_3: sta $af, sta Quote, jsr Byte_1 - and so on.
+; Presumably left over from a previous run.
 baseds1_elk_version=false
+
+; If true, build ROM matching part 0 of the Advanced BASIC Editor.
+; (The corresponding parts of The BASIC Editor Plus and BASIC Editor &
+; Toolkit are very similar.)
+;
+; A work in progress.
+abe_version=false
+                
                 .endweak
 
 ;-------------------------------------------------------------------------
 
-include_ROMID=!baseds1_version&&!baseds1_elk_version
-include_MEMEDIT=!baseds1_version&&!baseds1_elk_version
-include_TXCOPY=!baseds1_version&&!baseds1_elk_version
+;-------------------------------------------------------------------------
 
+enable_CLR=abe_version
+enable_ROMID=abe_version
+enable_TXCOPY=abe_version
+                
+include_ROMID=enable_ROMID||!baseds1_version&&!baseds1_elk_version
+include_MEMEDIT=!baseds1_version&&!baseds1_elk_version
+include_TXCOPY=enable_TXCOPY||!baseds1_version&&!baseds1_elk_version
+
+;-------------------------------------------------------------------------
+
+                .if abe_version
+; Labels for unknown stuff. These will get resolved in
+; due course.
+LB890=$b890
+LB89D=$b89d
+LB8AA=$b8aa
+LB936=$b936
+LB969=$b969
+LB973=$b973
+LB97D=$b97d
+LB9AC=$b9ac
+LBFE2=$bfe2
+LBFE5=$bfe5
+LBFE8=$bfe8
+                .endif
+                
 ;-------------------------------------------------------------------------
 
 ; $ATD ELECTRON
@@ -95,27 +129,51 @@ OSCLI=$FFF7
 ;  * based on Probe 6.02
 ;  * * * * * * * * * * * * * * * * * * * * * * *
 
+                .if abe_version
+                jmp LB936
+                jmp LB97D
+                .else
                 brk             ; No Language entry
                 brk
                 brk
 
                 jmp Reason      ; Service entry
+                .endif
 
-                .byte $82       ; Service & Language Rom
+                .if abe_version
+                .byte $c2            ;Service+Language
+                .else
+                .byte $82       ; Service Rom
+                .endif
                 .byte Offset_0-$8000; Offset to 0(C)
+                .if abe_version
+                .byte 1
+                .else
                 .byte 6         ; Version#
+                .endif
 
 Romname:
                 .if baseds1_elk_version
                 .text "Altra Electron BasicEd DEMO 2"
+                .elif abe_version
+                .text "Advanced BASIC Editor "
                 .else
                 .text "Altra BasicEd (Electron) "
                 .endif
                 .byte 0
+                .if abe_version
+                .text "1.00"
+                .else
                 .text "1.60"    ; Version$
+                .endif
 
 Offset_0:       .byte 0
-                .text "(C)1988 IJW"
+                .text "(C)"
+                .if abe_version
+                .text "1988 PRES"
+                .else
+                .text "1988 IJW"
+                .endif
                 .byte 0
 
 Reason:         pha
@@ -155,7 +213,12 @@ Help:
                 jsr Rt2         ; Print Version$, Romtitle left Y pointing at Version$
                 jsr OSNEWL
                 jsr Printmsg
-                .text " BASED"
+                .text " "
+                .if abe_version
+                .text "BUTIL"
+                .else
+                .text "BASED"
+                .endif
                 .byte 0
                 jsr OSNEWL
                 jmp Nosuch
@@ -171,8 +234,14 @@ Search_0:
                 tay             ; Original offset
                 pla
                 tax
+                .if abe_version
+                jsr LB969
+                nop
+                nop
+                .else
                 jsr Nextoscl
                 cmp #"A"        ; PREFIX CHR$, A=Altra
+                .endif
                 bne Nosuch
                 iny             ; Skip any prefix A
                 jsr Search2
@@ -550,15 +619,21 @@ Table_0:                        ; Table of Rom contents with xeqn addresses
                 DDB BASED-1
 
 Table2:                         ; Start for Help file, entries above Table2 do not appear in *HELP
+                .if abe_version
+                .text "BUTIL"
+                .else
                 .text "BASED"
+                .endif
                 DDB BASED-1
 
                 .text "BLIST"
                 DDB BLIST-1
 
-;  $EQUS "CLR"
-;  DDB CLEAR-1
-
+                .if enable_CLR
+                .text "CLR"
+                DDB CLEAR-1
+                .endif
+                
                 .text "FKEYS"
                 DDB FKEYS-1
 
@@ -568,27 +643,43 @@ Table2:                         ; Start for Help file, entries above Table2 do n
                 .text "MOVE"
                 DDB MOVECMND-1
 
-;  $EQUS "ROMID"
-;  DDB ROMID-1
+                .if enable_ROMID
+                .text "ROMID"
+                DDB ROMID-1
+                .endif
 
                 .text "SPACE"
                 DDB SPACE-1
 
-;  $EQUS "TXCOPY"
-;  DDB TXCOPY-1
+                .if enable_TXCOPY
+                .text "TXCOPY"
+                DDB TXCOPY-1
+                .endif
 
                 .text "VLIST"
                 DDB VARCAT-1
 
                 .byte 0         ; End of Command table
 
+                .if abe_version
+                .fill 7,0
+                .endif
+
 Helptabl:
+                .if abe_version
+                .text "BE"
+                .else
                 .text "BASED"
+                .endif
                 DDB Helpaids-1
 
                 .byte 0         ; End of Help table
 
 ;  ***************************
+
+                .if abe_version
+                .fill 3,0
+                .endif
 
 ; Helpfile- each index entry has a string here ending CR. (or CR only)
 
@@ -598,7 +689,9 @@ Helpfile:
                 .text "<fsp>"   ; Blist
                 .byte 13
 
-;  $EQUB 13 \ CLR
+                .if enable_CLR
+                .byte 13        ; CLR
+                .endif
 
                 .text "[key]"   ; FKEYS
                 .byte 13
@@ -609,15 +702,27 @@ Helpfile:
                 .text " page|ssss ffff|+eeee dddd"; MOVE
                 .byte 13
 
-;  $EQUB " [rom address]"  \ROMID
-;  $EQUB 13
+                .if enable_ROMID
+                .if abe_version
+                .text " "
+                .else
+                .text " [rom address]"  ;ROMID
+                .endif
+                .byte 13
+                .endif
 
                 .byte 13        ; SPACE
 
-;  $EQUB 13 \TXCOPY
+                .if enable_TXCOPY
+                .byte 13        ;TXCOPY
+                .endif
 
                 .text "[HR$%PF]"; VLIST
                 .byte 13
+
+                .if abe_version
+                .fill 12,0
+                .endif
 
 ; ****************************************
 ; * CLR - POWER UP RESET EMULATION
@@ -1713,8 +1818,13 @@ WARMSTART:                      ; Return to BASIC or EDITOR
                 pla
                 cmp #5          ; ^E 
                 bne gobasic
+                .if abe_version
+                ldx #<LBFE8
+                ldy #>LBFE8
+                .else
                 ldx #Editor_0 % 256
                 ldy #Editor_0 / 256
+                .endif
                 jmp OSCLI
 
 gobasic:        ldx#0
@@ -1989,9 +2099,18 @@ Choice:         ldx#$FF
                 ldx #1
                 jsr OSBYTE      ; Flush KB
 
-Wait_0:         jsr OSRDCH      ; Read input
+Wait_0:
+                .if abe_version
+                jsr LB973
+                nop
+                nop
+                nop
+                nop
+                .else
+                jsr OSRDCH      ; Read input
                 cmp #$1B
                 beq Exit_0      ; Escaped
+                .endif
                 cmp #5
                 beq Exit_0      ; ^E
                 cmp #4
@@ -2137,7 +2256,12 @@ Menu:           jsr Printmsg
 ;  $EQUB 135 \but use shadow mode if available
                 .byte 26        ; No windows
                 .byte 12        ; CLS
-                .text " ",131,"  BASIC EDITOR"
+                .text " ",131,"  "
+                .if abe_version
+                .text "UTILITIES   "
+                .else
+                .text "BASIC EDITOR"
+                .endif
 Subfile:        .byte 13        ; Start point for submenu
                 .byte 13
                 .text "",135,"E",131,"Enter Search$"
@@ -5687,7 +5811,12 @@ U2_1:           dec Extent_1+1
 SPACE:
 
                 ldx #$FF
-L0:             jsr OSNEWL
+L0:
+                .if abe_version
+                jsr LB9AC
+                .else
+                jsr OSNEWL
+                .endif
                 ldy #7          ; Length of messg
 Loop_1:         inx
                 lda Mess,x
@@ -5835,10 +5964,18 @@ normal:
                 stx T0
                 sty T1_1
                 ldy #21         ; Offset to OSWRCH
+                .if abe_version
+                lda #<LBFE5
+                .else
                 lda #HERE % 256
+                .endif
                 sta (T0),y      ; Set extended OSWRCH vector
                 iny
+                .if abe_version
+                lda #>LBFE5
+                .else
                 lda #HERE /256
+                .endif
                 sta (T0),y
                 iny
                 lda $F4         ; This ROM no.
@@ -5849,18 +5986,37 @@ normal:
                 sta Oldvec+1    ; Save current OSWRCH vector
 
                 ldy #48         ; Offset for eventV
+                .if abe_version
+                lda #<LBFE2
+                .else
                 lda #Event % 256
+                .endif
                 sta (T0),y      ; Set extended EVENT vector
                 iny
+                .if abe_version
+                lda #>LBFE2
+                .else
                 lda #Event /256
+                .endif
                 sta (T0),y
                 iny
                 lda $F4
                 sta (T0),y
+                .if abe_version
+                jsr LB890
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                .else
                 lda #$30
                 sta $220
                 lda #$FF
                 sta $221        ; Point EVENTV to extended handler at FF30
+                .endif
                 lda #14
                 ldx #6
                 jsr OSBYTE      ; Enable Event 6, Escape pressed
@@ -6223,17 +6379,39 @@ NT2:
                 sta Return+1    ; Save callers address
                 lda #0
                 sta Trap        ; Set +ve off
+                .if abe_version
+                jsr LB89D
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                .else
                 lda #$15
                 sta $20E
                 lda #$FF
                 sta $20F        ; Point OSWRCH to Extended vector handler at FF15
+                .endif
                 jmp Alldone     ; Return to BASIC, which will print Value?!
 
 Continue_1:                     ; Get back here after printing value
+                .if abe_version
+                jsr LB8AA
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                .else
                 lda Oldvec
                 sta $20E        ; Restore OSWRCHV
                 lda Oldvec+1
                 sta $20F
+                .endif
                 bit $FF         ; Escaped?
                 bmi VExit
                 lda Return+1
@@ -6284,10 +6462,21 @@ Event:
                 ldx #6
                 ldy #0
                 jsr OSBYTE      ; Disable event 6
+                .if abe_version
+                jsr LB8AA
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                .else
                 lda Oldvec
                 sta $20E        ; Restore OSWRCH
                 lda Oldvec+1
                 sta $20F
+                .endif
                 lda #125
                 jsr OSBYTE      ; Set escape
                 pla
