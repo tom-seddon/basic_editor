@@ -39,15 +39,26 @@ the box. To build the code:
 3. Do `*MASS !MAKROM`
 
 You can find a copy of the ROM built from the code as supplied in
-`../beeb/1/$.ELECTRON`.
+`../beeb/1/$.ELECTRON`. I haven't tested this ROM, just built it.
 
 `$.!MAKROM` has 3 includes commented out. You can find a copy of the
-ROM built with those commented back in in `../beeb/1/$.ELECTRON2`.
+ROM built with those commented back in in `../beeb/1/$.ELECTRON2`. But
+it looks like just uncommenting the includes might not be enough.
+There's still some commented-out stuff in `Table2`, for example - I
+haven't tested this ROM either.
 
 There's a ROM image on the disk already: `../beeb/1/$.ELK`. It doesn't
-match either of the above.
+match either of the above, and I haven't tested it.
 
-I haven't actually tested any of these ROMs yet.
+# 64tass format source files
+
+There's a 64tass format source file converted from the BBC files in
+`butils.s65`.
+
+To build it, ensure 64tass is on the path, then do `make pres_stuff`
+from the root of the working copy. This will assemble the code and
+check it matches `$.ELECTRON2` (see above) - the build will fail if it
+doesn't.
 
 # Original ROMs
 
@@ -91,3 +102,4 @@ The ABEP 32 KB ROM is the other way around, so to speak, and it seems
 the PLD is set up differently to accommodate this. Looks like in both
 cases accessing $bff8...$bffb selects the BASIC Editor half, and
 accessing $bffc...$bfff selects the BUTILS half.
+

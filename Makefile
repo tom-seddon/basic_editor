@@ -30,9 +30,7 @@ TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 
 .PHONY:build
 build: VER:=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
-build:
-	$(_V)$(SHELLCMD) mkdir $(DEST) $(DRIVE)
-
+build: _make_output_folders
 	$(_V)$(MAKE) _assemble BUILD_TYPE=4 VER= STEM=basiced_type4
 	$(_V)$(MAKE) _assemble BUILD_TYPE=0 "VER=$(VER)" STEM=basiced
 	$(_V)$(MAKE) _assemble BUILD_TYPE=1 "VER=$(VER)" STEM=hibasiced
@@ -54,6 +52,13 @@ build:
 	$(_V)$(SHELLCMD) stat $(DEST)/rbasiced.relocation.dat
 
 	$(_V)$(SHELLCMD) sha1 "--ignore=$(VER)" $(DEST)/basiced.rom
+
+##########################################################################
+##########################################################################
+
+.PHONY:_make_output_folders
+_make_output_folders:
+	$(_V)$(SHELLCMD) mkdir $(DEST) $(DRIVE)
 
 ##########################################################################
 ##########################################################################
@@ -94,3 +99,8 @@ clean:
 
 ##########################################################################
 ##########################################################################
+
+.PHONY:pres_stuff
+pres_stuff: _make_output_folders
+	$(_V)$(TASS) --case-sensitive -Wall --nostart "./pres/butils.s65" "-o$(DEST)/butils.rom" "-L$(DEST)/butils.lst"
+	$(_V)$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON2"
