@@ -1,5 +1,5 @@
-The Advanced Basic Editor and Advanced Basic Editor Plus were PRES
-products for the Electron. Review here:
+The Advanced Basic Editor (ABE) and Advanced Basic Editor Plus (ABEP)
+were PRES products for the Electron. Review here:
 https://www.everygamegoing.com/larticle/Advanced-Basic-Editor-Plus-000/15244
 
 It comes as a 32 KB ROM with a bank switching mechanism handled by a
@@ -49,3 +49,45 @@ match either of the above.
 
 I haven't actually tested any of these ROMs yet.
 
+# Original ROMs
+
+ROM images can be found in this folder, named `ABE` or `ABEP`
+according to product: `.32KB.rom` is the original 32 KB ROM, useable
+with the appropriate PLD. and `.0.rom` and `.1.rom` are the two 16 KB
+halves, not useable independently.
+
+It looks like these two products are essentially identical. The
+differences between `ABE.0.rom` and `ABEP.1.rom`:
+
+```
+-00000000: 4c 36 b9 4c 7d b9 c2 24 01 41 64 76 61 6e 63 65 L6.L}..$.Advance
++00000000: 4c 36 b9 4c 7d b9 c2 24 01 54 68 65 20 42 41 53 L6.L}..$.The BAS
+```
+```
+-00000010: 64 20 42 41 53 49 43 20 45 64 69 74 6f 72 20 00 d BASIC Editor .
++00000010: 49 43 20 45 64 69 74 6f 72 20 50 6c 75 73 20 00 IC Editor Plus .
+```
+
+The differences between `ABE.1.rom` and `ABEP.0.rom`:
+
+```
+-00000000: 4c 52 8e 4c 33 80 c2 24 01 41 64 76 61 6e 63 65 LR.L3..$.Advance
++00000000: 4c 52 8e 4c 33 80 c2 24 01 54 68 65 20 42 41 53 LR.L3..$.The BAS
+```
+```
+-00000010: 64 20 42 41 53 49 43 20 45 64 69 74 6f 72 00 20 d BASIC Editor.
++00000010: 49 43 20 45 64 69 74 6f 72 20 50 6c 75 73 00 20 IC Editor Plus.
+```
+```
+-00002990: 6e 67 20 3a 20 16 07 0a 41 64 76 61 6e 63 65 64 ng : ...Advanced
++00002990: 6e 67 20 3a 20 16 07 0a 54 68 65 20 42 41 53 49 ng : ...The BASI
+```
+```
+-000029A0: 20 42 41 53 49 43 20 45 64 69 74 6f 72 00 0d 0a  BASIC Editor...
++000029A0: 43 20 45 64 69 74 6f 72 20 50 6c 75 73 00 0d 0a C Editor Plus...
+```
+
+The 32 KB ROM is the other way around, so to speak, and it semes the
+PLD is set up differently to accommodate this. Looks like in both
+cases accessing $bff8...$bffb selects the BASIC Editor half, and
+accessing $bffc...$bfff selects the BUTILS half.
