@@ -1,5 +1,11 @@
 #+STARTUP: overview
 
+* .dir-locals.el
+
+#+begin_example
+((nil . ((compile-command . "cd ~/github/basic_editor && make _tom_emacs"))))
+#+end_example
+
 * Variants
 
 ** Variant 1

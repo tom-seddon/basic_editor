@@ -1,3 +1,4 @@
 /.build/
 /lkg/
 /beeb/0/
+/.dir-locals.el
