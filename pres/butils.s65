@@ -174,9 +174,9 @@ Match_0:        inx
                 and #$5F        ; force uppercase
                 beq Match_0     ; If=0 chrs match,try next
                 dex             ; Chrs not matching
-Skip:           inx
+Skip_0:         inx
                 lda Table_0,x
-                bpl Skip        ; Skip rest of Rom$
+                bpl Skip_0      ; Skip rest of Rom$
                 lda ($F2),y     ; Get OSCL$ byte again
                 cmp #"."        ; Abbreviation?
                 bne Start_0     ; no, try next Rom$
@@ -1672,8 +1672,8 @@ WARMSTART:                      ; Return to BASIC or EDITOR
                 pla
                 cmp #5          ; ^E 
                 bne gobasic
-                ldx #Editor % 256
-                ldy #Editor / 256
+                ldx #Editor_0 % 256
+                ldy #Editor_0 / 256
                 jmp OSCLI
 
 gobasic:        ldx#0
@@ -1700,7 +1700,7 @@ Warm:           .text "OLD"
 Basic:          .text "BASIC"
                 .byte 13
 
-Editor:         .text "BE"
+Editor_0:       .text "BE"
                 .byte 13
 
 ; \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -1943,12 +1943,12 @@ Choice:         ldx#$FF
                 sta $8C         ; Reset Variables flag +ve
                 jsr OSBYTE      ; Clear Escape
                 bit Exec
-                bmi Wait        ; Dont flush
+                bmi Wait_0      ; Dont flush
                 lda #15
                 ldx #1
                 jsr OSBYTE      ; Flush KB
 
-Wait:           jsr OSRDCH      ; Read input
+Wait_0:         jsr OSRDCH      ; Read input
                 cmp #$1B
                 beq Exit_0      ; Escaped
                 cmp #5
@@ -2056,7 +2056,7 @@ Count2:
                 beq *+5
 Searchline:     jsr Nextline
                 jsr Search
-                bne Rts         ; TOP of prgm reached
+                bne Rts_0       ; TOP of prgm reached
 Ctest:          bcs Searchline  ; No match this line
                 bit $8C         ; Variable count?
                 bpl Cinc        ; No
@@ -2067,7 +2067,7 @@ Cinc:           inc $2A
                 inc $2B         ; INC IAC
 Cexclude:       jsr ConSrch     ; Check for >1 match/line
                 beq Ctest
-Rts:            rts
+Rts_0:          rts
 
 Count:                          ; Count occurences of SS
                 jsr Count2
@@ -2311,11 +2311,11 @@ Real:           lda #"G"
                 sta $704        ; Make line# bytes all 0 if wild
 Moveleft:       ldx #0
                 dey
-Shift:          lda $701,x      ; Move line left 1 byte
+Shift_0:        lda $701,x      ; Move line left 1 byte
                 sta $700,x      ; to loose quote or GOTO
                 inx
                 cmp #13         ; CR?
-                bne Shift
+                bne Shift_0
 Rtn_0:          rts             ; Z=1 if Special syntax
 
 ;  *********************************
@@ -2345,9 +2345,9 @@ En_Printer:     ldx #0
 ;  ********************************
 
 Prbyte:         cmp #3          ; wild A,B ?
-                bcs CS2         ; No
+                bcs CS2_0       ; No
 CS4:            lda #$FF        ; Wildcard block
-CS2:            cmp #13
+CS2_0:          cmp #13
                 beq CS3b        ; CR
 
 Printasci:      cmp #32
@@ -2974,17 +2974,17 @@ Nvp:            jsr LinetoIAC   ; Put line# in IAC
 ; Copy line out to buffer, upto match point
                 lda$5AB
                 cmp#"["
-                bne Copy
+                bne Copy_0
                 ldx#1
                 bne Insert      ; [ Deletes up to R$
-Copy:           ldx Offset
+Copy_0:         ldx Offset
                 dex
                 dex
                 dex
-                bne C2
+                bne C2_0
                 inx
                 bne Insert      ; IF X=0 now then first byte of SS is WC and matching line len byte, so skip first byte of Rep$, also WC!
-C2:             dex             ; No of bytes to copy
+C2_0:           dex             ; No of bytes to copy
                 beq Insert      ; Nothing to copy
 Get_1:          lda (Addr),y
                 sta $6FC,y      ; Buffer at &700
@@ -3367,22 +3367,22 @@ CR1_0:          jsr Lineiachi   ; Put old line# in 2C/D
                 sta$C           ; Set (B) to start of new lines
                 ldy#4
 CR2:            jsr Findcall2   ; Search for any reference to line 2C/D
-                bne CR5         ; No call found
+                bne CR5_0       ; No call found
 ; Call found, check if its in a line past the last newline
                 ldy#1
                 lda($B),y
                 cmp News2+1     ; Check Hi bytes
-                bcc CR3         ; Calling line is a new line
-                bne CR5         ; Calling line is not new
+                bcc CR3_0       ; Calling line is a new line
+                bne CR5_0       ; Calling line is not new
                 iny
                 lda News2
                 cmp($B),y
-                bcc CR5         ; Calling line is not new
-CR3:                            ; Call of new line by a new line found
+                bcc CR5_0       ; Calling line is not new
+CR3_0:                          ; Call of new line by a new line found
                 jsr Newstoiac
                 jsr Insertline_no; Insert new#
                 bne CR2         ; Continue looking for calls
-CR5:                            ; No (more) calls of line 2C/D found
+CR5_0:                          ; No (more) calls of line 2C/D found
                 jsr Nextline    ; Update (Addr)
                 jsr UpNews      ; Add step to Newstart and check finish
                 bcc CR1_0
@@ -5221,7 +5221,244 @@ UB2:            lda Addr
 
                 ; include_end: UNPACK
 
-;  $INCLUDE ROMID
+                ; include_start: ROMID
+
+
+
+;  ****************************************************
+;  *            ROMID reader/copier                   *
+;  *            V5 18/9/84 IJW                        *
+;  *            Syntax- *ROMID page addr              *
+;  ****************************************************
+
+Null=$90
+Rom_0=$91
+Entry=$92
+RomOffset=$93
+WORK3=$900
+STACK=$7C0
+
+ROMID:
+                jsr OSNEWL
+                lda #170
+                ldx #0
+                ldy #$FF
+                jsr OSBYTE      ; Get addr of Rom table
+                stx $F8
+                sty $F9
+
+; Check if page#/address given
+                pla
+                pha
+                tay             ; Oscli offset
+                jsr Nextoscl
+                beq idroms      ; CR only
+
+                jsr HEXBIN      ; Convert page#
+                beq done_1      ; CR no address
+                bcc done_1      ; Illegal hex
+                ldx $AE         ; Result
+                cpx #$10
+                bcs done_1      ; Illegal page#>15
+                stx Rom_0
+
+                cmp #"O"        ; Check ON/OFF
+                bne RomAddr
+                jsr Skposcl
+                cmp #"N"
+                beq Rom_on
+                lda #0          ; 0=off
+                beq Set_table
+
+Rom_on:         lda#6
+                sta $F6
+                lda #$80
+                sta $F7
+                ldy Rom_0
+                jsr $FFB9       ; Get Rom type
+
+Set_table:
+                ldy Rom_0
+                sta ($F8),y     ; Set Rom type in table
+
+idroms:         jsr romid
+done_1:         jmp Alldone
+
+
+RomAddr:        jsr HEXBIN      ; Convert address
+                bcc idroms      ; Illegal address
+                lda $AF         ; Addr MSB
+                cmp #$E
+                bcc idroms      ; If address<E00 illegal
+                sta $AB
+                lda $AE
+                sta $AA         ; Save address
+                lda #0
+                sta $F6
+                lda #$80
+                sta Null
+                sta $F7         ; Set (F6) to &8000
+
+move:           ldy Rom_0
+                jsr $FFB9       ; Get (F6) of rom Y
+                cmp ($F6),y     ; =this rom?
+                beq m2
+                sty Null        ; Y=0, clear if any bytes<>
+m2:             sta ($AE),y     ; Y=0
+                inc $AE
+                bne *+4
+                inc $AF
+                inc $F6
+                bne move
+                ldy Null        ; if<>0 first 256 bytes
+                bne loaded      ; =this rom!
+                inc $F7
+                lda $F7
+                cmp #$C0
+                bcc move
+
+loaded:
+                jsr Printmsg
+                .byte 13
+                .text " *SAVE "
+                .byte 0
+                ldy #9
+name:           lda ($AA),y     ; Rom name
+                bmi save
+                cmp #33         ; No spaces or ctrl chrs
+                bcc save
+                jsr OSWRCH
+                iny
+                cpy #$10
+                bcc name
+
+save:           jsr Space1
+                lda $AB
+                jsr Hex_asci    ; Print save addr in hex
+                lda $AA
+                jsr Hex_asci
+                jsr Printmsg
+                .text " +"
+                .byte 0
+
+; Check if 8 or 16K image
+                lda $AA
+                sta $AE
+                lda $AB
+                clc
+                adc #$20        ; Add 8K
+                sta $AF
+                ldy #0
+Find:           lda ($AA),y
+                cmp($AE),y
+                bne K16
+                iny
+                bne Find        ; Check first 256
+K8:             lda #"2"
+                bne K_1
+K16:            lda #"4"
+K_1:            jsr OSWRCH
+                jsr Printmsg
+                .text "000 "
+                .byte 0
+
+                lda $FFFD
+                jsr Hex_asci
+                lda $FFFC       ; Print reset address
+                jsr Hex_asci
+                jsr Printmsg    ; Reload address
+                .text " 8000"
+                .byte 13
+                .byte 0
+                jmp Alldone
+
+;  *******************************
+
+romid:          lda #15
+                sta Rom_0
+
+Nextrom:        lda Rom_0
+                tay
+                jsr Nybble      ; Print Rom page
+                ldx #"-"
+                lda ($F8),y     ; Rom type
+                bne valid
+                ldx #$20        ; Space if ROM not on
+valid:          txa
+                jsr OSWRCH
+                lda #$80
+                sta $F7         ; (F6)points to (C) offset
+                jsr Checkrom
+                bne NOROM       ; Not valid image
+                jsr Print_Rom_Id
+
+NOROM:          jsr Curpos
+                beq NOROM2
+                jsr OSNEWL
+
+NOROM2:         dec Rom_0
+                bpl Nextrom     ; Do roms 15-0
+                rts
+
+;  **********************************
+
+Checkrom:       lda #7
+                sta $F6
+                jsr Getbyte     ; Get byte (F6) of Rom Y
+                sta $F6         ; (F6) now points to 0(C)
+; Check if rom exists/valid
+                ldx #4
+Chk:            stx Null
+                jsr Getbyte
+                ldx Null
+                cmp Copy_1-1,x
+                bne Notrom
+                inc $F6
+                dex
+                bne Chk         ; Check 4 bytes
+Notrom:         rts             ; Z=1 if good rom
+Copy_1:         .text ")C("
+                .byte 0
+
+;  *******************************
+
+Print_Rom_Id:   lda #8
+                sta $F6         ; Point to Version#
+                jsr Getbyte
+                jsr Hex_asci    ; Print version#
+                jsr Space1
+                ldy #3
+                sty Null        ; Allow 3 nulls in name
+Get_2:          inc $F6
+                jsr Curpos
+                beq PRI2        ; End of line
+                jsr Getbyte
+                cmp #127
+                bcs Skip_1
+                cmp #32
+                bcc Skip_1
+                jsr OSWRCH
+Skip_1:         cmp #0
+                bne Get_2
+                jsr Space1
+                dec Null
+                bne Get_2
+PRI2:           rts
+
+Curpos:         lda #134
+                jsr OSBYTE      ; Read cursor XY
+                cpx #0
+                rts
+
+Getbyte:        ldy Rom_0
+                bmi Ram         ; Only 0-F are Rom#'s
+                jmp $FFB9       ; Get byte (F6) of Rom Y
+Ram:            ldy #0
+                lda ($F6),y
+                rts
+
+
+                ; include_end: ROMID
                 ; include_start: MOVE
 
 P_0=$A8                         ; Page 0 use..
@@ -5788,7 +6025,7 @@ P_1:            sta T1_1
                 sta T2_1
                 bne R
 
-K_1:            lda T0
+K_2:            lda T0
                 jsr DECRUNCH    ; DECRUNCH TOKEN
                 lda #32         ; Space
                 jsr NAME
@@ -5842,7 +6079,7 @@ R:              ldy #0
                 lda (T1_1),y
                 sta T2_1
                 stx T1_1
-                bne K_1
+                bne K_2
 
 Again:          bit Pad+6
                 bmi Done        ; No FNs
@@ -6058,7 +6295,7 @@ CR1_1:          cmp #$D
 CR_3:           jsr OSASCI
                 jsr Byte_1
                 tay
-                bmi done_1      ; Line#msb -ve =TOP
+                bmi done_2      ; Line#msb -ve =TOP
                 sta $AF
                 sta Quote       ; Reset off, +ve
                 jsr Byte_1
@@ -6098,7 +6335,7 @@ Out_1:          lda #126
                 jsr OSBYTE      ; Ack escape
 Out2:           pla
                 pla             ; Drop rtn address
-done_1:         ldy Channel
+done_2:         ldy Channel
                 lda #0
                 jsr OSFIND
                 jsr OSNEWL
@@ -6155,7 +6392,7 @@ Keyok:          ldx $AD
                 lda $AE
                 bne Badkey      ; MSB must=0
                 jsr Keyout
-done_2:         jmp Alldone
+done_3:         jmp Alldone
 
 All:            ldx #0
 A1_1:           stx $AD
@@ -6260,7 +6497,7 @@ L2_3:           dex
                 ldy $AE
                 cpy $AF
                 beq Nokey
-L3:             lda $B01,y
+L3_0:           lda $B01,y
                 bpl L4_1
                 pha
                 lda #"|"
@@ -6288,12 +6525,734 @@ L4b:            pha
 L5:             jsr OSWRCH
                 iny
                 cpy $AF
-                bcc L3
+                bcc L3_0
 Nokey:          jmp OSNEWL
 
 
                 ; include_end: FKEYS
-;  $INCLUDE MEMEDIT
-;  $INCLUDE TXCOPY
+                ; include_start: MEMEDIT
+
+
+;  ********************************
+;  * MEMORY EDITOR
+;  * for ELECTRON
+;  ********************************
+P_2=$80
+
+Sptr=P_2
+Saddr=P_2+2
+MEStart=P_2+4
+MEFinish=P_2+6
+Width=P_2+8
+Char=P_2+9
+Shift=P_2+10
+Ctrl=P_2+11
+Writeflag=P_2+12
+RTemp=P_2+13
+Maxtrack=P_2+14
+MELines=P_2+15
+Wtop=P_2+16
+MEPtr=P_2+17
+MEAddr=P_2+19
+MEOffset=P_2+21
+Side=P_2+22
+Maxsector=P_2+23
+
+Rom_1=P_2+24
+
+;  ******************************
+
+MEMEDIT:
+                tya             ; Save oscli ptr
+                pha
+                lda #252        ; Set default parameters..
+                ldx #0
+                ldy #$FF
+                jsr OSBYTE      ; Read lang rom no
+                stx Rom_1
+                lda #131
+                jsr OSBYTE      ; Read OSHWM in XY
+                stx Sptr
+                sty Sptr+1      ; Set default address
+                stx Saddr
+                sty Saddr+1
+                pla
+                tay
+
+                jsr Nextoscl
+                beq ME2         ; CR, no parameters
+                jsr HEXBIN
+                bcc ME3         ; bad Hex
+                ldx $AE         ; LSB
+                stx Sptr
+                stx Saddr
+                ldx $AF         ; MSB
+                stx Sptr+1      ; Set users address
+                stx Saddr+1
+
+ME3:            cmp#"@"         ; ROM #?
+                bne ME2
+                iny
+                jsr HEXBIN
+                bcc ME2         ; Bad hex
+                lda $AE
+                sta Rom_1       ; Set user Rom#
+
+ME2:
+                ldx #0
+                stx MEStart
+                stx MEStart+1
+                dex             ; =FF
+                stx MEFinish
+                stx MEFinish+1
+                stx Wtop        ; Silly number, no window
+                lda #25
+                sta MELines
+                jsr Modes
+; No Headings
+                jsr Editor
+                jmp E3
+
+Medit:          lda #15
+                tax
+                jsr OSBYTE      ; Flush ip buffers
+                jsr Wait
+
+E3:             bit $FF
+                bmi MEdone      ; Escaped
+                ldx Ctrl
+                bmi Medit       ; Ignore ctrls
+
+MEdone:
+                jsr Curnorm
+                ldx #0
+                lda #4
+                jsr OSBYTE      ; Restore cursor keys
+                ldx #0
+                ldy #24
+                jsr Tab
+                jsr OSNEWL
+                jmp Alldone
+
+;  *****************************
+
+;  MEMORY EDITOR / DISPLAY
+;  USES MODES 3 or 6 DEPENDING ON
+;  ENTRY MODE
+;  LIMITS SET BY (START)/(FINISH)
+;  Initial Ptr in Sptr
+;  Apparent Addr in SADDR
+; 
+;  Top line of window in Wtop
+;  Number of lines in MELines
+
+Modes:
+                lda #135
+                jsr OSBYTE      ; Get display mode 0..7
+                ldx #$6         ; Mode 6
+                lda #8          ; Width in columns
+                cpy #4          ; Mode
+                bcs Mode        ; Use mode 6 for modes 4..7
+                ldx #$3         ; Use Mode 3 for mode 0..3
+                asl a           ; =16
+Mode:           sta Width
+                lda #22
+                jsr OSWRCH
+                txa
+                jsr OSWRCH      ; select mode 
+                lda #12
+                jmp OSWRCH      ; CLS as well
+
+;  * * * * * * * * * * * * * * * * * *
+
+Initial_Screen:
+                jsr Windowon
+                lda #4
+                ldx #1
+                jsr OSBYTE      ; Set Cursor keys to asci
+                jsr Blockcur
+; Print out initial screen full
+                jsr Setptrs
+                lda MELines
+                sta Ctrl        ; Line count
+
+Line_2:         jsr Prntline
+                jsr MECheckfinish
+                bcs done_4
+                jsr Updateptrs
+A2:             dec Ctrl
+                bne Line_2
+done_4:         jmp Setptrs     ; Reset MEPtr/MEAddr
+
+;  * * * * * * * * * * * * * * * * * *
+
+Editor:
+                jsr Copy_Selects
+                jsr Initial_Screen
+                ldx #6          ; Tab to byte 1 Hex
+                ldy #0
+                sty Side        ; 0=Hex, FF=Asci
+                sty MEOffset    ; (MEPtr),MEOffset 0-15
+                jsr Tab
+
+Wait:                           ; Wait for Key down
+                jsr OSRDCH
+                bcs Quit        ; error, ie escaped
+Gotkey:         sta Char
+                lda #121
+                ldx #(0 ^ $80)  ; Check shift
+                jsr OSBYTE
+                cpx #$FF
+                bne *+4
+                ldx #0          ; not down
+                stx Shift       ; -ve = down
+                ldx #(1 ^ $80)  ; Check Ctrl
+                jsr OSBYTE
+                cpx #$FF
+                bne *+4
+                ldx #0          ; not down
+                stx Ctrl        ; -ve = down
+                lda Char
+                cmp #$7F
+                bcc *+5
+                jmp Cursors
+                cmp #13
+                beq CR_4
+                cmp #9
+                bne Key
+
+; Char=9, TAB
+                ldx Ctrl
+                bmi Key         ; Ctrl I
+; Toggle sides - Asci/Hex
+                bit Side
+                bmi TLft
+; Move to asci on RHS
+                jsr Goright
+                jmp LL
+
+TLft:           jsr Goleft
+LL:             lda Side
+                eor #$FF
+                sta Side
+                jmp Wait
+
+CR_4:                           ; Char=13
+                ldx Ctrl
+                bmi Key         ; Ctrl M
+Quit:           rts
+
+Key:            bit Side
+                bpl Hex_edit
+
+Asci_edit:                      ; Chr in A
+                ldy MEOffset
+                jsr Writeram    ; Alter ram
+                jsr Goleft      ; Tab to Hex side
+                lda Char
+                jsr Halfhex     ; Update Hex
+                jsr Updateasci
+                jmp CRight2     ; Update offset etc.
+
+Updateasci:
+                lda #$FF
+                sta Writeflag
+                jsr Goright     ; back to Asci
+                lda Char
+                jmp Printasci_dot; Update asci
+
+Hex_edit:                       ; Chr in A
+                jsr Hex
+                bcc Wait        ; Bad hex
+                sta Ctrl        ; Temp store
+                jsr Up_or_Low   ; Which nybble?
+                php
+                ldy MEOffset
+                bcc Hexlow      ; C=0 if low nybble
+
+Hexhigh:        lda Ctrl
+                asl a
+                asl a
+                asl a
+                asl a
+                sta Ctrl
+                jsr Readram
+                and #$0F
+                bcc HL2         ; C=0 from ASL A
+
+Hexlow:         jsr Readram
+                and #$F0
+
+HL2:            ora Ctrl
+                jsr Writeram
+                sta Char        ; New chr
+                jsr Updateasci
+                jsr Goleft      ; back to hex, upper nybble
+                lda Char
+                jsr Hex_asci    ; Update Hex
+                plp             ; C=0 if lower nybble edited
+                bcc CR3_1       ; Move on to next byte
+                lda #8
+                jsr OSWRCH      ; Back onto lower
+                jmp Wait
+
+Shifted:        cmp#139
+                beq Up8
+                cmp#135
+                beq Curcopy
+                cmp#138
+                bne JW
+
+Down8:          ldx #16
+                stx Shift
+D8a:            jsr C_down
+                dec Shift
+                bne D8a
+                beq JW
+
+Up8:            ldx #16
+                stx Shift
+U8a:            jsr C_up
+                dec Shift
+                bne U8a
+                beq JW
+
+Cursors:
+                ldx Shift
+                bmi Shifted
+                ldx Ctrl
+                bpl *+3
+                rts             ; CTRL CURSORS
+
+                cmp #136
+                bne *+5
+                jmp Curleft
+                cmp #137
+                beq Curight
+                cmp #138
+                beq Curdown
+                cmp #139
+                bne JW
+                jmp Curup
+
+Curcopy:                        ; Copy key,
+                jsr Curposn
+                txa
+                pha
+                tya
+                pha
+                lda #26
+                jsr OSWRCH      ; No window
+                jsr Copy_scr
+                jsr Windowon
+                pla
+                tay
+                pla
+                tax
+                jsr Tab
+JW:             jmp Wait
+
+Curight:
+                bit Side
+                bpl HexCR
+CR3_1:          lda #9
+                bne CR5_1
+HexCR:          jsr Up_or_Low   ; Which nybble?
+                php
+                lda #9
+                jsr OSWRCH      ; Forward 1
+                plp
+                bcs JW          ; C=1 if Upper
+CR5_1:          jsr OSWRCH      ; Forward
+CRight2:        inc MEOffset
+                lda MEOffset
+                cmp Width
+                bcc JW          ; Not line end
+                lda #0
+                sta MEOffset
+                bit Side
+                bpl CR4
+                jsr Goright     ; Tab to column 0 in asci
+                jmp Curdown     ; Newline
+
+CR4:            jsr Goleft      ; Tab to column 0 in Hex, then fall into Curdown..
+
+Curdown:        jsr C_down
+JW2:            jmp Wait
+
+C_down:         jsr MECheckfinish; See if a new line would exceed end addr
+                bcs Rts_1
+                jsr Updateptrs
+                jsr Curposn
+                iny
+                cpy MELines     ; Bottom line?
+                beq Rolldown
+                lda #10
+                jmp OSWRCH      ; and rts
+
+Rolldown:       stx Ctrl        ; Temp save
+                jsr Prntline    ; Newline
+                ldy MELines
+                dey
+
+Rollcom:        ldx Ctrl
+                jsr Tab
+Rts_1:          rts
+
+Curleft:        bit Side
+                bpl HexCL       ; Hex side
+                lda #8
+                bne CL2
+HexCL:          jsr Up_or_Low
+                php
+                lda #8
+                jsr OSWRCH      ; Back 1
+                plp             ; C=1 for Upper nybble
+                bcc JW2         ; Was lower, now upper
+CL2:            jsr OSWRCH      ; Back 1
+                dec MEOffset
+                bpl JW2         ; Same line still
+                ldy Width
+                dey
+                sty MEOffset    ; Reset to 7/15
+                bit Side
+                bpl CL4
+                jsr Goright     ; Tab to New column in asci
+                jmp Curup
+CL4:            jsr Goleft      ; Tab to New column in hex
+; Now fall into Cursor up
+
+Curup:          jsr C_up
+                jmp Wait
+
+C_up:           jsr Checkstart
+                bcc Rts_1       ; cant move
+                jsr Updateptr2
+                jsr Curposn
+                lda #11
+                jsr OSWRCH      ; Up 1
+                cpy #0          ; Top line?
+                bne Rts_1       ; No, done
+
+Rollup:         stx Ctrl
+                lda #13
+                jsr OSWRCH
+                jsr Prntln2     ; New line
+                ldy #0
+                beq Rollcom     ; Tab back to old X
+
+Windowon:                       ; Set Textwindow
+                lda #28
+                jsr OSWRCH
+                lda #0
+                jsr OSWRCH      ; Left=0
+                ldx Wtop
+                dex
+                txa
+                clc
+                adc MELines
+                jsr OSWRCH      ; Bottom= Wtop+MELines-1
+                lda #39
+                ldx Width
+                cpx #8
+                beq W2
+                lda #79
+W2:             jsr OSWRCH      ; Right=39 or 79
+                lda Wtop
+                jmp OSWRCH      ; Top
+
+Prntline:       jsr OSNEWL
+Prntln2:        ldy MEAddr+1
+                beq lsb
+                tya
+                jsr Hex_asci    ; msb
+lsb:            lda MEAddr
+                jsr Hex_asci    ; lsb
+                tya
+                bne L4_2
+                jsr Space2
+L4_2:           jsr Space2
+                ldy #0
+                ldx Width       ; 8 or 16
+Hexline:        jsr Readram
+                jsr Halfhex
+L2_4:           jsr Space1
+                iny
+                dex
+                bne Hexline
+                ldy #1
+                ldx Width
+                cpx #8
+                beq L3_1
+                ldy #8
+; Add 1 space if 40 col, 7 for 80
+L3_1:           jsr Space1
+                dey
+                bne L3_1
+; Y=0, X=Width
+Ascline:        jsr Readram
+                jsr Printasci_dot
+                iny
+                dex
+                bne Ascline
+                rts
+
+Goright:        jsr Curposn
+                lda #31
+                ldx Width
+                cpx #8
+                beq *+3
+                asl a           ; =62
+                clc
+                adc MEOffset
+                bne Jump
+
+Goleft:         jsr Curposn
+                lda MEOffset
+                asl a
+                adc MEOffset    ; x3
+                adc #6          ; Addr width
+Jump:           tax
+                jmp Tab
+
+Up_or_Low:                      ; See if cursor is on upper or lower nybble
+                jsr Curposn
+                txa
+                sec
+UL2:            sbc #3
+                beq UL3         ; Rtn C=1 for upper, 3/6/9..
+                bcs UL2
+UL3:            rts             ; C=0 for lower
+
+MECheckfinish:                  ; See if newline possible
+                lda MEPtr
+                clc
+                adc Width
+                tay             ; lsb
+                lda MEPtr+1
+                adc #0
+                cmp MEFinish+1
+                bcc CF2         ; Ok, rtn C=0
+                bne CF2         ; Past, C=1
+                cpy MEFinish
+CF2:            rts             ; C=0 OK, C=1 too far
+
+Updateptrs:     sta MEPtr+1     ; msb
+                sty MEPtr       ; lsb
+                lda MEAddr
+                clc
+                adc Width
+                sta MEAddr
+                bcc Ud2
+                inc MEAddr+1
+Ud2:            rts
+
+Checkstart:     lda MEPtr
+                sec
+                sbc Width
+                tay             ; lsb
+                lda MEPtr+1
+                sbc #0
+                cmp MEStart+1
+                bcc CS2_1       ; Too far, C=0
+                bne CS2_1       ; Ok, C=1
+                cpy MEStart
+CS2_1:          rts
+
+Updateptr2:     sta MEPtr+1
+                sty MEPtr
+                lda MEAddr
+                sec
+                sbc Width
+                sta MEAddr
+                bcs UD3
+                dec MEAddr+1
+UD3:            rts
+
+Setptrs:        ldx #3          ; Transfer Saddr and Sptr
+Sp2:            lda Sptr,x      ; to MEAddr and MEPtr
+                sta MEPtr,x
+                dex
+                bpl Sp2
+                rts
+
+;  ********************************
+
+Halfhex:        cmp #$10
+                bcc Half
+                jmp Hex_asci
+Half:           pha
+                jsr Space1
+                pla
+                jmp Nybble
+
+Tab:            lda #31
+                jsr OSWRCH
+                txa
+                jsr OSWRCH
+                tya
+                jmp OSWRCH
+
+Curposn:        lda #134
+                jmp OSBYTE
+
+Printasci_dot:                  ; Print chr in A if possible, else dot.
+                cmp #$7F
+                bcs dot
+                cmp #32
+                bcs print
+dot:            lda #"."
+print:          jmp OSWRCH
+
+Curnorm:        lda #26
+                jsr OSWRCH      ; No window
+                ldy #114
+                bne Bc1
+
+Blockcur:
+                ldy #96
+
+Bc1:            rts             ;  *** NO CURSOR CHANGES ***
+
+                ldx #9
+Bc2:            lda Block,x
+                bpl *+3
+                tya             ; Required size
+                jsr OSWRCH
+                dex
+                bpl Bc2
+                rts
+
+Block:          .word 0
+                .dword 0
+                .byte $FF       ; Variable
+                .byte 10        ; Reg 10
+                .byte 0         ; CRTC..
+                .byte 23        ; Define chr
+
+; **********************************
+Readram=$100
+Writeram=$111
+
+Copy_Selects:                   ; Copy read/write routines to ram
+                ldx #0
+C2_1:           lda Copystart,x
+                sta $100,x
+                inx
+                cpx #Copyend-Copystart
+                bcc C2_1
+                rts
+
+Copystart:
+;  ELECTRON rom select is at FE05, BBC at FE30
+; Readram - LDA(MEPtr),Y after selecting swrom, preserves XY
+
+                sei             ; No interrupts, as F4 is not correct..
+                lda #$C
+                sta $FE05       ; page out basic by selecting a rom C to F
+                lda Rom_1
+                sta $FE05
+                lda (MEPtr),y
+                pha
+                lda $F4
+                sta $FE05       ; Reselect Probe rom
+                pla
+                cli
+                rts
+
+Copymid:
+; Writeram - STA(MEPtr),Y, Corrupts X
+                ldx #$C
+                sei
+                stx $FE05
+                ldx Rom_1
+                stx $FE05
+                sta (MEPtr),y
+                ldx $F4
+                stx $FE05
+                cli
+                rts
+Copyend:
+
+
+                ; include_end: MEMEDIT
+                ; include_start: TXCOPY
+
+;  *******************************************
+;  * TXCOPY - Copy text screen to printer    *
+;  *******************************************
+
+TXCOPY:
+                jsr Curposn
+                txa
+                pha
+                tya
+                pha
+                jsr Copy_scr
+                pla
+                tay
+                pla
+                tax
+                jsr Tab         ; Restore cursor posn
+                jmp Alldone
+
+;  Entry point also used by MEMEDIT..
+
+Copy_scr:       lda #2
+                jsr OSWRCH      ; Printer on
+                lda #236
+                ldx #$40
+                ldy #$BF
+                jsr OSBYTE      ; Disable printer except 1,..
+                lda #30
+                jsr OSWRCH      ; Home
+                lda $30A        ; Window rt
+                sec
+                sbc $308        ; left
+                sta $AE         ; Chrs/line
+                lda $309        ; Bottom
+                sbc $30B        ; Top
+                sta $AF         ; lines in window
+
+Loop_2:         bit $FF
+                bmi Copied      ; Escaped
+                lda #135
+                jsr OSBYTE      ; Get chr at cursor
+                lda #1
+                jsr OSWRCH      ; Next chr to printer
+                txa
+                jsr Printasci_dot
+                jsr Curposn
+                cpx $AE         ; Width
+                bcc next
+                lda #13
+                jsr Printit     ; CR to printer
+                cpy $AF         ; Lines
+                beq Copied      ; Last
+                ldx #0
+                ldy #$FF
+                lda #246
+                jsr OSBYTE      ; Read printer ignore chr
+                cpx #10         ; Ignore lfs?
+                beq next        ; Printer must be auto LF
+                lda #10
+                jsr Printit     ; LF 
+
+next:           lda #9
+                jsr OSWRCH
+                jmp Loop_2
+
+Copied:
+                lda #10
+                jsr Printit     ; Final LF
+                lda #236
+                ldx #0
+                ldy #$BF
+                jsr OSBYTE      ; Reset printer drive
+                lda #3
+                jmp OSWRCH      ; printer off, RTS
+
+
+                ; include_end: TXCOPY
 
 
