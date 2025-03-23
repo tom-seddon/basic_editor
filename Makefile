@@ -77,18 +77,18 @@ _assemble:
 ##########################################################################
 ##########################################################################
 
-.PHONY:release
-release: VER=$(error must set VER)
-release:
-	$(_V)$(SHELLCMD) rm-tree $(RELEASES)/$(VER)
-	$(_V)$(SHELLCMD) mkdir $(RELEASES)/$(VER)
-	$(_V)$(MAKE) build
-	$(_V)$(SHELLCMD) copy-file $(DEST)/basiced.rom $(RELEASES)/$(VER)/
-	$(_V)$(SHELLCMD) copy-file $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
-	$(_V)$(SHELLCMD) copy-file $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
-	$(_V)$(SHELLCMD) copy-file $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
-	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.rom $(RELEASES)/$(VER)/
-	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.relocation.dat $(RELEASES)/$(VER)/
+# .PHONY:release
+# release: VER=$(error must set VER)
+# release:
+# 	$(_V)$(SHELLCMD) rm-tree $(RELEASES)/$(VER)
+# 	$(_V)$(SHELLCMD) mkdir $(RELEASES)/$(VER)
+# 	$(_V)$(MAKE) build
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/basiced.rom $(RELEASES)/$(VER)/
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.rom $(RELEASES)/$(VER)/
+# 	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.relocation.dat $(RELEASES)/$(VER)/
 
 ##########################################################################
 ##########################################################################

@@ -8,10 +8,11 @@ Extra functionality, improved usability, better performance, shadow
 RAM compatibility, a new HIBASIC Editor for use with the 6502 Second
 Processor, and a new Electron version.
 
-To download the latest version, please visit [the releases page](
-https://github.com/tom-seddon/basic_editor/releases/latest).
+To download the latest version, please visit [the latest release
+page]( https://github.com/tom-seddon/basic_editor/releases/latest).
 
-For instructions and a PDF of the original manual, please see [the documentation](./docs/doc.md).
+For instructions and a PDF of the original manual, please see [the
+documentation](./docs/doc.md).
 
 To build the code yourself on a PC or Mac, see [the build
 instructions](./docs/build.md).
