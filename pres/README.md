@@ -87,7 +87,7 @@ The differences between `ABE.1.rom` and `ABEP.0.rom`:
 +000029A0: 43 20 45 64 69 74 6f 72 20 50 6c 75 73 00 0d 0a C Editor Plus...
 ```
 
-The 32 KB ROM is the other way around, so to speak, and it semes the
-PLD is set up differently to accommodate this. Looks like in both
+The ABEP 32 KB ROM is the other way around, so to speak, and it seems
+the PLD is set up differently to accommodate this. Looks like in both
 cases accessing $bff8...$bffb selects the BASIC Editor half, and
 accessing $bffc...$bfff selects the BUTILS half.
