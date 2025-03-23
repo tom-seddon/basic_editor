@@ -1,3 +1,5 @@
+#+STARTUP: overview
+
 * Variants
 
 ** Variant 1
@@ -123,3 +125,33 @@ e8     inx
 
 1.32+ indeed! This single change makes a huge improvement. I don't
 know what they were thinking, making overtype the default.
+
+* PRES stuff
+
+https://stardot.org.uk/forums/viewtopic.php?f=3&t=7719&start=30#p108512
+
+Vague goals:
+
+1. Figure out what's in the UTILS part
+
+2. Produce an updated ABE mashup like the PRES ABE, but this time
+   building from source on PC: updated BE, rebuilt UTILS 
+
+3. Have both types of ABE: 2 x 16 KB banks, or 1 x 32 KB bank switched
+   using the PLD board
+
+4. Figure out what the differences between the various versions of the
+   UTILS ROM are
+
+** Different UTILS ROMS in this repo
+
+- beeb/1/$.ELECTRON :: built on my BBC B from the source on disk
+- beeb/1/$.ELECTRON2 :: built on my BBC B from the source on disk
+  after reinstating includes of =ROMID=, =MEMEDIT= and =TXCOPY=
+- beeb/1/$.ELK :: came on the disk image - looks like it has a bit
+  more in it?
+
+TODO: 32 KB PRES ABE and ABE+ ROMs (from memory actually very similar)
+
+
+* eof.
