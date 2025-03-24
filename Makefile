@@ -110,6 +110,7 @@ _pres_stuff: _make_output_folders
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
 # Don't compare butils_elk.rom. It won't match.
+	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "./pres/ABE.0.rom"
 
 .PHONY:_pres_assemble
 _pres_assemble: STEM=$(error must specify STEM)

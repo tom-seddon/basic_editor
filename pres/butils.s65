@@ -1,9 +1,8 @@
-
+;
 ;  CONTROL FILE FOR  ALTRA ELECTRON BASED, VERSION 1.602
 ;  ( founded on PROBE VERSION 6.02 )
 
-*= $8000
-                ; $ORGV $8000
+                .include "../submodules/beeb/include/beeb.s65"
 
 ;-------------------------------------------------------------------------
 
@@ -60,20 +59,38 @@ include_TXCOPY=enable_TXCOPY||!baseds1_version&&!baseds1_elk_version
                 .if abe_version
 ; Labels for unknown stuff. These will get resolved in
 ; due course.
-LB890=$b890
-LB89D=$b89d
-LB8AA=$b8aa
-LB936=$b936
-LB969=$b969
-LB973=$b973
-LB97D=$b97d
-LB9AC=$b9ac
-LBFE2=$bfe2
-LBFE5=$bfe5
-LBFE8=$bfe8
+                .endif
+
+;-------------------------------------------------------------------------
+
+                
+;-------------------------------------------------------------------------
+
+                .if abe_version
+; the additional code fills in parts of the BE workspace, so include a
+; few bits of the BE code to get the symbols - also some fluff to make
+; it work.
+
+ENABLE_DEBUG=false
+
+*=0
+                .dsection zp
+*=$60
+                .dsection basic_unused_zp
+
+
+                .include "../zp.s65"
+                .include "../workspace.s65"
+
+                .endif
+
+                .if abe_version
+rom_switch_thunk=$a00
                 .endif
                 
 ;-------------------------------------------------------------------------
+
+*= $8000
 
 ; $ATD ELECTRON
 ;  $ORGS &F00
@@ -88,31 +105,6 @@ DDB:            .macro X
                 .endmacro
 
                 ; $LIST 1,0
-
-                ; include_start: OSLIB
-
-
-; OSLIB
-OSRDRM=$FFB9
-OSEVEN=$FFBF
-GSINIT=$FFC2
-GSREAD=$FFC5
-OSFIND=$FFCE
-OSGBPB=$FFD1
-OSBPUT=$FFD4
-OSBGET=$FFD7
-OSARGS=$FFDA
-OSFILE=$FFDD
-OSRDCH=$FFE0
-OSASCI=$FFE3
-OSNEWL=$FFE7
-OSWRCH=$FFEE
-OSWORD=$FFF1
-OSBYTE=$FFF4
-OSCLI=$FFF7
-
-                ; include_end: OSLIB
-
 
 
                 ; $IF @P=2
@@ -192,7 +184,7 @@ Reason:         pha
 
 Boot:
                 jsr Romtitle    ; Print Romtitle on Break
-                jsr OSNEWL
+                jsr osnewl
 
 Nosuch:         pla             ; Restore AXY and rtn, not done
                 tay
@@ -211,7 +203,7 @@ Help:
 
                 jsr Romtitle
                 jsr Rt2         ; Print Version$, Romtitle left Y pointing at Version$
-                jsr OSNEWL
+                jsr osnewl
                 jsr Printmsg
                 .text " "
                 .if abe_version
@@ -220,7 +212,7 @@ Help:
                 .text "BASED"
                 .endif
                 .byte 0
-                jsr OSNEWL
+                jsr osnewl
                 jmp Nosuch
 
 Fullhelp:       lda #(Helptabl-Table_0-2); Offset to help table-2
@@ -324,7 +316,7 @@ Msgout:         inc $AE
                 inc $AF
                 ldy #0
                 lda ($AE),y
-                jsr OSASCI
+                jsr osasci
                 tay
                 bne Msgout
 Msgends:        lda $AF
@@ -335,9 +327,9 @@ Msgends:        lda $AF
 
 Printit:        pha             ; chr in A to printer only
                 lda #1
-                jsr OSWRCH
+                jsr oswrch
                 pla
-                jmp OSWRCH
+                jmp oswrch
 
 Printer:                        ; Message to printer only
                 pla
@@ -364,7 +356,7 @@ Nextoscl:       lda ($F2),y
                 rts
 Space2:         jsr Space1
 Space1:         lda #32
-                jmp OSWRCH
+                jmp oswrch
 
 ;  * Routine to print IAC in decimal *
 OUTIAC:         lda #0          ; In zero field
@@ -407,7 +399,7 @@ P4:             dex
                 bpl P1_0
 P2_0:           pla
 P3_0:           ora #$30        ; Make ascii
-                jsr OSWRCH      ; Print digits
+                jsr oswrch      ; Print digits
                 pla
                 bpl P3_0
                 rts
@@ -427,7 +419,7 @@ Nybble:                         ; Print LSN of A in hex
                 bcc Number
                 adc #6          ; C=1, so +7
 Number:         adc #$30
-                jmp OSWRCH      ; Print it and RTS
+                jmp oswrch      ; Print it and RTS
 
 
 ; ERROR-EXIT Syntax is JSR Errorexit, Error#, Message, 0
@@ -451,16 +443,16 @@ EE2:            jmp $100        ; Let lang rom handle error, lets basic REPORT w
 ; YES/NO checks KB for Y or N(default), prints Y/N as rqd, rtns Z=1 for Yes, Z=0 for No
 YESNO:          lda #15
                 ldx #1
-                jsr OSBYTE      ; Flush input buffer
-YESNO2:         jsr OSRDCH      ; Get input
+                jsr osbyte      ; Flush input buffer
+YESNO2:         jsr osrdch      ; Get input
                 bcs No          ; Escaped?
                 and #$5F
                 cmp #"Y"
                 beq Answer
 No:             lda #"N"
 Answer:         php
-                jsr OSWRCH      ; Print Y/N
-                jsr OSNEWL      ; CR
+                jsr oswrch      ; Print Y/N
+                jsr osnewl      ; CR
                 plp             ; Restore Z as answer
                 rts
 
@@ -574,11 +566,11 @@ Hex:            cmp #"G"
 ;  * So any changes will not alter call addresses
 
 Romtitle:
-                jsr OSNEWL
+                jsr osnewl
                 ldy #0
 Rt2:            lda Romname,y
                 iny
-                jsr OSWRCH
+                jsr oswrch
                 tax
                 bne Rt2
                 rts
@@ -588,7 +580,7 @@ Rt2:            lda Romname,y
 Helpaids:                       ;  Print ROM contents for *HELP PROBE
                 jsr Romtitle
                 jsr Rt2         ; Print Version$, Romtitle left Y pointing at Version$
-                jsr OSNEWL
+                jsr osnewl
                 ldx #$FE
                 ldy #0
 HA1:            inx
@@ -598,12 +590,12 @@ HA1:            inx
                 pha
                 jsr Space2      ; 2 spaces
                 pla
-HA2:            jsr OSWRCH      ; Print name until..
+HA2:            jsr oswrch      ; Print name until..
                 inx
                 lda Table2,x
                 bpl HA2         ; ..until addr hi byte
                 lda #32         ; Space
-HA3:            jsr OSASCI      ; Print syntax upto CR
+HA3:            jsr osasci      ; Print syntax upto CR
                 cmp #13
                 beq HA1         ; next name
                 lda Helpfile,y
@@ -1809,7 +1801,7 @@ Z9558:          rts
 WARMSTART:                      ; Return to BASIC or EDITOR
                 pha             ; B=BASIC, ^E=Editor
                 lda#126
-                jsr OSBYTE      ; Ack any Escape
+                jsr osbyte      ; Ack any Escape
 
 ;  SET OSHWM TO PAGE incase PAGE<>OSHWM, added 1/87
 ;  Both BASIC & BASIC EDITOR use OSWHM for PAGE
@@ -1825,7 +1817,7 @@ WARMSTART:                      ; Return to BASIC or EDITOR
                 ldx #Editor_0 % 256
                 ldy #Editor_0 / 256
                 .endif
-                jmp OSCLI
+                jmp oscli
 
 gobasic:        ldx#0
 WS1:            ldy Warm,x
@@ -1835,14 +1827,14 @@ WS1:            ldy Warm,x
                 pha
                 lda#138
                 ldx#0           ; Keybd buffer
-                jsr OSBYTE      ; Insert chr
+                jsr osbyte      ; Insert chr
                 pla
                 tax
                 bne WS1
 
 WS2:            ldx #Basic % 256
                 ldy #Basic / 256
-                jmp OSCLI
+                jmp oscli
 
 Warm:           .text "OLD"
                 .byte 13
@@ -1865,12 +1857,12 @@ CheckBASIC:
                 lda#252
                 ldx#0
                 ldy#$FF
-                jsr OSBYTE      ; Read Current Language rom no.
+                jsr osbyte      ; Read Current Language rom no.
                 stx $100
                 lda #187
                 ldx#0
                 ldy#$FF
-                jsr OSBYTE      ; Read BASIC Rom no.
+                jsr osbyte      ; Read BASIC Rom no.
                 cpx $100
                 beq Bok
 
@@ -1949,7 +1941,7 @@ Blang:
 
 get_mode:       lda #$A0
                 ldx #$55
-                jsr OSBYTE      ; Get Mode in X
+                jsr osbyte      ; Get Mode in X
                 cpx #5
                 beq nok         ; mode 5 -> 6
                 cpx #2
@@ -2039,7 +2031,7 @@ Keys:           ldx #KCB % 256
                 ldy #KCB / 256
                 sty $2B         ; Set illegal #
                 lda #0
-                jsr OSWORD
+                jsr osword
                 bcs Choice      ; Escaped
                 ldy #0
                 sty $F2
@@ -2065,24 +2057,24 @@ KB2:            jsr DECBIN
                 jsr INSERT
                 beq Choice
 Noline:         lda #7
-Nol2:           jsr OSWRCH
+Nol2:           jsr oswrch
                 jmp Choice
 ;  **********************************
 
 ERRORHANDLER:                   ; Display error message
-                jsr OSNEWL
+                jsr osnewl
                 ldy#1           ; Skip error no.
 Err1:           lda($FD),y
                 beq Errend
-                jsr OSWRCH
+                jsr oswrch
                 iny
                 bne Err1
-Errend:         jsr OSNEWL
+Errend:         jsr osnewl
 
 Choice:         ldx#$FF
                 txs
                 lda #132
-                jsr OSBYTE      ; Get Screen bottom
+                jsr osbyte      ; Get Screen bottom
                 sty RAMTOP
                 jsr Dis_Printer
                 jsr Printmsg
@@ -2092,12 +2084,12 @@ Choice:         ldx#$FF
                 .byte 0
                 lda #124
                 sta $8C         ; Reset Variables flag +ve
-                jsr OSBYTE      ; Clear Escape
+                jsr osbyte      ; Clear Escape
                 bit Exec
                 bmi Wait_0      ; Dont flush
                 lda #15
                 ldx #1
-                jsr OSBYTE      ; Flush KB
+                jsr osbyte      ; Flush KB
 
 Wait_0:
                 .if abe_version
@@ -2107,7 +2099,7 @@ Wait_0:
                 nop
                 nop
                 .else
-                jsr OSRDCH      ; Read input
+                jsr osrdch      ; Read input
                 cmp #$1B
                 beq Exit_0      ; Escaped
                 .endif
@@ -2126,7 +2118,7 @@ W1:             ldx #17         ; 18 Lines in menu
 
 Exit_0:         pha             ;  A = 'B',Esc or ^E
                 jsr En_Printer
-                jsr OSNEWL
+                jsr osnewl
                 lda Old_oswrch  ; Restore OSWRCH vector
                 sta $20E
                 lda Old_oswrch+1
@@ -2156,11 +2148,11 @@ Sub1:           lda Subfile,y
 Sub2:           lda Subfile,y
                 cmp #13         ; CR?
                 beq Sub3
-                jsr OSASCI
+                jsr osasci
                 iny
                 bne Sub2
 Sub3:           jsr En_Printer
-                jmp OSNEWL      ; And goto routine via RTS
+                jmp osnewl      ; And goto routine via RTS
 
 ;  *********************************
 
@@ -2401,17 +2393,17 @@ Getline:                        ; Input line at &700
                 bmi Reset_0     ; Execing, dont flush
                 lda #15
                 ldx #1
-                jsr OSBYTE      ; Flush KB
+                jsr osbyte      ; Flush KB
 Reset_0:        ldx #0
                 stx $3A         ; Reset len counter
-Get_0:          jsr OSRDCH      ; Get input
+Get_0:          jsr osrdch      ; Get input
                 bcs RtnG        ; Escaped
                 cmp #127        ; Delete?
                 bne G2
 
                 lda #121
                 ldx #(1 ^ $80)
-                jsr OSBYTE      ; Check ctrl
+                jsr osbyte      ; Check ctrl
                 lda #127
                 cpx #$80
                 bcs G2          ; -ve=Ctrl down, insert 7F
@@ -2425,15 +2417,15 @@ Get_0:          jsr OSRDCH      ; Get input
                 bcs cd2         ; No
                 cpy #3          ; WC?
                 bcc cd2         ; delete 1 for WC
-ctrldel:        jsr OSWRCH      ; Delete 2 chrs for |ctrl
-cd2:            jsr OSWRCH
+ctrldel:        jsr oswrch      ; Delete 2 chrs for |ctrl
+cd2:            jsr oswrch
                 jmp Get_0
 
 G2:             ldy $3A         ; Ptr
                 cpy #80         ; Max line length
                 bcc G1          ; Ok
                 lda #7
-                jsr OSWRCH      ; Beep, too long
+                jsr oswrch      ; Beep, too long
                 bne Get_0       ; Wait for delete or escape
 G1:             sta $700,y      ; Build line
                 inc $3A         ; Inc Ptr
@@ -2505,7 +2497,7 @@ Dis_Printer:    ldx #4
 En_Printer:     ldx #0
                 lda #3
                 ldy #$FB        ; Mask bit2
-                jmp OSBYTE      ; Printer on/off
+                jmp osbyte      ; Printer on/off
 
 ;  ********************************
 
@@ -2521,10 +2513,10 @@ Printasci:      cmp #32
                 bne CS3b        ; ascii \7F=|?
 CS3:            pha
                 lda #"|"
-                jsr OSWRCH      ; Print |ctrl
+                jsr oswrch      ; Print |ctrl
                 pla
                 eor #$40
-CS3b:           jsr OSASCI
+CS3b:           jsr osasci
                 cmp #13
                 rts
 
@@ -2617,7 +2609,7 @@ FL2:            rts             ; RTN Z=1 if line found
 
 Topover:                        ; Backup before..
                 lda #13
-                jsr OSWRCH      ; CR, no LF
+                jsr oswrch      ; CR, no LF
 Topis:          jsr Printmsg
                 .text "TOP=&"
                 .byte 0
@@ -2926,7 +2918,7 @@ Lb2:            cpy Match
                 tya
                 pha             ; Save Y, Start of match
                 lda#$86
-                jsr OSBYTE      ; Read cursor pos
+                jsr osbyte      ; Read cursor pos
 
 HL6:            pla
                 tay
@@ -2943,19 +2935,19 @@ HLtoken:        txa
                 adc #8
                 bcc HL0
 
-HLnl:           jsr OSNEWL      ; If within 8 of line end start new line for token
+HLnl:           jsr osnewl      ; If within 8 of line end start new line for token
                 bne HL1
 
 HL0:            txa
                 beq HL1         ; Start of newline
                 lda #8
-                jsr OSWRCH      ; Backspace 1
+                jsr oswrch      ; Backspace 1
                 lda #$87
-                jsr OSBYTE      ; Read chr at cursor
+                jsr osbyte      ; Read chr at cursor
                 cpx #$20        ; Space?
                 beq HL1         ; Leave backspaced
                 lda #9
-                jsr OSWRCH      ; Forward again
+                jsr oswrch      ; Forward again
 HL1:            lda Hlt_code
                 bne HL4         ; Start Highlight
 
@@ -2965,7 +2957,7 @@ Middle:         tya
                 beq HL3         ; End of match$
                 bcs HL5         ; Past match$
                 lda#$86
-                jsr OSBYTE      ; Get cursor x
+                jsr osbyte      ; Get cursor x
                 txa
                 beq HL1         ; Start of new line within match$
                 pla
@@ -2981,7 +2973,7 @@ HL3:            lda#$87         ; End of match$, white default
                 cpy#$88         ; Flash?
                 bne *+4
                 lda#$89
-                jsr OSWRCH
+                jsr oswrch
                 pla
                 tay
                 lda(Addr),y
@@ -2992,7 +2984,7 @@ HL3:            lda#$87         ; End of match$, white default
                 bne Notyet      ; Skip space
                 dec Lineend
                 bne Notyet      ; If whole line listing, keep=FF
-HL4:            jsr OSWRCH
+HL4:            jsr oswrch
 HL5:            pla
                 tay
 
@@ -3034,7 +3026,7 @@ Lb:             cmp#$80
                 iny
                 jmp Listbyte
 
-CR_0:           jmp OSASCI      ; End of line
+CR_0:           jmp osasci      ; End of line
 
 
                 ; include_end: LIST
@@ -3292,7 +3284,7 @@ Failed:         jsr LINIAC      ; Print line# not found
 ; 
 ; 
 ;  **********************************
-done_0:         jsr OSNEWL      ; CR
+done_0:         jsr osnewl      ; CR
 Finished:       jmp Choice
 ; 
 Sort:
@@ -3305,7 +3297,7 @@ S0:             jsr Lineiachi
                 jsr Findcall    ; Search prgm for any reference to line# in 2C/2D
 S6:             bne S5          ; No call found
                 jsr Iachi_lo    ; Copy # into 2A/2B
-                jsr OSNEWL      ; CR
+                jsr osnewl      ; CR
                 jsr LINIAC      ; Print # in 5 field of referenced line
                 jsr Printmsg
                 .text "   "
@@ -3317,7 +3309,7 @@ S7:             jsr Printmsg    ; Call of line# in 2C/2D found
                 jsr LineB_iac   ; Put line# in 2A/B
                 jsr LINIAC      ; Print # in 5 field
                 lda#")"
-                jsr OSWRCH
+                jsr oswrch
                 ldy$A           ; Offset Y in line (B),Y
                 jsr Findcall2   ; Continue search for any further calls of same line
                 beq S7          ; Another call found
@@ -3433,7 +3425,7 @@ Repeat:                         ; Ask if any more required
                 lda Addr+1
                 adc#0
                 sta$13
-                jsr OSNEWL
+                jsr osnewl
                 jsr Topis
                 jsr Printmsg
                 .text ", More?"
@@ -3942,7 +3934,7 @@ Novar:          jsr Printmsg
                 bit$FF
                 bpl *+5
                 jmp Choice      ; Escaped
-                jsr OSNEWL
+                jsr osnewl
                 jsr Topis
                 lda $12
                 sta$A8
@@ -3951,7 +3943,7 @@ Novar:          jsr Printmsg
                 bit Varpack
                 bpl *+5
                 jsr VARPACK
-                jsr OSNEWL
+                jsr osnewl
                 jsr Topis
                 jsr Dis_Printer
                 lda Comm_del
@@ -4369,7 +4361,7 @@ Vcl1:           sta$47F,x       ; Clear Link table
                 sta Assmflag    ; Reset to +ve, off
                 rts
 
-Readstack:      jsr OSNEWL
+Readstack:      jsr osnewl
                 lda#2
                 sta Startchr    ; CtrlB, WC
                 lda#"@"
@@ -4451,9 +4443,9 @@ notreal:        sty SSLenW      ; Length of S$ less end WCs
                 .byte 0
                 jsr OUTIAC      ; Print in 0 field
                 lda#"]"
-                jsr OSWRCH
+                jsr oswrch
                 lda#134
-                jsr OSBYTE      ; Read Cursor pos
+                jsr osbyte      ; Read Cursor pos
                 txa
                 sec
                 sbc#16          ; Tab to col 16 if possible
@@ -4467,7 +4459,7 @@ Tab_0:          jsr Space1      ; Tab to next column
                 bmi Replace_1
                 jsr Lines2      ; Print match line#s for XREF
 
-UpdateVp:       jsr OSNEWL
+UpdateVp:       jsr osnewl
                 ldy#0
                 lda (Vptr),y
                 tax             ; LSB of link addr
@@ -4905,7 +4897,7 @@ Nxtbyte:        iny
 Byte_0:         lda(Addr),y
                 cmp#$D          ; CR?
                 bne Notcr
-CR_1:           jsr OSASCI
+CR_1:           jsr osasci
                 jsr Nextline
                 jsr UpB
                 bne Line_0
@@ -5001,7 +4993,7 @@ NX5:            .byte ":"       ; List of bytes that can terminate NEXT string
 Newline_1:      bit Flag
                 bpl D1_0        ; Dont throw another newline if nothing done since the last one
                 pha
-                jsr OSNEWL
+                jsr osnewl
                 ldx#5           ; Length of line no.
 NW1:            jsr Space1
                 dex
@@ -5214,7 +5206,7 @@ K_0:            bit $FF
                 bne M_0         ; Alldone
                 jmp PASS        ;  2nd pass
 
-M_0:            jsr OSNEWL
+M_0:            jsr osnewl
                 jsr Update_Basic
                 jmp Choice      ; Alldone
 
@@ -5404,11 +5396,11 @@ WORK3=$900
 STACK=$7C0
 
 ROMID:
-                jsr OSNEWL
+                jsr osnewl
                 lda #170
                 ldx #0
                 ldy #$FF
-                jsr OSBYTE      ; Get addr of Rom table
+                jsr osbyte      ; Get addr of Rom table
                 stx $F8
                 sty $F9
 
@@ -5492,7 +5484,7 @@ name:           lda ($AA),y     ; Rom name
                 bmi save
                 cmp #33         ; No spaces or ctrl chrs
                 bcc save
-                jsr OSWRCH
+                jsr oswrch
                 iny
                 cpy #$10
                 bcc name
@@ -5522,7 +5514,7 @@ Find:           lda ($AA),y
 K8:             lda #"2"
                 bne K_1
 K16:            lda #"4"
-K_1:            jsr OSWRCH
+K_1:            jsr oswrch
                 jsr Printmsg
                 .text "000 "
                 .byte 0
@@ -5550,7 +5542,7 @@ Nextrom:        lda Rom_0
                 bne valid
                 ldx #$20        ; Space if ROM not on
 valid:          txa
-                jsr OSWRCH
+                jsr oswrch
                 lda #$80
                 sta $F7         ; (F6)points to (C) offset
                 jsr Checkrom
@@ -5559,7 +5551,7 @@ valid:          txa
 
 NOROM:          jsr Curpos
                 beq NOROM2
-                jsr OSNEWL
+                jsr osnewl
 
 NOROM2:         dec Rom_0
                 bpl Nextrom     ; Do roms 15-0
@@ -5602,7 +5594,7 @@ Get_2:          inc $F6
                 bcs Skip_1
                 cmp #32
                 bcc Skip_1
-                jsr OSWRCH
+                jsr oswrch
 Skip_1:         cmp #0
                 bne Get_2
                 jsr Space1
@@ -5611,7 +5603,7 @@ Skip_1:         cmp #0
 PRI2:           rts
 
 Curpos:         lda #134
-                jsr OSBYTE      ; Read cursor XY
+                jsr osbyte      ; Read cursor XY
                 cpx #0
                 rts
 
@@ -5815,13 +5807,13 @@ L0:
                 .if abe_version
                 jsr LB9AC
                 .else
-                jsr OSNEWL
+                jsr osnewl
                 .endif
                 ldy #7          ; Length of messg
 Loop_1:         inx
                 lda Mess,x
                 beq L1_2
-                jsr OSWRCH
+                jsr oswrch
                 dey
                 bne Loop_1
 L1_2:
@@ -5897,7 +5889,7 @@ Top:            jsr OUTIAC
                 sbc $3          ; Vartop msb
                 sta $2B
                 jsr OUTIAC      ; Print bytes free
-                jsr OSNEWL
+                jsr osnewl
                 jmp Alldone
 
 Mess:           .text "HIMEM"
@@ -5960,7 +5952,7 @@ normal:
                 lda #$A8
                 ldx #0
                 ldy #$FF
-                jsr OSBYTE      ; Get Extended vector base
+                jsr osbyte      ; Get Extended vector base
                 stx T0
                 sty T1_1
                 ldy #21         ; Offset to OSWRCH
@@ -6019,7 +6011,7 @@ normal:
                 .endif
                 lda #14
                 ldx #6
-                jsr OSBYTE      ; Enable Event 6, Escape pressed
+                jsr osbyte      ; Enable Event 6, Escape pressed
                 pla
                 tay             ; Oscli offset
 
@@ -6060,18 +6052,18 @@ do_it:          lda #"@"
 STATIC:
                 jsr SetPrint
                 lda T0
-                jsr OSWRCH      ; @..Z
+                jsr oswrch      ; @..Z
                 tay
                 lda #138
                 ldx #0
-                jsr OSBYTE      ; Insert in Key buff
+                jsr osbyte      ; Insert in Key buff
                 lda #"%"
-                jsr OSWRCH
+                jsr oswrch
                 tay
                 lda #138
-                jsr OSBYTE      ; X=0 still
+                jsr osbyte      ; X=0 still
                 lda Pad         ; =
-                jsr OSWRCH
+                jsr oswrch
                 jsr Ampsnd      ; Check if & needed
                 jsr NTOASCI     ; Get BASIC to print value
 
@@ -6130,7 +6122,7 @@ Showit:
 
 Single:         pha
                 lda Pad         ; = or space
-                jsr OSWRCH
+                jsr oswrch
                 pla
                 cmp #"$"
                 beq String
@@ -6153,7 +6145,7 @@ NWM:
                 jmp NextQ
 
 String:         lda #34
-                jsr OSWRCH      ; Opening Quote
+                jsr oswrch      ; Opening Quote
                 iny             ; inc past terminating 0
                 iny
                 lda (T1_1),y
@@ -6169,17 +6161,17 @@ String:         lda #34
                 ldy #0
 
 Str2:           lda (T3),y      ; Print string contents
-                jsr OSWRCH
+                jsr oswrch
                 iny
                 dex
                 bne Str2
 
 empty:          lda #$22
-Str3:           jsr OSWRCH      ; Closing quote
-                jsr OSNEWL
+Str3:           jsr oswrch      ; Closing quote
+                jsr osnewl
                 lda #21
                 ldx #0
-                jsr OSBYTE      ; flush key buff
+                jsr osbyte      ; flush key buff
                 jmp NWM
 
 ARRAY:          iny
@@ -6206,7 +6198,7 @@ Dims:           iny
                 dec T6
                 beq Last_1
                 lda #","
-                jsr OSWRCH
+                jsr oswrch
                 pla
                 tay
                 bne Dims
@@ -6229,7 +6221,7 @@ K_2:            lda T0
                 lda #32         ; Space
                 jsr NAME
 N_1:            lda #32
-                jsr OSWRCH
+                jsr oswrch
                 iny
                 lda (T1_1),y
                 sta T3
@@ -6269,7 +6261,7 @@ none:           dex
                 sta $2A
 ; Line#lo
                 jsr OUTIAC      ; PRINTline#in dec.
-                jsr OSNEWL
+                jsr osnewl
 
 R:              ldy #0
                 lda (T1_1),y
@@ -6292,7 +6284,7 @@ Done:           jmp VExit       ; Finished
 
 NAME:                           ; Print name and insert in keybuff, A=first chr 
                 ldy #1
-M_1:            jsr OSWRCH
+M_1:            jsr oswrch
                 tax             ; SAve chr
                 tya
                 pha             ; Save index
@@ -6300,7 +6292,7 @@ M_1:            jsr OSWRCH
                 tay             ; Chr in Y
                 ldx #0
                 lda #138
-                jsr OSBYTE      ; Insert in key buff
+                jsr osbyte      ; Insert in key buff
                 pla
                 tay             ; Index
                 iny
@@ -6321,7 +6313,7 @@ Ampsnd:         lda Pad
                 and Hexopt      ; Hex option
                 beq Amp2
                 lda #"&"        ; If Hex and pad= add &
-                jsr OSWRCH
+                jsr oswrch
 Amp2:           rts
 
 Table_1:        .text "=H%$(PFR"
@@ -6331,17 +6323,17 @@ Table_1:        .text "=H%$(PFR"
 SetPrint:                       ; Insert P. in key buff..
                 lda #21
                 ldx #0
-                jsr OSBYTE      ; flush kbd
+                jsr osbyte      ; flush kbd
                 lda #138
                 ldy #"P"
                 ldx #0
-                jsr OSBYTE
+                jsr osbyte
                 ldy #"."
-                jsr OSBYTE
+                jsr osbyte
                 bit Hexopt
                 bpl SP2
                 ldy #"~"
-                jsr OSBYTE
+                jsr osbyte
 SP2:            rts
 
 ; ******************************************
@@ -6366,7 +6358,7 @@ NT1:            ldy NTEXT,x
                 pha
                 lda #138
                 ldx #0
-                jsr OSBYTE      ; Insert ;<CR> *VL.X <CR>
+                jsr osbyte      ; Insert ;<CR> *VL.X <CR>
                 pla
                 tax
                 inx
@@ -6424,10 +6416,10 @@ VExit:
                 lda #13
                 ldx #6
                 ldy #0
-                jsr OSBYTE      ; Disable Escape event
+                jsr osbyte      ; Disable Escape event
                 ldx #0
                 lda #21
-                jsr OSBYTE      ; Flush key buff 
+                jsr osbyte      ; Flush key buff 
                 jmp Alldone
 
 ; ****************************
@@ -6461,7 +6453,7 @@ Event:
                 lda #13
                 ldx #6
                 ldy #0
-                jsr OSBYTE      ; Disable event 6
+                jsr osbyte      ; Disable event 6
                 .if abe_version
                 jsr LB8AA
                 nop
@@ -6478,7 +6470,7 @@ Event:
                 sta $20F
                 .endif
                 lda #125
-                jsr OSBYTE      ; Set escape
+                jsr osbyte      ; Set escape
                 pla
                 tax
                 pla
@@ -6511,7 +6503,7 @@ BLIST:
                 bcc A1_0
                 iny
 A1_0:           lda #$40
-                jsr OSFIND      ; OPENIN
+                jsr osfind      ; OPENIN
                 tay             ; Channel#
                 bne Open
 
@@ -6524,7 +6516,7 @@ Open:           sta Channel
                 jsr Byte_1
 CR1_1:          cmp #$D
                 bne Bad
-CR_3:           jsr OSASCI
+CR_3:           jsr osasci
                 jsr Byte_1
                 tay
                 bmi done_2      ; Line#msb -ve =TOP
@@ -6559,18 +6551,18 @@ La_1:           bit Quote
 Byte_1:         bit $FF
                 bmi Out_1
                 ldy Channel
-                jsr OSBGET
+                jsr osbget
                 bcs Out2        ; EOF
                 dec Length_1
                 rts
 Out_1:          lda #126
-                jsr OSBYTE      ; Ack escape
+                jsr osbyte      ; Ack escape
 Out2:           pla
                 pla             ; Drop rtn address
 done_2:         ldy Channel
                 lda #0
-                jsr OSFIND
-                jsr OSNEWL
+                jsr osfind
+                jsr osnewl
                 jmp Alldone
 
 Bad:            jsr Errorexit
@@ -6660,16 +6652,16 @@ A1_1:           stx $AD
                 .byte 0
                 lda #228
                 jsr Ftype       ; Get Shifted/Ctrl Fkeys
-                jsr OSNEWL
+                jsr osnewl
                 jmp Alldone
 
 Ftype:          ldx #0
                 ldy #$FF
-                jsr OSBYTE
+                jsr osbyte
                 jsr FT0
 
 Tab_1:          lda #134
-                jsr OSBYTE      ; Get POS
+                jsr osbyte      ; Get POS
                 sec
                 txa
 t1:             sbc #10         ; Tab to next of 10,20,30..
@@ -6695,7 +6687,7 @@ User:           jsr Printmsg
                 rts
 
 Asci:           lda #"&"
-                jsr OSWRCH
+                jsr oswrch
                 txa
                 jmp Hex_asci
 
@@ -6733,9 +6725,9 @@ L3_0:           lda $B01,y
                 bpl L4_1
                 pha
                 lda #"|"
-                jsr OSWRCH
+                jsr oswrch
                 lda #"!"
-                jsr OSWRCH
+                jsr oswrch
                 pla
                 and #$7F
 
@@ -6751,14 +6743,14 @@ L4_1:           cmp #32
 L4a:            eor #$40
 L4b:            pha
                 lda #"|"
-                jsr OSWRCH
+                jsr oswrch
                 pla
                 eor #$40
-L5:             jsr OSWRCH
+L5:             jsr oswrch
                 iny
                 cpy $AF
                 bcc L3_0
-Nokey:          jmp OSNEWL
+Nokey:          jmp osnewl
 
 
                 ; include_end: FKEYS
@@ -6801,10 +6793,10 @@ MEMEDIT:
                 lda #252        ; Set default parameters..
                 ldx #0
                 ldy #$FF
-                jsr OSBYTE      ; Read lang rom no
+                jsr osbyte      ; Read lang rom no
                 stx Rom_1
                 lda #131
-                jsr OSBYTE      ; Read OSHWM in XY
+                jsr osbyte      ; Read OSHWM in XY
                 stx Sptr
                 sty Sptr+1      ; Set default address
                 stx Saddr
@@ -6848,7 +6840,7 @@ ME2:
 
 Medit:          lda #15
                 tax
-                jsr OSBYTE      ; Flush ip buffers
+                jsr osbyte      ; Flush ip buffers
                 jsr Wait
 
 E3:             bit $FF
@@ -6860,11 +6852,11 @@ MEdone:
                 jsr Curnorm
                 ldx #0
                 lda #4
-                jsr OSBYTE      ; Restore cursor keys
+                jsr osbyte      ; Restore cursor keys
                 ldx #0
                 ldy #24
                 jsr Tab
-                jsr OSNEWL
+                jsr osnewl
                 jmp Alldone
 
 ;  *****************************
@@ -6881,7 +6873,7 @@ MEdone:
 
 Modes:
                 lda #135
-                jsr OSBYTE      ; Get display mode 0..7
+                jsr osbyte      ; Get display mode 0..7
                 ldx #$6         ; Mode 6
                 lda #8          ; Width in columns
                 cpy #4          ; Mode
@@ -6890,11 +6882,11 @@ Modes:
                 asl a           ; =16
 Mode:           sta Width
                 lda #22
-                jsr OSWRCH
+                jsr oswrch
                 txa
-                jsr OSWRCH      ; select mode 
+                jsr oswrch      ; select mode 
                 lda #12
-                jmp OSWRCH      ; CLS as well
+                jmp oswrch      ; CLS as well
 
 ;  * * * * * * * * * * * * * * * * * *
 
@@ -6902,7 +6894,7 @@ Initial_Screen:
                 jsr Windowon
                 lda #4
                 ldx #1
-                jsr OSBYTE      ; Set Cursor keys to asci
+                jsr osbyte      ; Set Cursor keys to asci
                 jsr Blockcur
 ; Print out initial screen full
                 jsr Setptrs
@@ -6929,18 +6921,18 @@ Editor:
                 jsr Tab
 
 Wait:                           ; Wait for Key down
-                jsr OSRDCH
+                jsr osrdch
                 bcs Quit        ; error, ie escaped
 Gotkey:         sta Char
                 lda #121
                 ldx #(0 ^ $80)  ; Check shift
-                jsr OSBYTE
+                jsr osbyte
                 cpx #$FF
                 bne *+4
                 ldx #0          ; not down
                 stx Shift       ; -ve = down
                 ldx #(1 ^ $80)  ; Check Ctrl
-                jsr OSBYTE
+                jsr osbyte
                 cpx #$FF
                 bne *+4
                 ldx #0          ; not down
@@ -7026,7 +7018,7 @@ HL2:            ora Ctrl
                 plp             ; C=0 if lower nybble edited
                 bcc CR3_1       ; Move on to next byte
                 lda #8
-                jsr OSWRCH      ; Back onto lower
+                jsr oswrch      ; Back onto lower
                 jmp Wait
 
 Shifted:        cmp#139
@@ -7075,7 +7067,7 @@ Curcopy:                        ; Copy key,
                 tya
                 pha
                 lda #26
-                jsr OSWRCH      ; No window
+                jsr oswrch      ; No window
                 jsr Copy_scr
                 jsr Windowon
                 pla
@@ -7093,10 +7085,10 @@ CR3_1:          lda #9
 HexCR:          jsr Up_or_Low   ; Which nybble?
                 php
                 lda #9
-                jsr OSWRCH      ; Forward 1
+                jsr oswrch      ; Forward 1
                 plp
                 bcs JW          ; C=1 if Upper
-CR5_1:          jsr OSWRCH      ; Forward
+CR5_1:          jsr oswrch      ; Forward
 CRight2:        inc MEOffset
                 lda MEOffset
                 cmp Width
@@ -7121,7 +7113,7 @@ C_down:         jsr MECheckfinish; See if a new line would exceed end addr
                 cpy MELines     ; Bottom line?
                 beq Rolldown
                 lda #10
-                jmp OSWRCH      ; and rts
+                jmp oswrch      ; and rts
 
 Rolldown:       stx Ctrl        ; Temp save
                 jsr Prntline    ; Newline
@@ -7139,10 +7131,10 @@ Curleft:        bit Side
 HexCL:          jsr Up_or_Low
                 php
                 lda #8
-                jsr OSWRCH      ; Back 1
+                jsr oswrch      ; Back 1
                 plp             ; C=1 for Upper nybble
                 bcc JW2         ; Was lower, now upper
-CL2:            jsr OSWRCH      ; Back 1
+CL2:            jsr oswrch      ; Back 1
                 dec MEOffset
                 bpl JW2         ; Same line still
                 ldy Width
@@ -7163,38 +7155,38 @@ C_up:           jsr Checkstart
                 jsr Updateptr2
                 jsr Curposn
                 lda #11
-                jsr OSWRCH      ; Up 1
+                jsr oswrch      ; Up 1
                 cpy #0          ; Top line?
                 bne Rts_1       ; No, done
 
 Rollup:         stx Ctrl
                 lda #13
-                jsr OSWRCH
+                jsr oswrch
                 jsr Prntln2     ; New line
                 ldy #0
                 beq Rollcom     ; Tab back to old X
 
 Windowon:                       ; Set Textwindow
                 lda #28
-                jsr OSWRCH
+                jsr oswrch
                 lda #0
-                jsr OSWRCH      ; Left=0
+                jsr oswrch      ; Left=0
                 ldx Wtop
                 dex
                 txa
                 clc
                 adc MELines
-                jsr OSWRCH      ; Bottom= Wtop+MELines-1
+                jsr oswrch      ; Bottom= Wtop+MELines-1
                 lda #39
                 ldx Width
                 cpx #8
                 beq W2
                 lda #79
-W2:             jsr OSWRCH      ; Right=39 or 79
+W2:             jsr oswrch      ; Right=39 or 79
                 lda Wtop
-                jmp OSWRCH      ; Top
+                jmp oswrch      ; Top
 
-Prntline:       jsr OSNEWL
+Prntline:       jsr osnewl
 Prntln2:        ldy MEAddr+1
                 beq lsb
                 tya
@@ -7320,14 +7312,14 @@ Half:           pha
                 jmp Nybble
 
 Tab:            lda #31
-                jsr OSWRCH
+                jsr oswrch
                 txa
-                jsr OSWRCH
+                jsr oswrch
                 tya
-                jmp OSWRCH
+                jmp oswrch
 
 Curposn:        lda #134
-                jmp OSBYTE
+                jmp osbyte
 
 Printasci_dot:                  ; Print chr in A if possible, else dot.
                 cmp #$7F
@@ -7335,10 +7327,10 @@ Printasci_dot:                  ; Print chr in A if possible, else dot.
                 cmp #32
                 bcs print
 dot:            lda #"."
-print:          jmp OSWRCH
+print:          jmp oswrch
 
 Curnorm:        lda #26
-                jsr OSWRCH      ; No window
+                jsr oswrch      ; No window
                 ldy #114
                 bne Bc1
 
@@ -7351,7 +7343,7 @@ Bc1:            rts             ;  *** NO CURSOR CHANGES ***
 Bc2:            lda Block,x
                 bpl *+3
                 tya             ; Required size
-                jsr OSWRCH
+                jsr oswrch
                 dex
                 bpl Bc2
                 rts
@@ -7435,13 +7427,13 @@ TXCOPY:
 ;  Entry point also used by MEMEDIT..
 
 Copy_scr:       lda #2
-                jsr OSWRCH      ; Printer on
+                jsr oswrch      ; Printer on
                 lda #236
                 ldx #$40
                 ldy #$BF
-                jsr OSBYTE      ; Disable printer except 1,..
+                jsr osbyte      ; Disable printer except 1,..
                 lda #30
-                jsr OSWRCH      ; Home
+                jsr oswrch      ; Home
                 lda $30A        ; Window rt
                 sec
                 sbc $308        ; left
@@ -7453,9 +7445,9 @@ Copy_scr:       lda #2
 Loop_2:         bit $FF
                 bmi Copied      ; Escaped
                 lda #135
-                jsr OSBYTE      ; Get chr at cursor
+                jsr osbyte      ; Get chr at cursor
                 lda #1
-                jsr OSWRCH      ; Next chr to printer
+                jsr oswrch      ; Next chr to printer
                 txa
                 jsr Printasci_dot
                 jsr Curposn
@@ -7468,14 +7460,14 @@ Loop_2:         bit $FF
                 ldx #0
                 ldy #$FF
                 lda #246
-                jsr OSBYTE      ; Read printer ignore chr
+                jsr osbyte      ; Read printer ignore chr
                 cpx #10         ; Ignore lfs?
                 beq next        ; Printer must be auto LF
                 lda #10
                 jsr Printit     ; LF 
 
 next:           lda #9
-                jsr OSWRCH
+                jsr oswrch
                 jmp Loop_2
 
 Copied:
@@ -7484,11 +7476,354 @@ Copied:
                 lda #236
                 ldx #0
                 ldy #$BF
-                jsr OSBYTE      ; Reset printer drive
+                jsr osbyte      ; Reset printer drive
                 lda #3
-                jmp OSWRCH      ; printer off, RTS
+                jmp oswrch      ; printer off, RTS
 
                 .endif
                 ; include_end: TXCOPY
 
+;-------------------------------------------------------------------------
 
+                .if abe_version
+
+                .align 16,0
+LB040: .block
+                ; pha
+                ; lda $f4
+                ; eor #$01
+                ; sta $f4
+                ; sta $fe30
+                ; pla
+
+                sei
+                ldy $bff0
+                ldy $bff8
+                ldy $8000
+                cli
+                
+                jmp (LBFEE)
+                .endblock
+
+LB04E:
+                lda #<LB07E
+                sta ptr0+0
+                lda #>LB07E
+                sta ptr0+1
+                ldy #0
+                ldx #0
+LB05A:
+                lda (ptr0),y
+                bpl LB05F
+                inx
+
+LB05F:
+                cpx last_error_number
+                beq LB06B
+                inc ptr0+0
+                bne LB05A
+                inc ptr0+1
+                bne LB05A
+
+LB06B:
+                ldx #0
+LB06D:
+                and #$7f
+                sta error_message_buffer,x
+                iny
+                inx
+                lda (ptr0),y
+                bpl LB06D
+                rts
+
+LB079:
+                lda #6
+                jmp LB993
+
+error_message: .macro parts
+                .text (\parts)[0]|$80
+                .for _i=1,_i<len(\parts),_i+=1
+                .text (\parts)[_i]
+                .endfor
+                .endm
+
+LB07E:
+                .error_message ["This is not a valid BASIC program"]
+                .error_message ["Unknown error message"]
+                .error_message ["The screen mode has been reset because",$D,$A,"it needed too much memory"]
+                .error_message ["Line is too long to be edited.  Use",$D,$A,"UTILS/Unpack to make the line shorter"]
+                .error_message ["The program has used up all the",$D,$A,"memory.  Changing mode may gain more",$D,$A,"room"]
+                .error_message ["You entered a destination without a",$D,$A,"line command"]
+                .error_message ["A renumber failure has caused unmatched",$D,$A,"line numbers to be replaced by @@@@"]
+                .error_message ["The search string could not be found in",$D,$A,"the program"]
+                .error_message ["This is not a valid command"]
+                .error_message ["This command must not have any",$D,$A,"parameters"]
+                .error_message ["This command should be followed by a",$D,$A,"number"]
+                .error_message ["You have entered too many parameters forthis command"]
+                .error_message ["Only modes 0,1,3,4,6 and 7 are valid"]
+                .error_message ["There is not enough memory to edit in",$D,$A,"this mode"]
+                .error_message ["The program contains no label",$D,$A,"references"]
+                .error_message ["Some label references were found withoutmatching labels"]
+                .error_message ["Replacing labels would make a line too",$D,$A,"long.  Shorten it and try again"]
+                .error_message ["Replacing line numbers would make a linetoo long.  Shorten it and try again"]
+                .error_message ["No line numbers were found which matchedlabels"]
+                .error_message ["The lines cannot be joined as together",$D,$A,"they would be too long"]
+                .error_message ["Invalid colour",$D,$A,"Only N,R,G,Y,B,M,C and W are allowed"]
+                .error_message ["A line number must not be followed by",$D,$A,"any text"]
+                .error_message ["You have not typed in a replace string"]
+                .error_message ["No more than two strings can be entered",$D,$A,"with this command"]
+                .error_message ["The program cannot be renumbered with",$D,$A,"these parameters as they are too big"]
+                .error_message ["You can only execute one line command",$D,$A,"at a time"]
+                .error_message ["You have entered an invalid block line",$D,$A,"command"]
+                .error_message ["You have entered an invalid delete line",$D,$A,"command"]
+                .error_message ["The destination must be outside the",$D,$A,"block"]
+                .error_message ["You must enter a destination for this",$D,$A,"line command"]
+                .error_message ["You must enter both ends of the block",$D,$A,"line command"]
+                .error_message ["This command must have a parameter"]
+                .error_message ["The value for this command must be in",$D,$A,"the range 0 to 80"]
+                .error_message ["There is no marked line"]
+                .error_message ["You have not yet entered a search string"]
+                .error_message ["The line has been truncated because it",$D,$A,"was too long"]
+                .error_message ["The replace was not completed because",$D,$A,"it would have made a line too long"]
+                .error_message ["The renumber increment must be in the",$D,$A,"range 1 to 255"]
+                .error_message ["Cannot update program because the file",$D,$A,"name may have been truncated"]
+                .error_message ["Cannot update program because no file",$D,$A,"has been previously loaded"]
+                .byte $ff
+
+LB890:
+                sei
+                lda #(eventv-$200)/2*3
+                sta eventv+0
+                lda #$ff
+                sta eventv+1
+                cli
+                rts
+
+LB89D:
+                sei
+                lda #(wrchv-$200)/2*3
+                sta wrchv+0
+                lda #$ff
+                sta wrchv+1
+                cli
+                rts
+
+LB8AA:
+                sei
+                lda $82
+                sta wrchv+0
+                lda $83
+                sta wrchv+1
+                cli
+                rts
+
+LB8B7:
+                tay
+                pla
+                tax
+LB8BA:
+                pla
+                sta rom_switch_thunk,x
+                dex
+                bpl LB8BA
+                tya
+                pha
+                and #$7f
+                cmp #1
+                bne LB8CF
+                jsr LB04E
+                jmp LB926
+
+LB8CF:
+                cmp #2
+                beq LB8D7
+                cmp #3
+                bne LB8FA
+
+LB8D7:
+                pha
+                tsx
+                lda $106,x
+                tay
+                lda $107,x
+                sta $a8
+                lda $103,x
+                tax
+                lda $a8
+                jsr Reason
+                tay
+                pla
+                cmp #3
+                bne LB926
+                pla
+                tax
+                tya
+                pha
+                txa
+                pha
+                jmp LB926
+
+LB8FA:
+                cmp #4
+                bne LB902
+                pla
+                jmp LB954
+
+LB902:
+                cmp #$a
+                bne LB90C
+                pla
+                lda #$B
+                jmp LB993
+
+LB90C:
+                cmp #7
+                beq LB926
+                cmp #8
+                bne LB91D
+                pla
+                pla
+                tay
+                pla
+                tax
+                pla
+                jmp LBFE2
+
+LB91D:
+                pla
+                pla
+                tay
+                pla
+                tax
+                pla
+                jmp LBFE5
+
+LB926:
+                pla
+                bmi LB92C
+                jmp LB993
+
+LB92C:
+                cmp #$83
+                bne LB933
+                jmp LB954
+
+LB933:
+                jmp LB947
+
+LB936:
+                lda #<LBFEB
+                sta brkv+0
+                lda #>LBFEB
+                sta brkv+1
+                ldx #<LBFE8
+                ldy #>LBFE8
+                jmp oscli
+
+LB947:
+                pla
+                tax
+                pla
+                sta $a9
+                pla
+                sta $a8
+                pla
+                tay
+                pla
+                plp
+                rts
+
+LB954:
+                pla
+                beq LB95A
+                jmp LB947
+
+LB95A:
+                pla
+                tax
+                pla
+                sta $a9
+                pla
+                sta $a8
+                pla
+                tay
+                pla
+                lda #0
+                plp
+                rts
+
+LB969:
+                jsr Nextoscl
+                cmp #'p'
+                beq LB972
+                cmp #'P'
+LB972:
+                rts
+
+LB973:
+                jsr osrdch
+                cmp #27
+                bne LB97C
+                lda #5
+LB97C:
+                rts
+
+LB97D:
+                php
+                pha
+                tya
+                pha
+                lda $a8
+                pha
+                lda $a9
+                pha
+                txa
+                pha
+                stx $a8
+                sty $a9
+                cld
+                lda #5
+                jmp LB993
+
+LB993:
+                tay
+                ldx #0
+LB996:
+                lda rom_switch_thunk,x
+                pha
+                lda LB040,x
+                sta rom_switch_thunk,x
+                inx
+                cpx #size(LB040)
+                bne LB996
+                lda #$d
+                pha
+                tya
+                jmp rom_switch_thunk
+
+LB9AC:
+                jsr CheckBASIC
+                jmp osnewl
+
+*=$bfe2
+LBFE2:
+                jmp Event
+
+LBFE5:
+                jmp HERE
+
+LBFE8:
+                .text "BE",13
+
+LBFEB:
+                jmp LB079
+
+LBFEE:
+                .word LB8B7
+
+                .cerror *>$bff0,"code overflow"
+
+*=$bff0
+                .fill 16,$20
+                
+                .endif
