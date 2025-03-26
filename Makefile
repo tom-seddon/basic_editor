@@ -120,14 +120,14 @@ _pres_bedit_assemble: STEM=$(error must specify STEM)
 _pres_bedit_assemble: FLAG=$(error must specify FLAG)
 _pres_bedit_assemble: _TASS:=$(TASS) -Wall --nostart
 _pres_bedit_assemble:
-	$(_V)$(TASS) "./pres/bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+	$(_V)$(TASS) "./pres/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
 _pres_butils_assemble: _TASS:=$(TASS) --case-sensitive -Wall --nostart
 _pres_butils_assemble:
-	$(_V)$(_TASS) "./pres/butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+	$(_V)$(_TASS) "./pres/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
 ##########################################################################
 ##########################################################################
