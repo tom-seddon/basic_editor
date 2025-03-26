@@ -79,8 +79,9 @@ for diffing against other versions.)
 - `BET2` - BASIC Editor & Tooklkit (2 x ROM version - no 32 KB
   version)
 - `ABE-ELK` - BASIC Editor & Tooklbit (Electron version? - named
-  `ABE-ELK` in [original zip](referred to as ")) (2 x ROM version - no
-  32 KB version)
+  `ABE-ELK` in [original
+  zip](https://stardot.org.uk/forums/viewtopic.php?p=255699#p255699))
+  (2 x ROM version - no 32 KB version)
 
 Some notes about the differences.
 
