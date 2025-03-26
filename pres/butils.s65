@@ -73,14 +73,13 @@ include_TXCOPY=enable_TXCOPY||!baseds1_version&&!baseds1_elk_version
 
 ENABLE_DEBUG=false
 
-*=0
-                .dsection zp
-*=$60
-                .dsection basic_unused_zp
+; *=0
+;                 .dsection zp
+; *=$60
+;                 .dsection basic_unused_zp
 
 
-                .include "../zp.s65"
-                .include "../workspace.s65"
+                .include "pres_constants.s65"
 
                 .endif
 

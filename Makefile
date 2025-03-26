@@ -102,21 +102,31 @@ clean:
 
 .PHONY:_pres_stuff
 _pres_stuff: _make_output_folders
-	$(_V)$(MAKE) _pres_assemble STEM=butils FLAG=baseds1_version
-	$(_V)$(MAKE) _pres_assemble STEM=butils2 FLAG=baseds1_all_version
-	$(_V)$(MAKE) _pres_assemble STEM=butils_elk FLAG=baseds1_elk_version
-	$(_V)$(MAKE) _pres_assemble STEM=butils_abe FLAG=abe_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils FLAG=baseds1_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils2 FLAG=baseds1_all_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_elk FLAG=baseds1_elk_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_abe FLAG=abe_version
 
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
 # Don't compare butils_elk.rom. It won't match.
 	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "./pres/ABE.0.rom"
 
-.PHONY:_pres_assemble
-_pres_assemble: STEM=$(error must specify STEM)
-_pres_assemble: FLAG=$(error must specify FLAG)
-_pres_assemble: _TASS:=$(TASS) --case-sensitive -Wall --nostart
-_pres_assemble:
+	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
+	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
+
+.PHONY:_pres_beditor_assemble
+_pres_bedit_assemble: STEM=$(error must specify STEM)
+_pres_bedit_assemble: FLAG=$(error must specify FLAG)
+_pres_bedit_assemble: _TASS:=$(TASS) -Wall --nostart
+_pres_bedit_assemble:
+	$(_V)$(TASS) "./pres/bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+
+.PHONY:_pres_butils_assemble
+_pres_butils_assemble: STEM=$(error must specify STEM)
+_pres_butils_assemble: FLAG=$(error must specify FLAG)
+_pres_butils_assemble: _TASS:=$(TASS) --case-sensitive -Wall --nostart
+_pres_butils_assemble:
 	$(_V)$(_TASS) "./pres/butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
 ##########################################################################
@@ -134,3 +144,4 @@ _pres_stuff_2: _make_output_folders
 .PHONY:_tom_emacs
 _tom_emacs:
 	$(_V)$(MAKE) _pres_stuff
+
