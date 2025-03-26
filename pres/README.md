@@ -76,6 +76,8 @@ halves, not useable independently.
 - `BET` - BASIC Editor & Tooklkit
 - `BET2` - BASIC Editor & Tooklkit (sideways RAM version - no 32 KB
   version)
+- `ABE-ELK` - BASIC Editor & Tooklbit (Electron version? - named
+  `ABE-ELK` in [original zip](referred to as "))
 
 Some notes about the differences.
 
@@ -209,7 +211,7 @@ Different names and copyrights in ROM header in part 1:
 
 ## `BET2`
 
-Looks to be related to `BET.
+Looks to be based on BET.
 
 `-` lines are from BET and `+` lines are from BET2.
 
@@ -289,3 +291,32 @@ BET2:
 -00003040: 78 ac f0 bf ac f8 bf ac 00 80 58 6c ee bf a9 7e x.........Xl...~
 +00003040: 48 a5 f4 49 01 85 f4 8d 30 fe 68 6c ee bf a9 7e H..I....0.hl...~
 ```
+
+** `ABE-ELK`
+
+Looks to be based on BET2.
+
+`-` lines are from BET2 and `+` lines are from ABE-ELK.
+
+The differences are the ROM paging register written to by the ROM
+switch routine. Now it's $fe35 rather than $fe30.
+
+ABE-ELK part 1:
+
+```
+-00000130: f0 d7 18 60 48 a5 f4 49 01 85 f4 8d 30 fe 68 6c ...`H..I....0.hl
++00000130: f0 d7 18 60 48 a5 f4 49 01 85 f4 8d 35 fe 68 6c ...`H..I....5.hl
+                                               ^^                      ^
+```
+
+ABE-ELK part  2:
+
+```
+-00003040: 48 a5 f4 49 01 85 f4 8d 30 fe 68 6c ee bf a9 7e H..I....0.hl...~
++00003040: 48 a5 f4 49 01 85 f4 8d 35 fe 68 6c ee bf a9 7e H..I....5.hl...~
+                                   ^^                              ^
+```
+
+As this routine always switches between two non-BASIC paged ROMs, the
+2-step Electron ROM switching presumably doesn't apply, and the ROM
+select register can be written to directly.
