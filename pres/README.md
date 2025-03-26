@@ -68,20 +68,25 @@ Consult `butils.s65` for more info about the different versions..
 
 ROM images can be found in this folder, named after the product
 according to the following table. `.32KB.rom` is a 32 KB ROM, useable
-with the appropriate PLD. and `.0.rom` and `.1.rom` are the two 16 KB
-halves, not useable independently.
+with the appropriate PLD; `.0.rom` and `.1.rom` are the two 16 KB
+halves. (If there's a 32 KB ROM, the two halves aren't useable
+independently, but they're in the repo anyway as I've found them handy
+for diffing against other versions.)
 
 - `ABE` - Advanced BASIC Editor
 - `ABEP` - The BASIC Editor Plus
 - `BET` - BASIC Editor & Tooklkit
-- `BET2` - BASIC Editor & Tooklkit (sideways RAM version - no 32 KB
+- `BET2` - BASIC Editor & Tooklkit (2 x ROM version - no 32 KB
   version)
 - `ABE-ELK` - BASIC Editor & Tooklbit (Electron version? - named
-  `ABE-ELK` in [original zip](referred to as "))
+  `ABE-ELK` in [original zip](referred to as ")) (2 x ROM version - no
+  32 KB version)
 
 Some notes about the differences.
 
 ## ABE vs ABEP
+
+ROM library links: [`ABE.32KB.rom`](https://tobylobster.github.io/rom_library/?search=8b5a7b4633c567a16fe5e885e4d742d85138e07c); [`ABEP.32KB.rom`](https://tobylobster.github.io/rom_library/?search=27e299a9f265415f347c028d14d8fb434c636d03)
 
 It looks like these two products are essentially identical.
 
@@ -130,6 +135,8 @@ And similarly for the differences between `ABE.1.rom` and
 ```
 
 ## BET
+
+ROM library links: [`BET.32KB.rom`](https://tobylobster.github.io/rom_library/?search=80fb0c735a294b57e3fcc92614063a4ce319b41b)
 
 Looks to be based on ABEP. The 32 KB versions are mostly identical.
 
@@ -210,6 +217,8 @@ Different names and copyrights in ROM header in part 1:
 ```
 
 ## `BET2`
+
+ROM library links: [`BET2.0.rom`](https://tobylobster.github.io/rom_library/?search=322e9ad43b5549ea7869b482747c8da7a9b6d111); [`BET2.1.rom`](https://tobylobster.github.io/rom_library/?search=9d3c0109e6178b7d57f1898833b897b62758a4ee)
 
 Looks to be based on BET.
 
@@ -292,7 +301,9 @@ BET2:
 +00003040: 48 a5 f4 49 01 85 f4 8d 30 fe 68 6c ee bf a9 7e H..I....0.hl...~
 ```
 
-** `ABE-ELK`
+## `ABE-ELK`
+
+ROM library links: [`ABE-ELK.0.rom`](https://tobylobster.github.io/rom_library/?search=922313d35b1059965beb8490767b5e5103abbfe3); [`ABE-ELK.1.rom`](https://tobylobster.github.io/rom_library/?search=969306fc06c624ad3deda5482667178c88e4176d)
 
 Looks to be based on BET2.
 
