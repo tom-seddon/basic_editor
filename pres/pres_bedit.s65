@@ -22,13 +22,27 @@ ORIGINAL_CTRL_UP_DOWN=true
                 .weak
 
 acornsoft_version=false
-
+bet2_version=false
+                
                 .endweak
 
 ;-------------------------------------------------------------------------
 
+                .if bet2_version
 ; bodge region
-print_on_off=$ffff
+restore_a8_a9=$a94d
+call_other_rom=$bb35
+LBC8B=$bc8b
+LA95A=$a95a
+L8054=$8054
+aBasicEditorToolkit=$a998
+be_help_subject=$abc1
+LBFEE=$bfee
+is_Electron=$bc7a
+L87DC=$87dc
+LB4EA=$b4ea
+LBFB2=$bfb2
+                .endif
                 
 ;-------------------------------------------------------------------------
 
@@ -67,15 +81,28 @@ rom_start:
 
                 .byte  copyright-rom_start ;
                 .byte     5
-aTheBasicEditor_0:
-                .text    "The "
-                .text "BASIC Editor",0
+                .if bet2_version
+                .text "BASIC Editor & Toolkit"
+                .else
+                .text "The BASIC Editor",0
+                .endif
 version_number_string:
+                .if bet2_version
+                .text " 1.00"
+                .else
                 .text " 1.32"
+                .endif
+version_number_string_end:
 copyright:
                 .byte 0
 aC1984Acornsoft:
-                .text "(C) 1984 Acornsoft",0
+                .text "(C)"
+                .if bet2_version
+                .text " 1990 B.E."
+                .else
+                .text " 1984 Acornsoft"
+                .endif
+                .byte 0
                 
 ; A = code, X = ROM number, Y = parameter.
 
@@ -90,6 +117,10 @@ service_entry .proc
                 pha
                 txa
                 pha
+                .if bet2_version
+                stx $a8
+                sty $a9
+                .endif
                 cld
                 tsx
                 lda $105,x
@@ -97,7 +128,14 @@ service_entry .proc
                 beq star_command
                 cmp #9
                 beq help
+                .if bet2_version
+                cmp #8
+                beq new_osword
+                .endif
 exit:
+                .if bet2_version
+                jmp restore_a8_a9
+                .else
                 pla
                 tax
                 pla
@@ -109,7 +147,175 @@ exit:
                 pla
                 plp
                 rts
+                .endif
                 .endproc
+
+                .if bet2_version
+star_command:
+                jsr L80D4
+                lda #3
+                jmp call_other_rom
+
+new_osword:
+                jsr LBC8B
+                pha
+                jmp LA95A
+
+help:
+                jsr L807C
+                cmp #2
+                beq L8054
+                cmp #1
+                beq L8077
+                jsr L80A4
+                jmp L8054
+
+L8077:
+                lda #2
+                jmp call_other_rom
+
+L807C:
+                ldy $a9
+L807E:
+                lda ($f2),y
+                cmp #' '
+                bne L8087
+                iny
+                bne L807E
+L8087:
+                cmp #13
+                bne L808E
+                lda #0
+                rts
+
+L808E:
+                clc
+                tya
+                adc $f2
+                sta $a8
+                lda #0
+                adc $f3
+                sta $a9
+                jsr L8107
+                lda #1
+                bcs L80A3
+                lda #2
+L80A3:
+                rts
+
+L80A4:
+                jsr osnewl
+                ldy #0
+L80A9:
+                lda aBasicEditorToolkit,y
+                beq L80B4
+                jsr oswrch
+                iny
+                bne L80A9
+L80B4:
+                ldy #0
+L80B6:
+                lda version_number_string,y
+                jsr oswrch
+                iny
+                cpy #version_number_string_end-version_number_string
+                bcc L80B6
+                jsr osnewl
+
+                ldy #0
+L80C6:
+                lda be_help_subject,y
+                jsr oswrch
+                iny
+                cpy #4;size(be_help_subject)
+                bcc L80C6
+                jmp osnewl
+
+L80D4:
+                lda $a8
+                pha
+                lda $a9
+                clc
+                adc $f2
+                sta $a8
+                lda #0
+                adc $f3
+                sta $a9
+                ldy #0
+                lda ($a8),y
+                and #$df
+                cmp #'P'
+                bne L80F9
+                lda $a8
+                clc
+                adc #1
+                sta $a8
+                bne L80F9
+                inc $a9
+L80F9:
+                jsr L8107
+                bcc L8105
+                pla
+                tax
+                lda #$8e
+                jmp osbyte
+
+L8105:
+                pla
+                rts
+
+L8107:
+                ldy #$ff
+L8109:
+                iny
+                lda be_cmd,y
+                tax
+                lda ($a8),y
+                cmp #'.'
+                beq L811E
+                cpy #0
+                beq L8132
+                cpx #0
+                beq L8132
+L811C:
+                sec
+                rts
+
+L811E:
+                cmp #13
+                beq L8126
+                cmp #' '
+                bne L812B
+L8126:
+                txa
+                beq L811C
+                bne L8132
+L812B:
+                and #$df
+                cmp be_cmd,y
+                beq L8109
+L8132:
+                clc
+                rts
+
+L8134:
+                pha
+                lda $f4
+                eor #1
+                sta $f4
+                sta $fe30
+                pla
+                jmp (LBFEE)
+
+                .include "pres_bedit.execute_key_command.s65"
+                .include "pres_bedit.atoi_from_command_line.s65"
+                .include "pres_bedit.AA41.s65"
+                .include "pres_bedit.token_table.s65"
+                .include "pres_bedit.itoa.s65"
+                .include "pres_bedit.brk_handler.s65"
+                .include "pres_bedit.edit_mode_loop.s65"
+                
+                .else
 
 help:
                 lda ($f2),y
@@ -136,7 +342,7 @@ print_version_number_loop:
                 lda version_number_string,y
                 jsr oswrch
                 iny
-                cpy #5
+                cpy #version_number_string_end-version_number_string
                 bcc print_version_number_loop
                 jsr osnewl
                 jmp service_entry.exit
@@ -184,7 +390,10 @@ check_char:
                 bne service_entry.exit
                 iny
                 bne L8097
+
                 .endproc
+                
+                .endif
 
                 ; fall through to language entry
                 
@@ -865,52 +1074,9 @@ loc_8437:
                 LDA     #227
                 JMP     osbyte_with_y0
 
-brk_handler:
-                JSR     clear_5B1_to_600
-                LDY     higher_order_address
-                INY
-                BNE     loc_846C
-                LDY     higher_order_address+1
-                INY
-                BNE     loc_846C
-                LDA     $FE
-                CMP     #1
-                BEQ     loc_846C
-                CMP     #$C0
-                BCC     loc_848A
-
-loc_846C:                               
-                SEI
-                INC     $FD
-                BNE     loc_8473
-                INC     $FE
-
-loc_8473:                               
-                LDY     #0
-
-loc_8475:                               
-                LDA     ($FD),Y
-                CMP     #$20 ; ' '
-                BCC     loc_8483
-		STA	$5B1,Y
-		INY
-		CPY	#$4F ; 'O'
-		BCC	loc_8475
-
-loc_8483:				
-		CLI
-		LDA	#-1
-		STA	byte_15
-		BNE	loc_848F
-
-loc_848A:				
-		LDA	#2
-		JSR	get_error	; A = error code
-
-loc_848F:				
-		JMP	language_entry.loc_814D
-
-
+                .if acornsoft_version
+                .include "pres_bedit.brk_handler.s65"
+                .endif
 
 sub_8492:				
 		JSR	find_program
@@ -1757,87 +1923,9 @@ got_command:
 ; End of function parse_command_line
 
 
-
-; Gets string representation of	16-bit number.
-;
-; Entry:
-; Y,X =	value
-;
-; Exit:
-; unk_0	holds digit count
-; unk_1... filled with string
-
-itoa:					
-					
-		LDA	unk_37
-		PHA
-		LDA	byte_38
-		PHA
-		LDA	byte_39
-		PHA
-		LDA	byte_3A
-		PHA
-		STX	unk_37
-		STY	byte_38
-		LDA	#0
-		STA	byte_0
-
-loc_8DCA:				
-		LDA	#0
-		STA	byte_39
-		STA	byte_3A
-		LDX	#$10
-		CLC
-
-loc_8DD3:				
-		ROL	unk_37
-		ROL	byte_38
-		ROL	byte_39
-		ROL	byte_3A
-		SEC
-		LDA	byte_39
-		SBC	#$A
-		TAY
-		LDA	byte_3A
-		SBC	#0
-		BCC	loc_8DEB
-		STY	byte_39
-		STA	byte_3A
-
-loc_8DEB:				
-		DEX
-		BNE	loc_8DD3
-		ROL	unk_37
-		ROL	byte_38
-		LDA	byte_39
-		CLC
-		ADC	#$30 ; '0'
-		LDY	byte_0
-		BEQ	loc_8E02
-
-loc_8DFB:				
-		LDX	byte_0,Y
-		STX	unk_1,Y
-		DEY
-		BNE	loc_8DFB
-
-loc_8E02:				
-		STA	unk_1
-		INC	byte_0
-		LDA	unk_37
-		ORA	byte_38
-		BNE	loc_8DCA
-		PLA
-		STA	byte_3A
-		PLA
-		STA	byte_39
-		PLA
-		STA	byte_38
-		PLA
-		STA	unk_37
-		RTS
-; End of function itoa
-
+                .if acornsoft_version
+                .include "pres_bedit.itoa.s65"
+                .endif
 
 
 ; entry: (unk_C) points	to input char, (unk_E) points to command table char
@@ -2211,100 +2299,9 @@ loc_8F74:
 .pend
 ; End of function get_line_dimensions
 
-
-
-; entry: (byte_3E) points to command line;
-; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
-
-atoi_from_command_line:			
-					
-		LDA	byte_3E
-		STA	byte_C
-		LDA	byte_3F
-		STA	byte_D
-; End of function atoi_from_command_line
-
-
-
-; entry: (unk_C) points	to text;
-; exit:	C set if error,	or (byte_3E,byte_3F) holds value
-
-atoi:					
-		LDX	#0
-		STX	byte_3E
-		STX	byte_3F
-		LDY	#0
-		LDA	(byte_C),Y
-		PHA
-
-atoi_loop:				
-		LDA	(byte_C),Y
-		CMP	#32
-		BEQ	atoi_done		; branch taken if space	char
-		CMP	#13
-		BEQ	atoi_done		; branch taken if CR
-		CMP	#'0'
-		BCC	atoi_error		; branch taken if definitely not digit
-		CMP	#$3A ; ':'
-		BCC	is_digit	; branch taken if digit
-
-atoi_error:					
-		PLA
-		SEC
-		RTS
-
-is_digit:				
-		INX			; count	number of digits
-		CPX	#5		; 5 digits?
-		BEQ	check_most_significant_digit ; ==5 is OK
-		BCC	add_digit	; <5 is	OK
-		BCS	atoi_error		; >5 is	an error
-
-check_most_significant_digit:		
-		PLA
-		PHA
-		CMP	#$34 ; '4'
-		BCS	atoi_error		; error	if most	significant digit >'3' (since 32767 is the largest valid value)
-
-add_digit:				
-		ASL	byte_3E
-		ROL	byte_3F		; value*2
-		LDA	byte_3F
-		PHA
-		LDA	byte_3E
-		ASL	byte_3E
-		ROL	byte_3F		; value*4
-		ASL	byte_3E
-		ROL	byte_3F		; value*8
-; value*8 + value*2 (=value*10)
-		CLC
-		ADC	byte_3E
-		STA	byte_3E
-		PLA
-		ADC	byte_3F
-		STA	byte_3F
-		LDA	($C),Y		; get char (which is known to be a digit)
-		SEC
-		SBC	#'0'            ; -'0' to make it a number
-		CLC
-		ADC	byte_3E
-		STA	byte_3E		; add in to accumulator
-		BCC	done_digit
-		INC	byte_3F		; adjust high byte for carry
-
-done_digit:				
-		INY
-		BNE	atoi_loop
-
-atoi_done:					
-		LDA	byte_3F
-		BMI	atoi_error
-		PLA
-		CLC
-		RTS
-; End of function atoi
-
-
+                .if acornsoft_version
+                .include "pres_bedit.atoi_from_command_line.s65"
+                .endif
 
 ; unk_6BD = command to run
 
@@ -4473,153 +4470,11 @@ locret_9AD7:
 ; End of function sub_9AAD
 
 
+                .if acornsoft_version
+                .include "pres_bedit.edit_mode_loop.s65"
+                .endif
 
 
-edit_mode_loop:				
-					
-		LDX	#$FF
-		TXS
-		STX	byte_6A7
-		LDA	byte_6AB
-		BEQ	loc_9AE6
-		JSR	kbflush
-
-loc_9AE6:				
-		LDX	#0
-		LDY	#$FF
-		LDA	#216		; read length of soft key string
-		JSR	OSBYTE		; flush	pending	soft key expansion
-		STX	byte_3A		; save old value (??)
-		JSR	reset_cursor_shape
-		JSR	getch
-
-check_return_key:			; return?
-		CMP	#13
-		BNE	check_tab_key
-		LDA	#CMD_return_key
-		BNE	run_command
-
-check_tab_key:				
-		CMP	#9
-		BNE	check_delete_key
-		LDA	#CMD_tab_key
-		BNE	run_command
-
-check_delete_key:			
-		CMP	#$7F ; ''
-                bne run_command
-                LDA	#CMD_delete_key
-
-run_command:				
-					
-		STA	current_command_id
-		LDX	#0
-		LDY	#$FF
-		LDA	#216
-		JSR	OSBYTE
-		TXA
-		ORA	byte_3A		; check	if both	soft key expansion states were 0
-		BEQ	loc_9B2C	; branch taken if both were
-		LDA	current_command_id
-		CMP	#$20 ; ' '
-		BCC	loc_9B28
-
-loc_9B25:				
-					
-		JMP	dispatch_command
-
-loc_9B28:				
-		LDA	#$20 ; ' '
-		BNE	set_command	; JMP, in effect
-
-loc_9B2C:				
-		LDX	#$FF		; query	keyboard buffer
-		LDY	#$FF
-		LDA	#128
-		JSR	OSBYTE		; get ADVAL/buffer status (AUG p151)
-		TXA
-		BNE	loc_9B25	; branch taken if any keys in keyboard buffer
-		LDA	current_command_id
-		CMP	#CMD_return_key
-		BNE	loc_9B4E
-		LDX	#$9A
-		JSR	poll_key	; poll state of	key.
-					;
-					; Entry:
-					; X = -ve INKEY	value
-					;
-					; Exit:
-					; X = 0	and Z set if key pressed
-		BNE	loc_9B25
-		LDA	#$D
-
-set_command:				
-					
-		STA	current_command_id
-		JMP	dispatch_command
-
-loc_9B4E:				
-		CMP	#CMD_tab_key
-		BNE	loc_9B5D
-		LDX	#$DA		; I key
-		JSR	poll_key	; poll state of	key.
-					;
-					; Entry:
-					; X = -ve INKEY	value
-					;
-					; Exit:
-					; X = 0	and Z set if key pressed
-		BNE	loc_9B5D	; branch taken if I not	pressed
-		LDA	#9		; set command 9	(think this is some kind of fudge to stop Ctrl+I doing anything)
-		BNE	set_command
-
-loc_9B5D:				
-					
-		LDX	#0		; Don't change anything
-		LDY	#$FF		; Read old value
-		LDA	#202
-		JSR	OSBYTE		; Read keyboard	status byte (AUG p207)
-		STX	byte_38		; bit 3	- 1 if SHIFT pressed
-					; bit 4	- 0 if CAPS LOCK engaged
-					; bit 5	- 0 if SHIFT LOCK engaged
-					; bit 6	- 1 if CTRL pressed
-					; bit 7	- 1 if SHIFT is	to reverse CAPS	LOCK/SHIFT LOCK	status
-
-check_shift_delete_key:
-		LDA	current_command_id
-		CMP	#CMD_delete_key
-		BNE	check_shift_tab_key
-		LDA	#8
-		BIT	byte_38		; Check	SHIFT state
-		BEQ	dispatch_command ; Branch taken	if SHIFT not pressed
-		LDA	#CMD_shift_delete_key
-		STA	current_command_id
-		BNE	dispatch_command ; JMP,	in effect
-
-check_shift_tab_key:			
-		CMP	#CMD_tab_key
-		BNE	dispatch_command
-		LDA	#8
-		BIT	byte_38		; Check	SHIFT state
-		BEQ	dispatch_command ; Branch taken	if SHIFT not pressed
-		LDA	#CMD_shift_tab_key
-		STA	current_command_id
-
-dispatch_command:			
-					
-		LDA	current_command_id
-		CMP	#$20 ; ' '
-		BCC	execute_non_key_command
-		CMP	#$A0
-		BCS	execute_non_key_command
-		JSR	execute_key_command ; treats command ID	as ASCII char and puts that char into the current line as appropriate.
-		JMP	edit_mode_loop
-
-execute_non_key_command:		
-					
-		JSR	execute_command	; unk_6BD = command to run
-		JMP	edit_mode_loop
-; End of function edit_mode_loop
 
 
 
@@ -5414,148 +5269,9 @@ loc_9F26:
 		JMP	redraw_line_number
 ; End of function sub_9F00
 
-
-
-; treats command ID as ASCII char and puts that	char into the current line as appropriate.
-
-execute_key_command:			
-		LDA	unk_11
-		BNE	beep
-		JSR	sub_AB1E
-		LDX	byte_400	; X = line length
-		LDA	is_insert_mode	; 0=overtype 1=insert
-		BEQ	loc_9F5C	; branch taken if overtype mode
-		LDA	cursor_offset	; get cursor offset (?)
-		CMP	byte_400	; compare to line length
-		BEQ	loc_9F48
-		BCS	loc_9F58	; branch taken if cursor offset	> line length
-
-loc_9F48:				
-		LDY	byte_400	; get line length
-		BEQ	loc_9F55
-		DEY
-		LDA	$401,Y
-		CMP	#$20 ; ' '
-		BEQ	sub_9F6F
-
-loc_9F55:				
-		INX
-		BNE	loc_9F65
-
-loc_9F58:				
-					
-		LDX	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_9F65
-
-loc_9F5C:				
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		CMP	byte_400
-		BEQ	sub_9F6F
-		BCS	loc_9F58
-
-loc_9F65:				
-					
-		CPX	#$FC
-		BCC	sub_9F6F
-; End of function execute_key_command
-
-
-
-
-beep:					
-					
-		LDA	#7
-		JSR	OSWRCH
-		RTS
-; End of function beep
-
-
-
-
-sub_9F6F:				
-					
-		TXA
-		PHA
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		PHA
-		PHA
-		LDA	is_insert_mode	; 0=overtype 1=insert
-		BEQ	store_char	; branch taken if overtype
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		CMP	byte_400
-		BEQ	insert		; branch taken if at end of line
-		BCS	store_char	; branch taken if past end of line
-
-insert:					
-		PLA
-		TXA
-		PHA
-		LDX	#$FF
-		STX	byte_C
-		INX
-		STX	byte_E
-		INX
-		TXA
-		JSR	sub_9FB2
-
-store_char:				
-		LDA	current_command_id ; get char to write
-		LDY	cursor_offset	; offset of cursor in detokenized buffer
-		DEY			; make relative	to tex
-		STA	$401,Y		; store
-		LDA	#1
-		STA	byte_6B3
-		PLA
-		TAX
-		PLA
-		TAY
-		PLA
-		STA	byte_400
-		TYA
-		LDY	#0
-		INC	cursor_offset	; advance to next char
-		JSR	sub_A0B1
-		JMP	position_edit_mode_cursor
-; End of function sub_9F6F
-
-
-
-
-sub_9FB2:				
-		PHA
-		LDX	#2
-		JSR	adjust_pointer
-		LDX	#0
-		JSR	adjust_pointer
-; X=0
-		PLA
-		CLC
-		ADC	byte_400	; add line length
-		SEC
-		SBC	cursor_offset	; subtract cursor offset
-		TAY			; LSB of size
-		JMP	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-
-adjust_pointer:				
-		CLC
-		LDA	byte_C,X	; get pointer LSB
-		ADC	#1		; increment
-		CLC
-		ADC	cursor_offset	; +?byte_10
-		STA	byte_C,X	; store
-		LDA	#4
-		STA	byte_D,X	; copying in page 4.
-		RTS
-; End of function sub_9FB2
-
-
-
+                .if acornsoft_version
+                .include "pres_bedit.execute_key_command.s65"
+                .endif
 
 sub_9FD8:				
 		JSR	sub_A069
@@ -6392,389 +6108,10 @@ loc_A2B1:
 		RTS
 ; End of function sub_A2A1
 
-token_table:	.text "AND"
-		.byte  $80 ; Ä
-		.byte	 0 ;
-aAbs:		.text "ABS"
-		.byte  $94 ; î
-		.byte	 0 ;
-aAcs:		.text "ACS"
-		.byte  $95 ; ï
-		.byte	 0 ;
-aAdval:		.text "ADVAL"
-		.byte  $96 ; ñ
-		.byte	 0 ;
-aAsc:		.text "ASC"
-		.byte  $97 ; ó
-		.byte	 0 ;
-aAsn:		.text "ASN"
-		.byte  $98 ; ò
-		.byte	 0 ;
-aAtn:		.text "ATN"
-		.byte  $99 ; ô
-		.byte	 0 ;
-aAuto:		.text "AUTO"
-		.byte  $C6 ; ∆
-		.byte  $10 ;
-aBget:		.text "BGET"
-		.byte  $9A ; ö
-		.byte	 1 ;
-aBput:		.text "BPUT"
-		.byte  $D5 ; ’
-		.byte	 3 ;
-aColour:	.text "COLOUR"
-		.byte  $FB ; ˚
-		.byte	 2 ;
-aColor:		.text "COLOR"
-		.byte  $FB ; ˚
-		.byte	 2 ;
-aCall:		.text "CALL"
-		.byte  $D6 ; ÷
-		.byte	 2 ;
-aChain:		.text "CHAIN"
-		.byte  $D7 ; ◊
-		.byte	 2 ;
-aChr:		.text "CHR$"
-		.byte  $BD ; Ω
-		.byte	 0 ;
-aClear:		.text "CLEAR"
-		.byte  $D8 ; ÿ
-		.byte	 1 ;
-aClose:		.text "CLOSE"
-		.byte  $D9 ; Ÿ
-		.byte	 3 ;
-aClg:		.text "CLG"
-		.byte  $DA ; ⁄
-		.byte	 1 ;
-aCls:		.text "CLS"
-		.byte  $DB ; €
-		.byte	 1 ;
-aCos:		.text "COS"
-		.byte  $9B ; õ
-		.byte	 0 ;
-aCount:		.text "COUNT"
-		.byte  $9C ; ú
-		.byte	 1 ;
-aData:		.text "DATA"
-		.byte  $DC ; ‹
-		.byte  $20 ;
-aDeg:		.text "DEG"
-		.byte  $9D ; ù
-		.byte	 0 ;
-aDef:		.text "DEF"
-		.byte  $DD ; ›
-		.byte	 0 ;
-aDelete:	.text "DELETE"
-		.byte  $C7 ; «
-		.byte  $10 ;
-aDiv:		.text "DIV"
-		.byte  $81 ; Å
-		.byte	 0 ;
-aDim:		.text "DIM"
-		.byte  $DE ; ﬁ
-		.byte	 2 ;
-aDraw:		.text "DRAW"
-		.byte  $DF ; ﬂ
-		.byte	 2 ;
-aEndproc:	.text "ENDPROC"
-		.byte  $E1 ; ·
-		.byte	 1 ;
-aEnd_0:		.text "END"
-		.byte  $E0 ; ‡
-		.byte	 1 ;
-aEnvelope:	.text "ENVELOPE"
-		.byte  $E2 ; ‚
-		.byte	 2 ;
-aElse:		.text "ELSE"
-		.byte  $8B ; ã
-		.byte  $14 ;
-aEval:		.text "EVAL"
-		.byte  $A0 ; †
-		.byte	 0 ;
-aErl:		.text "ERL"
-		.byte  $9E ; û
-		.byte	 1 ;
-aError:		.text "ERROR"
-		.byte  $85 ; Ö
-		.byte	 4 ;
-aEof:		.text "EOF"
-		.byte  $C5 ; ≈
-		.byte	 1 ;
-aEor:		.text "EOR"
-		.byte  $82 ; Ç
-		.byte	 0 ;
-aErr:		.text "ERR"
-		.byte  $9F ; ü
-		.byte	 1 ;
-aExp:		.text "EXP"
-		.byte  $A1 ; °
-		.byte	 0 ;
-aExt:		.text "EXT"
-		.byte  $A2 ; ¢
-		.byte	 1 ;
-aFor:		.text "FOR"
-		.byte  $E3 ; „
-		.byte	 2 ;
-aFalse:		.text "FALSE"
-		.byte  $A3 ; £
-		.byte	 1 ;
-aFn:		.text "FN"
-		.byte  $A4 ; §
-		.byte	 8 ;
-aGoto_0:	.text "GOTO"
-		.byte  $E5 ; Â
-		.byte  $12 ;
-aGet_0:		.text "GET$"
-		.byte  $BE ; æ
-		.byte	 0 ;
-aGet:		.text "GET"
-		.byte  $A5 ; •
-		.byte	 0 ;
-aGosub:		.text "GOSUB"
-		.byte  $E4 ; ‰
-		.byte  $12 ;
-aGcol:		.text "GCOL"
-		.byte  $E6 ; Ê
-		.byte	 2 ;
-aHimem_0:	.text "HIMEM"
-		.byte  $93 ; ì
-		.byte  $43 ; C
-aInput:		.text "INPUT"
-		.byte  $E8 ; Ë
-		.byte	 2 ;
-aIf:		.text "IF"
-		.byte  $E7 ; Á
-		.byte	 2 ;
-aInkey_0:	.text "INKEY$"
-		.byte  $BF ; ø
-		.byte	 0 ;
-aInkey:		.text "INKEY"
-		.byte  $A6 ; ¶
-		.byte	 0 ;
-aInt:		.text "INT"
-		.byte  $A8 ; ®
-		.byte	 0 ;
-aInstr:		.text "INSTR("
-		.byte  $A7 ; ß
-		.byte	 0 ;
-aList:		.text "LIST"
-		.byte  $C9 ; …
-		.byte  $10 ;
-aLine:		.text "LINE"
-		.byte  $86 ; Ü
-		.byte	 0 ;
-aLoad_0:	.text "LOAD"
-		.byte  $C8 ; »
-		.byte	 2 ;
-aLomem_0:	.text "LOMEM"
-		.byte  $92 ; í
-		.byte  $43 ; C
-aLocal:		.text "LOCAL"
-		.byte  $EA ; Í
-		.byte	 2 ;
-aLeft:		.text "LEFT$("
-		.byte  $C0 ; ¿
-		.byte	 0 ;
-aLen:		.text "LEN"
-		.byte  $A9 ; ©
-		.byte	 0 ;
-aLet:		.text "LET"
-		.byte  $E9 ; È
-		.byte	 4 ;
-aLog:		.text "LOG"
-		.byte  $AB ; ´
-		.byte	 0 ;
-aLn:		.text "LN"
-		.byte  $AA ; ™
-		.byte	 0 ;
-aMid:		.text "MID$("
-		.byte  $C1 ; ¡
-		.byte	 0 ;
-aMode_0:	.text "MODE"
-		.byte  $EB ; Î
-		.byte	 2 ;
-aMod:		.text "MOD"
-		.byte  $83 ; É
-		.byte	 0 ;
-aMove:		.text "MOVE"
-		.byte  $EC ; Ï
-		.byte	 2 ;
-aNext:		.text "NEXT"
-		.byte  $ED ; Ì
-		.byte	 2 ;
-aNew_0:		.text "NEW"
-		.byte  $CA ;  
-		.byte	 1 ;
-aNot:		.text "NOT"
-		.byte  $AC ; ¨
-		.byte	 0 ;
-aOld_0:		.text "OLD"
-		.byte  $CB ; À
-		.byte	 1 ;
-aOn_0:		.text "ON"
-		.byte  $EE ; Ó
-		.byte	 2 ;
-aOff:		.text "OFF"
-		.byte  $87 ; á
-		.byte	 0 ;
-aOr:		.text "OR"
-		.byte  $84 ; Ñ
-		.byte	 0 ;
-aOpenin:	.text "OPENIN"
-		.byte  $8E ; é
-		.byte	 0 ;
-aOpenout:	.text "OPENOUT"
-		.byte  $AE ; Æ
-		.byte	 0 ;
-aOpenup:	.text "OPENUP"
-		.byte  $AD ; ≠
-		.byte	 0 ;
-aOscli:		.text "OSCLI"
-		.byte  $FF ;
-		.byte	 2 ;
-aPrint:		.text "PRINT"
-		.byte  $F1 ; Ò
-		.byte	 2 ;
-aPage_0:	.text "PAGE"
-		.byte  $90 ; ê
-		.byte  $43 ; C
-aPtr_0:		.text "PTR"
-		.byte  $8F ; è
-		.byte  $43 ; C
-aPi:		.text "PI"
-		.byte  $AF ; Ø
-		.byte	 1 ;
-aPlot:		.text "PLOT"
-		.byte  $F0 ; 
-		.byte	 2 ;
-aPoint:		.text "POINT("
-		.byte  $B0 ; ∞
-		.byte	 0 ;
-aProc:		.text "PROC"
-		.byte  $F2 ; Ú
-		.byte	$A ;
-aPos:		.text "POS"
-		.byte  $B1 ; ±
-		.byte	 1 ;
-aReturn:	.text "RETURN"
-		.byte  $F8 ; ¯
-		.byte	 1 ;
-aRepeat:	.text "REPEAT"
-		.byte  $F5 ; ı
-		.byte	 0 ;
-aReport:	.text "REPORT"
-		.byte  $F6 ; ˆ
-		.byte	 1 ;
-aRead:		.text "READ"
-		.byte  $F3 ; Û
-		.byte	 2 ;
-aRem:		.text "REM"
-		.byte  $F4 ; Ù
-		.byte  $20 ;
-aRun_0:		.text "RUN"
-		.byte  $F9 ; ˘
-		.byte	 1 ;
-aRad:		.text "RAD"
-		.byte  $B2 ; ≤
-		.byte	 0 ;
-aRestore:	.text "RESTORE"
-		.byte  $F7 ; ˜
-		.byte  $12 ;
-aRight:		.text "RIGHT$("
-		.byte  $C2 ; ¬
-		.byte	 0 ;
-aRnd:		.text "RND"
-		.byte  $B3 ; ≥
-		.byte	 1 ;
-aRenumber_0:	.text "RENUMBER"
-		.byte  $CC ; Ã
-		.byte  $10 ;
-aStep:		.text "STEP"
-		.byte  $88 ; à
-		.byte	 0 ;
-aSave_0:	.text "SAVE"
-		.byte  $CD ; Õ
-		.byte	 2 ;
-aSgn:		.text "SGN"
-		.byte  $B4 ; ¥
-		.byte	 0 ;
-aSin:		.text "SIN"
-		.byte  $B5 ; µ
-		.byte	 0 ;
-aSqr:		.text "SQR"
-		.byte  $B6 ; ∂
-		.byte	 0 ;
-aSpc:		.text "SPC"
-		.byte  $89 ; â
-		.byte	 0 ;
-aStr:		.text "STR$"
-		.byte  $C3 ; √
-		.byte	 0 ;
-aString:	.text "STRING$("
-		.byte  $C4 ; ƒ
-		.byte	 0 ;
-aSound:		.text "SOUND"
-		.byte  $D4 ; ‘
-		.byte	 2 ;
-aStop:		.text "STOP"
-		.byte  $FA ; ˙
-		.byte	 1 ;
-aTan:		.text "TAN"
-		.byte  $B7 ; ∑
-		.byte	 0 ;
-aThen:		.text "THEN"
-		.byte  $8C ; å
-		.byte  $14 ;
-aTo:		.text "TO"
-		.byte  $B8 ; ∏
-		.byte	 0 ;
-aTab_0:		.text "TAB("
-		.byte  $8A ; ä
-		.byte	 0 ;
-aTrace:		.text "TRACE"
-		.byte  $FC ; ¸
-		.byte  $12 ;
-aTime_0:	.text "TIME"
-		.byte  $91 ; ë
-		.byte  $43 ; C
-aTrue:		.text "TRUE"
-		.byte  $B9 ; π
-		.byte	 1 ;
-aUntil:		.text "UNTIL"
-		.byte  $FD ; ˝
-		.byte	 2 ;
-aUsr:		.text "USR"
-		.byte  $BA ; ∫
-		.byte	 0 ;
-aVdu:		.text "VDU"
-		.byte  $EF ; Ô
-		.byte	 2 ;
-aVal:		.text "VAL"
-		.byte  $BB ; ª
-		.byte	 0 ;
-aVpos:		.text "VPOS"
-		.byte  $BC ; º
-		.byte	 1 ;
-aWidth:		.text "WIDTH"
-		.byte  $FE ; ˛
-		.byte	 2 ;
-aPage:		.text "PAGE"
-		.byte  $D0 ; –
-		.byte	 0 ;
-aPtr:		.text "PTR"
-		.byte  $CF ; œ
-		.byte	 0 ;
-aTime:		.text "TIME"
-		.byte  $D1 ; —
-		.byte	 0 ;
-aLomem:		.text "LOMEM"
-		.byte  $D2 ; “
-		.byte	 0 ;
-aHimem:		.text "HIMEM"
-		.byte  $D3 ; ”
-		.byte	 0 ;
 
-
+                .if acornsoft_version
+                .include "pres_bedit.token_table.s65"
+                .endif
 
 toggle_insert_overtype_command:		
 		LDX	#0
@@ -7680,83 +7017,9 @@ locret_AA40:
 		RTS
 ; End of function sub_AA17
 
-
-loc_AA41:				
-		JSR	sub_AA47
-		JMP	loc_9DA8
-
-
-
-sub_AA47:				
-		LDA	#$FF
-		STA	unk_2E
-
-loc_AA4B:				
-		JSR	detokenize_one_line
-		JSR	get_line_height	; get height of	current	line
-					;
-					; Entry:
-					; ?byte_400 = line length
-					;
-					; Exit:
-					; X = line height
-		TXA			; A = line height
-		CLC
-		ADC	unk_2E		; Add to current coordinate
-		CMP	screen_height	; Reached height of screen?
-		BEQ	loc_AA5C	; taken	if reached screen height exactly
-		BCS	loc_AA71	; taken	if gone	past screen height
-
-loc_AA5C:				
-		STA	unk_2E		; store	coordinate
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	current_line_no_lsb
-		STA	byte_2B
-		LDA	current_line_no_msb
-		STA	byte_2C
-		JSR	find_line_by_number ; finds a line, given a line number
-					;
-					; Entry:
-					; byte_2B: line	number MSB
-					; byte_2C: line	number LSB
-					;
-					; Exit:
-					; (byte_2B) points to most suitable line
-		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
-		BNE	loc_AA4B
-
-loc_AA71:				
-		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
-		JMP	save_line_number ; saves line number from program.
-; End of function sub_AA47		;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-
-
-; swap byte_2B with unk_2F, swap byte_2C with unk_30
-
-sub_AA77:				
-					
-		LDX	byte_2B
-		LDY	unk_2F
-		STX	unk_2F
-		STY	byte_2B
-		LDX	byte_2C
-		LDY	unk_30
-		STX	unk_30
-		STY	byte_2C
-		RTS
-; End of function sub_AA77
-
+                .if acornsoft_version
+                .include "pres_bedit.AA41.s65"
+                .endif
 
 delete_key_command:			
 		LDA	unk_11
@@ -11860,5 +11123,7 @@ find_current_line_by_number:
 		STA	byte_2C
 		JMP	find_line_by_number ; finds a line, given a line number
 
+                .if acornsoft_version
                 .fill $c000-*,0
+                .endif
                 

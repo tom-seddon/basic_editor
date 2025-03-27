@@ -1,0 +1,91 @@
+; entry: (byte_3E) points to command line;
+; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
+
+atoi_from_command_line:			
+					
+		LDA	byte_3E
+		STA	byte_C
+		LDA	byte_3F
+		STA	byte_D
+; End of function atoi_from_command_line
+
+
+
+; entry: (unk_C) points	to text;
+; exit:	C set if error,	or (byte_3E,byte_3F) holds value
+
+atoi:					
+		LDX	#0
+		STX	byte_3E
+		STX	byte_3F
+		LDY	#0
+		LDA	(byte_C),Y
+		PHA
+
+atoi_loop:				
+		LDA	(byte_C),Y
+		CMP	#32
+		BEQ	atoi_done		; branch taken if space	char
+		CMP	#13
+		BEQ	atoi_done		; branch taken if CR
+		CMP	#'0'
+		BCC	atoi_error		; branch taken if definitely not digit
+		CMP	#$3A ; ':'
+		BCC	is_digit	; branch taken if digit
+
+atoi_error:					
+		PLA
+		SEC
+		RTS
+
+is_digit:				
+		INX			; count	number of digits
+		CPX	#5		; 5 digits?
+		BEQ	check_most_significant_digit ; ==5 is OK
+		BCC	add_digit	; <5 is	OK
+		BCS	atoi_error		; >5 is	an error
+
+check_most_significant_digit:		
+		PLA
+		PHA
+		CMP	#$34 ; '4'
+		BCS	atoi_error		; error	if most	significant digit >'3' (since 32767 is the largest valid value)
+
+add_digit:				
+		ASL	byte_3E
+		ROL	byte_3F		; value*2
+		LDA	byte_3F
+		PHA
+		LDA	byte_3E
+		ASL	byte_3E
+		ROL	byte_3F		; value*4
+		ASL	byte_3E
+		ROL	byte_3F		; value*8
+; value*8 + value*2 (=value*10)
+		CLC
+		ADC	byte_3E
+		STA	byte_3E
+		PLA
+		ADC	byte_3F
+		STA	byte_3F
+		LDA	($C),Y		; get char (which is known to be a digit)
+		SEC
+		SBC	#'0'            ; -'0' to make it a number
+		CLC
+		ADC	byte_3E
+		STA	byte_3E		; add in to accumulator
+		BCC	done_digit
+		INC	byte_3F		; adjust high byte for carry
+
+done_digit:				
+		INY
+		BNE	atoi_loop
+
+atoi_done:					
+		LDA	byte_3F
+		BMI	atoi_error
+		PLA
+		CLC
+		RTS
+; End of function atoi
+

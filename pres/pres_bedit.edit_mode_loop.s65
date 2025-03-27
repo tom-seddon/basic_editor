@@ -1,0 +1,207 @@
+edit_mode_loop:				
+					
+		LDX	#$FF
+		TXS
+		STX	byte_6A7
+		LDA	byte_6AB
+		BEQ	loc_9AE6
+		JSR	kbflush
+loc_9AE6:				
+		LDX	#0
+		LDY	#$FF
+		LDA	#216		; read length of soft key string
+		JSR	OSBYTE		; flush	pending	soft key expansion
+                .if acornsoft_version
+		STX	byte_3A		; save old value (??)
+                .else
+                stx byte_38
+                .endif
+		JSR	reset_cursor_shape
+                .if acornsoft_version
+		JSR	getch
+                .else
+L864D:
+                jsr is_Electron
+                bcc L8673
+                lda is_insert_mode
+                beq L8673
+                ldx #0
+                ldy #$81
+                lda screen_mode
+                cmp #1
+                bne L8670
+                ldy #$83
+L8670:
+                jsr L87DC
+L8673:
+                jsr LB4EA
+                jsr LBFB2
+                pha
+                jsr is_Electron
+                bcc check_return_key
+                lda is_insert_mode
+                beq check_return_key
+                ldy #$80
+                ldx #1
+                lda screen_mode
+                cmp #1
+                bne L868F
+                ldx #3
+L868F:
+                jsr L87DC
+                .endif
+
+check_return_key:			; return?
+                .if bet2_version
+                pla
+                .endif
+		CMP	#13
+		BNE	check_tab_key
+		LDA	#CMD_return_key
+		BNE	run_command
+
+check_tab_key:				
+		CMP	#9
+		BNE	check_delete_key
+		LDA	#CMD_tab_key
+		BNE	run_command
+
+check_delete_key:			
+		CMP	#$7F ; ''
+                bne run_command
+                LDA	#CMD_delete_key
+
+run_command:				
+					
+		STA	current_command_id
+		LDX	#0
+		LDY	#$FF
+		LDA	#216
+		JSR	OSBYTE
+		TXA
+                .if acornsoft_version
+		ORA	byte_3A		; check	if both	soft key expansion states were 0
+                .else
+                ora byte_38
+                .endif
+		BEQ	loc_9B2C	; branch taken if both were
+		LDA	current_command_id
+		CMP	#$20 ; ' '
+		BCC	loc_9B28
+
+loc_9B25:				
+					
+		JMP	dispatch_command
+
+loc_9B28:				
+		LDA	#$20 ; ' '
+		BNE	set_command	; JMP, in effect
+
+loc_9B2C:				
+		LDX	#$FF		; query	keyboard buffer
+		LDY	#$FF
+		LDA	#128
+		JSR	OSBYTE		; get ADVAL/buffer status (AUG p151)
+		TXA
+		BNE	loc_9B25	; branch taken if any keys in keyboard buffer
+		LDA	current_command_id
+		CMP	#CMD_return_key
+		BNE	loc_9B4E
+		LDX	#$9A
+		JSR	poll_key	; poll state of	key.
+					;
+					; Entry:
+					; X = -ve INKEY	value
+					;
+					; Exit:
+					; X = 0	and Z set if key pressed
+		BNE	loc_9B25
+		LDA	#$D
+
+set_command:				
+					
+		STA	current_command_id
+		JMP	dispatch_command
+
+loc_9B4E:				
+		CMP	#CMD_tab_key
+		BNE	loc_9B5D
+		LDX	#$DA		; I key
+		JSR	poll_key	; poll state of	key.
+					;
+					; Entry:
+					; X = -ve INKEY	value
+					;
+					; Exit:
+					; X = 0	and Z set if key pressed
+		BNE	loc_9B5D	; branch taken if I not	pressed
+		LDA	#9		; set command 9	(think this is some kind of fudge to stop Ctrl+I doing anything)
+		BNE	set_command
+
+                
+loc_9B5D:				
+					
+		LDX	#0		; Don't change anything
+		LDY	#$FF		; Read old value
+		LDA	#202
+		JSR	OSBYTE		; Read keyboard	status byte (AUG p207)
+		STX	byte_38		; bit 3	- 1 if SHIFT pressed
+					; bit 4	- 0 if CAPS LOCK engaged
+					; bit 5	- 0 if SHIFT LOCK engaged
+					; bit 6	- 1 if CTRL pressed
+					; bit 7	- 1 if SHIFT is	to reverse CAPS	LOCK/SHIFT LOCK	status
+
+                .if bet2_version
+                jsr is_Electron
+                lda #$40
+                bcs check_shift_delete_key
+                lda #8
+                .endif
+
+check_shift_delete_key:
+                .if bet2_version
+                and byte_38
+                sta byte_3A
+                .endif
+		LDA	current_command_id
+		CMP	#CMD_delete_key
+		BNE	check_shift_tab_key
+                .if bet2_version
+                lda byte_3A
+                .else
+		LDA	#8
+		BIT	byte_38		; Check	SHIFT state
+                .endif
+		BEQ	dispatch_command ; Branch taken	if SHIFT not pressed
+		LDA	#CMD_shift_delete_key
+		STA	current_command_id
+		BNE	dispatch_command ; JMP,	in effect
+
+check_shift_tab_key:			
+		CMP	#CMD_tab_key
+		BNE	dispatch_command
+                .if bet2_version
+                lda byte_3A
+                .else
+		LDA	#8
+		BIT	byte_38		; Check	SHIFT state
+                .endif
+		BEQ	dispatch_command ; Branch taken	if SHIFT not pressed
+		LDA	#CMD_shift_tab_key
+		STA	current_command_id
+
+dispatch_command:			
+					
+		LDA	current_command_id
+		CMP	#$20 ; ' '
+		BCC	execute_non_key_command
+		CMP	#$A0
+		BCS	execute_non_key_command
+		JSR	execute_key_command ; treats command ID	as ASCII char and puts that char into the current line as appropriate.
+		JMP	edit_mode_loop
+
+execute_non_key_command:		
+					
+		JSR	execute_command	; unk_6BD = command to run
+		JMP	edit_mode_loop
+; End of function edit_mode_loop

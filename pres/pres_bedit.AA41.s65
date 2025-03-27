@@ -1,0 +1,74 @@
+loc_AA41:				
+		JSR	sub_AA47
+		JMP	loc_9DA8
+
+sub_AA47:				
+		LDA	#$FF
+		STA	unk_2E
+
+loc_AA4B:				
+		JSR	detokenize_one_line
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+		TXA			; A = line height
+		CLC
+		ADC	unk_2E		; Add to current coordinate
+		CMP	screen_height	; Reached height of screen?
+		BEQ	loc_AA5C	; taken	if reached screen height exactly
+		BCS	loc_AA71	; taken	if gone	past screen height
+
+loc_AA5C:				
+		STA	unk_2E		; store	coordinate
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		BNE	loc_AA4B
+
+loc_AA71:				
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		JMP	save_line_number ; saves line number from program.
+; End of function sub_AA47		;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+
+
+; swap byte_2B with unk_2F, swap byte_2C with unk_30
+
+sub_AA77:				
+					
+		LDX	byte_2B
+		LDY	unk_2F
+		STX	unk_2F
+		STY	byte_2B
+		LDX	byte_2C
+		LDY	unk_30
+		STX	unk_30
+		STY	byte_2C
+		RTS
+; End of function sub_AA77
+

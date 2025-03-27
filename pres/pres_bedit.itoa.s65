@@ -1,0 +1,79 @@
+; Gets string representation of	16-bit number.
+;
+; Entry:
+; Y,X =	value
+;
+; Exit:
+; unk_0	holds digit count
+; unk_1... filled with string
+
+itoa:					
+					
+		LDA	unk_37
+		PHA
+		LDA	byte_38
+		PHA
+		LDA	byte_39
+		PHA
+		LDA	byte_3A
+		PHA
+		STX	unk_37
+		STY	byte_38
+		LDA	#0
+		STA	byte_0
+
+loc_8DCA:				
+		LDA	#0
+		STA	byte_39
+		STA	byte_3A
+		LDX	#$10
+		CLC
+
+loc_8DD3:				
+		ROL	unk_37
+		ROL	byte_38
+		ROL	byte_39
+		ROL	byte_3A
+		SEC
+		LDA	byte_39
+		SBC	#$A
+		TAY
+		LDA	byte_3A
+		SBC	#0
+		BCC	loc_8DEB
+		STY	byte_39
+		STA	byte_3A
+
+loc_8DEB:				
+		DEX
+		BNE	loc_8DD3
+		ROL	unk_37
+		ROL	byte_38
+		LDA	byte_39
+		CLC
+		ADC	#$30 ; '0'
+		LDY	byte_0
+		BEQ	loc_8E02
+
+loc_8DFB:				
+		LDX	byte_0,Y
+		STX	unk_1,Y
+		DEY
+		BNE	loc_8DFB
+
+loc_8E02:				
+		STA	unk_1
+		INC	byte_0
+		LDA	unk_37
+		ORA	byte_38
+		BNE	loc_8DCA
+		PLA
+		STA	byte_3A
+		PLA
+		STA	byte_39
+		PLA
+		STA	byte_38
+		PLA
+		STA	unk_37
+		RTS
+; End of function itoa

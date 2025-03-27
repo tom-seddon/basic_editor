@@ -1,0 +1,134 @@
+; treats command ID as ASCII char and puts that	char into the current line as appropriate.
+
+execute_key_command:			
+		LDA	unk_11
+		BNE	beep
+		JSR	sub_AB1E
+		LDX	byte_400	; X = line length
+		LDA	is_insert_mode	; 0=overtype 1=insert
+		BEQ	loc_9F5C	; branch taken if overtype mode
+		LDA	cursor_offset	; get cursor offset (?)
+		CMP	byte_400	; compare to line length
+		BEQ	loc_9F48
+		BCS	loc_9F58	; branch taken if cursor offset	> line length
+
+loc_9F48:				
+		LDY	byte_400	; get line length
+		BEQ	loc_9F55
+		DEY
+		LDA	$401,Y
+		CMP	#$20 ; ' '
+		BEQ	sub_9F6F
+
+loc_9F55:				
+		INX
+		BNE	loc_9F65
+
+loc_9F58:				
+					
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_9F65
+
+loc_9F5C:				
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	byte_400
+		BEQ	sub_9F6F
+		BCS	loc_9F58
+
+loc_9F65:				
+					
+		CPX	#$FC
+		BCC	sub_9F6F
+; End of function execute_key_command
+
+
+
+
+beep:					
+					
+		LDA	#7
+		JSR	OSWRCH
+		RTS
+; End of function beep
+
+sub_9F6F:				
+					
+		TXA
+		PHA
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		PHA
+		PHA
+		LDA	is_insert_mode	; 0=overtype 1=insert
+		BEQ	store_char	; branch taken if overtype
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	byte_400
+		BEQ	insert		; branch taken if at end of line
+		BCS	store_char	; branch taken if past end of line
+
+insert:					
+		PLA
+		TXA
+		PHA
+		LDX	#$FF
+		STX	byte_C
+		INX
+		STX	byte_E
+		INX
+		TXA
+		JSR	sub_9FB2
+
+store_char:				
+		LDA	current_command_id ; get char to write
+		LDY	cursor_offset	; offset of cursor in detokenized buffer
+		DEY			; make relative	to tex
+		STA	$401,Y		; store
+		LDA	#1
+		STA	byte_6B3
+		PLA
+		TAX
+		PLA
+		TAY
+		PLA
+		STA	byte_400
+		TYA
+		LDY	#0
+		INC	cursor_offset	; advance to next char
+		JSR	sub_A0B1
+		JMP	position_edit_mode_cursor
+; End of function sub_9F6F
+
+
+
+
+sub_9FB2:				
+		PHA
+		LDX	#2
+		JSR	adjust_pointer
+		LDX	#0
+		JSR	adjust_pointer
+; X=0
+		PLA
+		CLC
+		ADC	byte_400	; add line length
+		SEC
+		SBC	cursor_offset	; subtract cursor offset
+		TAY			; LSB of size
+		JMP	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+
+adjust_pointer:				
+		CLC
+		LDA	byte_C,X	; get pointer LSB
+		ADC	#1		; increment
+		CLC
+		ADC	cursor_offset	; +?byte_10
+		STA	byte_C,X	; store
+		LDA	#4
+		STA	byte_D,X	; copying in page 4.
+		RTS
+; End of function sub_9FB2

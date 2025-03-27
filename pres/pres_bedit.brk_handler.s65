@@ -1,0 +1,44 @@
+brk_handler:
+                JSR     clear_5B1_to_600
+                LDY     higher_order_address
+                INY
+                BNE     loc_846C
+                LDY     higher_order_address+1
+                INY
+                BNE     loc_846C
+                LDA     $FE
+                CMP     #1
+                BEQ     loc_846C
+                CMP     #$C0
+                BCC     loc_848A
+
+loc_846C:                               
+                SEI
+                INC     $FD
+                BNE     loc_8473
+                INC     $FE
+
+loc_8473:                               
+                LDY     #0
+
+loc_8475:                               
+                LDA     ($FD),Y
+                CMP     #$20 ; ' '
+                BCC     loc_8483
+		STA	$5B1,Y
+		INY
+		CPY	#$4F ; 'O'
+		BCC	loc_8475
+
+loc_8483:				
+		CLI
+		LDA	#-1
+		STA	byte_15
+		BNE	loc_848F
+
+loc_848A:				
+		LDA	#2
+		JSR	get_error	; A = error code
+
+loc_848F:				
+		JMP	language_entry.loc_814D
