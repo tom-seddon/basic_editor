@@ -4473,102 +4473,11 @@ locret_9AD7:
                 .if acornsoft_version
                 .include "pres_bedit.edit_mode_loop.s65"
                 .endif
+                
 
 
 
 
-
-; poll state of	key.
-;
-; Entry:
-; X = -ve INKEY	value
-;
-; Exit:
-; X = 0	and Z set if key pressed
-
-poll_key:				
-					
-		LDY	#$FF
-		LDA	#129
-		JSR	OSBYTE
-		INX
-		RTS
-; End of function poll_key
-
-
-
-
-make_cursor_invisible:			
-					
-		LDX	#10
-		LDY	#32
-; End of function make_cursor_invisible
-
-
-
-; X = CRTC register
-; Y = value
-
-write_crtc:				
-					
-		PHA			; save A
-		TYA
-		PHA			; save Y
-		TXA
-		TAY			; value	to write = original X
-		LDX	#0		; $FE00	(CRTC register select)
-		LDA	#151		; write	SHEILA
-		JSR	OSBYTE
-		PLA
-		TAY			; value	to write = original Y
-		LDX	#1		; $FE01	(CRTC register value)
-		LDA	#151		; write	SHEILA
-		JSR	OSBYTE
-		PLA
-		RTS
-; End of function write_crtc
-
-
-
-
-reset_cursor_shape:			
-					
-		JSR	get_current_mode_in_x
-		LDA	#0
-		LDY	is_insert_mode	; 0=overtype 1=insert
-		BNE	loc_9BD2
-		LDA	byte_89C1,X
-
-loc_9BD2:				
-		ORA	unk_31
-		TAY
-		LDX	#10
-		JSR	write_crtc
-		JSR	get_current_mode_in_x
-		LDA	is_insert_mode	; 0=overtype 1=insert
-		BNE	loc_9BE6
-		LDY	byte_89C9,X
-		BNE	loc_9BE9
-
-loc_9BE6:				
-		LDY	byte_89D1,X
-
-loc_9BE9:				
-		LDX	#11
-		JMP	write_crtc
-; End of function reset_cursor_shape
-
-
-
-
-get_current_mode_in_x:			
-					
-		LDA	#135
-		JSR	OSBYTE
-		TYA
-		TAX
-		RTS
-; End of function get_current_mode_in_x
 
 
 
