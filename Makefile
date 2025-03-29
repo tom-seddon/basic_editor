@@ -121,14 +121,14 @@ _pres_stuff: _make_output_folders
 .PHONY:_pres_beditor_assemble
 _pres_bedit_assemble: STEM=$(error must specify STEM)
 _pres_bedit_assemble: FLAG=$(error must specify FLAG)
-_pres_bedit_assemble: _TASS:=$(TASS) -Wall --nostart
+_pres_bedit_assemble: _TASS:=64tass -Wall --nostart -q -Wno-implied-reg
 _pres_bedit_assemble:
-	$(_V)$(TASS) "./pres/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+	$(_V)$(_TASS) "./pres/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
-_pres_butils_assemble: _TASS:=$(TASS) --case-sensitive -Wall --nostart
+_pres_butils_assemble: _TASS:=64tass --case-sensitive -Wall --nostart -q
 _pres_butils_assemble:
 	$(_V)$(_TASS) "./pres/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
@@ -138,7 +138,7 @@ _pres_butils_assemble:
 .PHONY:_pres_stuff_2
 _pres_stuff_2: _make_output_folders
 	$(_V)$(PYTHON) "submodules/beeb/bin/convert_ddtmass.py" "./beeb/1/$$.!MAKROM" -o "$(DEST)/butils_conv.s65"
-	$(_V)$(TASS) --case-sensitive -Wall --nostart "$(DEST)/butils_conv.s65" "-o$(DEST)/butils_conv.rom" "-L$(DEST)/butils_conv.lst"
+	$(_V)64tass --case-sensitive -Wall --nostart "$(DEST)/butils_conv.s65" "-o$(DEST)/butils_conv.rom" "-L$(DEST)/butils_conv.lst"
 	$(SHELLCMD) cmp "$(DEST)/butils_conv.rom" "./beeb/1/$$.ELECTRON2"
 
 ##########################################################################

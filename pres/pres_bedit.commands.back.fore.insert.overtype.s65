@@ -1,0 +1,49 @@
+back_command:				
+		LDX	#0		; load colour index (0=background)
+
+set_colour_from_command_line:		
+		LDY	byte_6BE
+		DEY
+		BEQ	loc_BA98
+
+back_command_error:					
+		LDA	#$15
+		JMP	loc_859D
+
+loc_BA98:				
+		LDA	($3E),Y		; get char from	command	line
+		AND	#$DF		; toupper
+
+find_colour_loop:			
+		CMP	colour_chars,Y	; matched colour char?
+		BEQ	got_colour	; taken	if colour found
+		INY			; next colour char
+		CPY	#8		; last colour?
+		BNE	find_colour_loop ; taken if last colour	not yet	reached
+		BEQ	back_command_error		; taken	if last	colour reached
+
+got_colour:				
+		STY	$A,X
+		RTS
+; End of function back_command
+
+fore_command:				
+		LDX	#1		; load colour index (1=foreground)
+		BNE	set_colour_from_command_line ; JMP, in effect
+; End of function fore_command		; set appropriate colour
+
+insert_command:				
+		LDA	#1
+
+loc_BAB1:				
+		STA	is_insert_mode	; 0=overtype 1=insert
+		RTS
+; End of function insert_command
+
+
+
+
+overtype_command:			
+		LDA	#0
+		BEQ	loc_BAB1
+; End of function overtype_command

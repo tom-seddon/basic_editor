@@ -1,0 +1,101 @@
+delete_key_command:			
+		LDA	unk_11
+		BNE	loc_AA97
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		DEX
+		BEQ	locret_AACC
+		DEX
+		CPX	byte_400
+		BCC	loc_AA9A
+
+loc_AA97:				
+		JMP	cursor_left_edit_mode_command
+
+loc_AA9A:				
+		LDX	#-1
+		STX	byte_C
+		DEX
+		STX	byte_E
+		LDA	#1
+		JSR	sub_9FB2
+
+loc_AAA6:				
+		LDA	byte_400
+		PHA
+		DEC	byte_400
+		LDY	byte_400
+		LDA	#$20 ; ' '
+		STA	$401,Y
+		DEC	cursor_offset	; offset of cursor in detokenized buffer
+
+loc_AAB7:				
+		LDA	#1
+		STA	byte_6B3
+		PLA
+		TAX
+		LDY	#0
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		JSR	sub_A0B1
+		JMP	position_edit_mode_cursor
+
+loc_AAC8:				
+					
+		LDA	unk_11
+		BEQ	loc_AACD
+
+locret_AACC:				
+		RTS
+
+loc_AACD:				
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	byte_400
+		BEQ	loc_AAD8
+		BCS	locret_AACC
+		BCC	loc_AADC
+
+loc_AAD8:				
+		INC	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_AAA6
+
+loc_AADC:				
+		LDX	#0
+		STX	byte_C
+		TXA
+		DEX
+		STX	byte_E
+		JSR	sub_9FB2
+		INC	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_AAA6
+
+delete_to_end_of_line_edit_mode_command: 
+		LDA	unk_11
+		BNE	locret_AACC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	byte_400
+		BEQ	loc_AAC8
+		BCS	locret_AACC
+		CLC
+		LDA	#1
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		STA	byte_C
+		DEC	byte_C
+		LDA	#4
+		STA	byte_D
+		SEC
+		LDA	byte_400
+		PHA
+		SBC	cursor_offset	; offset of cursor in detokenized buffer
+		TAY
+		INY
+		LDX	#0
+		LDA	#$20 ; ' '
+		JSR	memset		; Set memory to	value.
+					;
+					; ($C) points to memory	to clear.
+					; X holds number of pages to clear.
+					; Y holds number of bytes to clear in Xth page.
+					; A holds value	to write.
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		DEX
+		STX	byte_400
+		JMP	loc_AAB7

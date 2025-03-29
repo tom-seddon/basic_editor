@@ -1,0 +1,123 @@
+command_table
+                .text "APPEND",0
+		.byte	 9 ;
+		.byte CMD_APPEND
+                .text "BACK",0
+                .byte  $21 ; !
+                .byte CMD_BACK
+                .text "CHANGE",0
+                .byte  $15 ;
+                .byte CMD_CHANGE
+                ;.text "CASE",0,0,CMD_CASE
+                .text "END",0
+                .byte	 0 ;
+                .byte CMD_END
+                .text "EDIT",0
+                .byte	 5 ;
+                .byte CMD_EDIT
+                .text "EXIT",0
+                .byte	 0 ;
+                .byte CMD_EXIT
+                .text "FIND",0
+                .byte	 5 ;
+                .byte CMD_FIND
+                .text "FORE",0
+                .byte  $21 ; !
+                .byte CMD_FORE
+                .text "GOTO",0
+                .byte	 0 ;
+                .byte CMD_GOTO
+                .text "HELP",0
+                .byte	 0 ;
+                .byte CMD_HELP
+command_table_help_column_2:
+                .text "IE",0
+                .byte	 0 ;
+                .byte CMD_IE
+                .text "INFO",0
+                .byte	 0 ;
+                .byte CMD_INFO
+                .text "INSERT",0
+                .byte	 0 ;
+                .byte CMD_INSERT
+                .text "IT",0
+                .byte	 0 ;
+                .byte CMD_IT
+                .text "LOAD",0
+                .byte	 9 ;
+                .byte CMD_LOAD
+                .text "LABEL",0
+                .byte	 0 ;
+                .byte CMD_LABEL
+                .text "MODE",0
+                .byte	 3 ;
+                .byte CMD_MODE
+                .text "NEW",0
+                .byte	 0 ;
+                .byte CMD_NEW
+                .text "NOSCROLL",0
+                .byte	 0 ;
+                .byte CMD_NOSCROLL
+                .text "NUMBER",0
+                .byte	 0 ;
+                .byte CMD_NUMBER
+                ;.text "NOCASE",0,0,CMD_NOCASE
+command_table_help_column_3:
+                .text "OLD",0
+                .byte	 0 ;
+                .byte CMD_OLD
+                .text "OVERTYPE",0
+                .byte	 0 ;
+                .byte CMD_OVERTYPE
+                .text "QCHANGE",0
+                .byte  $15 ;
+                .byte CMD_QCHANGE
+                .text "RENUMBER",0
+                .byte  $45 ; E
+                .byte CMD_RENUMBER
+                .text "RUN",0
+                .byte	 0 ;
+                .byte CMD_RUN
+                .text "SAVE",0
+                .byte	 9 ;
+                .byte CMD_SAVE
+                .text "SCROLL",0
+                .byte	 0 ;
+                .byte CMD_SCROLL
+                .text "TOP",0
+                .byte	 0 ;
+                .byte CMD_TOP
+                .text "TAB",0
+                .byte	 3 ;
+                .byte CMD_TAB
+                .if bet2_version
+                .text "UTILS",0
+                .byte 0
+                .byte CMD_UTILS
+                .text "UPDATE",0
+                .byte 0
+                .byte CMD_UPDATE
+                .endif
+
+                ; .text "ZSAVE",0
+                ; .byte 0
+                ; .byte CMD_ZAUTOSAVE
+                
+                ; .text "ZRUN",0
+                ; .byte 0
+                ; .byte CMD_ZRUN
+
+		.byte  $FF ;
+byte_8C95:
+                .if acornsoft_version
+                .byte $A
+                .else
+                .byte $b
+                .endif        
+					
+byte_8C96:
+                .if acornsoft_version
+                .byte 9
+                .else
+                .byte 10
+                .endif        

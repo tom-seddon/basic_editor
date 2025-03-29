@@ -328,3 +328,14 @@ L87C3:
                 bne L87C3
                 rts
                 .endif
+
+kbflush:				
+					
+		LDX	#0		; Flush	keyboard buffer
+		STX	byte_6AB
+		LDA	#21		; Flush	specific buffer	(AUG p138)
+		JSR	OSBYTE
+		LDA	#216		; Read/write length of soft key	string
+		JSR	osbyte_with_y0	; Cancel any current soft key expansion
+		JMP	clear_escape_condition
+; End of function kbflush

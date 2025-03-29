@@ -1,0 +1,180 @@
+renumber_command:			
+		LDA	#$A
+		STA	unk_6B9
+		TAX
+		LDA	#0
+		STA	unk_6B8
+		LDA	byte_3F
+		BPL	loc_99E8
+		JMP	loc_9A8B
+
+loc_99E8:				
+		LDY	#1
+
+loc_99EA:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_99FD
+		CMP	#$2C ; ','
+		BNE	loc_99FA
+		LDA	#$20 ; ' '
+		STA	($3E),Y
+		BNE	loc_99FD
+
+loc_99FA:				
+		INY
+		BNE	loc_99EA
+
+loc_99FD:				
+		LDA	byte_3E
+		PHA
+		LDA	byte_3F
+		PHA
+		JSR	atoi_from_command_line ; entry:	(byte_3E) points to command line;
+					; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
+		BCC	loc_9A0D
+		LDA	#$B
+		JMP	loc_859D
+
+loc_9A0D:				
+		LDA	byte_3F
+		STA	unk_6B8
+		LDA	byte_3E
+		STA	unk_6B9
+		PLA
+		STA	byte_3F
+		PLA
+		STA	byte_3E
+		LDY	#0
+
+loc_9A1F:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_9A39
+		CMP	#$20 ; ' '
+		BEQ	loc_9A2C
+		INY
+		BNE	loc_9A1F
+
+loc_9A2C:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_9A39
+		CMP	#$20 ; ' '
+		BNE	loc_9A3E
+		INY
+		BNE	loc_9A2C
+
+loc_9A39:				
+		LDX	#$A
+		JMP	loc_9A99
+
+loc_9A3E:				
+		CLC
+		TYA
+		ADC	byte_3E
+		STA	byte_3E
+		PHA
+		BCC	loc_9A49
+		INC	byte_3F
+
+loc_9A49:				
+		LDA	byte_3F
+		PHA
+		JSR	atoi_from_command_line ; entry:	(byte_3E) points to command line;
+					; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
+		BCC	loc_9A56
+		LDA	#$B
+		JMP	loc_859D
+
+loc_9A56:				
+		LDA	byte_3F
+		BEQ	loc_9A5F
+
+loc_9A5A:				
+		LDA	#$26 ; '&'
+		JMP	loc_859D
+
+loc_9A5F:				
+		LDA	byte_3E
+		BEQ	loc_9A5A
+		TAX
+		PLA
+		STA	byte_3F
+		PLA
+		STA	byte_3E
+		LDY	#0
+
+loc_9A6C:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_9A99
+		CMP	#$20 ; ' '
+		BEQ	loc_9A79
+		INY
+		BNE	loc_9A6C
+
+loc_9A79:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_9A99
+		CMP	#$20 ; ' '
+		BNE	loc_9A86
+		INY
+		BNE	loc_9A79
+
+loc_9A86:				
+		LDA	#$C
+		JMP	loc_859D
+
+loc_9A8B:				
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	locret_9AD7
+		JSR	sub_9AAD
+		LDA	byte_39
+		BPL	loc_9AAA
+		LDX	#3
+
+loc_9A99:				
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	locret_9AD7
+		JSR	sub_9AAD
+		LDA	byte_39
+		BPL	loc_9AAA
+		LDA	#$19
+		JMP	loc_859D
+
+loc_9AAA:				
+		JMP	loc_84A7
+
+
+
+sub_9AAD:				
+		LDA	unk_6B8
+		STA	byte_39
+		LDA	unk_6B9
+		STA	byte_3A
+		LDA	oshwm
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_9ABF:				
+		JSR	advance_2b_to_next_line
+		LDY	#1
+		LDA	($2B),Y
+		BMI	locret_9AD7
+		CLC
+		TXA
+		ADC	byte_3A
+		STA	byte_3A
+		BCC	loc_9AD4
+		INC	byte_39
+		BMI	locret_9AD7
+
+loc_9AD4:				
+		JMP	loc_9ABF
+
+locret_9AD7:				
+		RTS
+; End of function sub_9AAD

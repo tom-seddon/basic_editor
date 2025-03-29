@@ -1,0 +1,275 @@
+detokenize_one_line:			
+					
+		LDA	#1
+		STA	byte_C
+		LDA	#4
+		STA	byte_D
+		LDX	#0
+		STX	byte_400
+		STX	byte_6A8
+		INX			; X=1
+		LDY	#$24 ; '$'
+		LDA	#$20 ; ' '
+		JSR	memset		; Clear	$401 - $525
+		LDX	byte_2C		; get MSB of address
+		INX
+		BNE	loc_9C26	; branch taken if MSB of address wasn't $FF
+
+locret_9C25:				
+		RTS
+
+loc_9C26:				
+		JSR	detokenize_line	; detokenize line and store result.
+					;
+					; Entry:
+					; (byte_2B) points to line
+					;
+					; Exit:
+					; $400 = line length
+					; $401... = line text
+					; unk_6A8 incremented if line too long
+		LDA	byte_6A8	; line too long?
+		BEQ	locret_9C25	; branch taken if line not too long
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	#4		; "Line	too long"
+		JMP	loc_859D
+; End of function detokenize_one_line
+
+; detokenize line and store result.
+;
+; Entry:
+; (byte_2B) points to line
+;
+; Exit:
+; $400 = line length
+; $401... = line text
+; unk_6A8 incremented if line too long
+
+detokenize_line:			
+					
+		CLC
+; Point (unk_27) at start of data of current line
+		LDA	byte_2B
+		ADC	#4		; +4 - skip 13,	line MSB, line LSB, line length.
+		STA	byte_27
+		LDA	byte_2C
+		STA	byte_28
+		BCC	loc_9C45
+		INC	byte_28
+
+loc_9C45:				
+		LDA	#0
+		STA	byte_400
+		STA	byte_23		; index	in body	of line
+		STA	byte_25		; not inside quotes
+		LDY	#3		; index	of line	length
+		LDA	(byte_2B),Y	; get total line length
+		SEC
+		SBC	#4		; subtract 4 as	the metadata is	already	considered
+		STA	byte_24		; ?unk_24 = length of body of line
+		BEQ	detokenize_line_done		; branch taken if line is empty
+
+loc_9C59:				
+		LDA	#4
+		STA	byte_F
+		CLC
+		LDA	#1
+		ADC	byte_400
+		STA	byte_E
+		BCC	loc_9C69
+		INC	byte_F
+
+loc_9C69:				
+		LDX	byte_24		; get line length
+		DEX			; -1 to	get index of last byte
+		CPX	byte_23		; compare to current index
+		BCS	loc_9C71	; branch taken if there's still more data to go
+
+detokenize_line_done:					
+		RTS
+
+loc_9C71:				
+		LDA	byte_25		; in string?
+		BEQ	copy_tokenized	; branch taken if not in string
+; point (byte_C) at byte in program
+
+not_token:				
+					
+		LDA	byte_28
+		STA	byte_D
+		LDA	byte_23
+		CLC
+		ADC	byte_27
+		STA	byte_C
+		BCC	copy_whilst_checking_for_quotes
+		INC	byte_D
+
+copy_whilst_checking_for_quotes:	
+		LDY	byte_23
+		LDA	(byte_27),Y	; get next byte
+		CMP	#34            ; quotes?
+		BNE	read_byte
+; toggle 'in quotes' flag
+		LDA	byte_25
+		EOR	#1
+		STA	byte_25
+
+read_byte:				
+		LDY	#1
+		BNE	advance
+
+copy_tokenized:				
+		LDY	byte_23
+		LDA	(byte_27),Y	; get next byte	from line
+		BPL	not_token	; if positive, not a taken
+		CMP	#$8D		; is this a line number?
+		BNE	token		; branch taken if not a	line number
+		TYA
+		CLC
+		ADC	#3		; +3 - skip line number	data
+		BCS	not_token	; if carry set,	assume end of line
+		CMP	byte_24		; past end of line?
+		BCS	not_token	; branch taken if past end of line
+		JSR	decode_line_number ; decode line number	from program.
+					;
+					; Entry:
+					; (unk_27),Y points to 8D token
+					;
+					; Exit:
+					; unk_21.w is line number.
+		LDX	byte_22
+		LDY	byte_21
+		JSR	itoa		; Gets string representation of	16-bit number.
+					;
+					; Entry:
+					; Y,X =	value
+					;
+					; Exit:
+					; unk_0	holds digit count
+					; unk_1... filled with string
+		LDA	#<unk_1
+		STA	byte_C
+		LDA	#>unk_1
+		STA	byte_D
+; Skip 3 bytes (line number data)
+		INC	byte_23
+		INC	byte_23
+		INC	byte_23
+		LDY	byte_0
+		BNE	advance		; JMP, in effect, I think...
+
+token:					
+		STA	byte_26		; ?byte_26 = token being searched for
+		LDA	#<token_table
+		STA	byte_C
+		LDA	#>token_table
+		STA	byte_D
+
+loc_9CD0:				
+		LDY	#0
+
+find_token_value_loop:			
+		LDA	(byte_C),Y	; get next byte	from token table
+		BMI	found_token_value ; branch taken if it's a token value
+		INY
+		BNE	find_token_value_loop
+
+found_token_value:			
+		CMP	byte_26		; is it	the desired token?
+		BEQ	advance		; branch taken if token	found
+		CMP	#$D3		; HIMEM, statement version?
+		BEQ	not_token	; ??? -	branch taken if	so
+		INY			; skip token ID
+		INY			; skip other byte
+; advance (byte_C) to next entry in token table
+		TYA
+		CLC
+		ADC	byte_C
+		STA	byte_C
+		BCC	loc_9CED
+		INC	byte_D
+
+loc_9CED:				
+		BNE	loc_9CD0
+
+advance:				
+					
+		TYA			; get length of	token
+		CLC
+		ADC	byte_400	; add to current length
+		BCS	overflow	; branch taken if line too long...
+		CMP	#$FC
+		BCS	overflow	; branch taken if line too long...
+		STA	byte_400	; store	new current length
+		DEY			; Y = index of last char of token
+		JSR	copy_detokenized_text ;	copy text whilst detokenizing.
+					;
+					; Entry:
+					; (byte_C) points to source text
+					; (byte_E) points to space in dest buffer
+					; Y is index of	last byte in each case (bytes are copied until Y<0)
+		INC	byte_23		; next byte in line
+		JMP	loc_9C59
+
+overflow:				
+					
+		INC	byte_6A8
+		RTS
+
+copy_detokenized_text:			
+					
+		LDA	(byte_C),Y	; copy text whilst detokenizing.
+					;
+					; Entry:
+					; (byte_C) points to source text
+					; (byte_E) points to space in dest buffer
+					; Y is index of	last byte in each case (bytes are copied until Y<0)
+		STA	(byte_E),Y
+		DEY
+		BPL	copy_detokenized_text ;	copy text whilst detokenizing.
+					;
+					; Entry:
+					; (byte_C) points to source text
+					; (byte_E) points to space in dest buffer
+					; Y is index of	last byte in each case (bytes are copied until Y<0)
+		RTS
+; End of function detokenize_line
+
+; decode line number from program.
+;
+; Entry:
+; (unk_27),Y points to 8D token
+;
+; Exit:
+; unk_21.w is line number.
+
+decode_line_number:			
+					
+		INY
+		LDA	(byte_27),Y	; get first line number	byte
+		PHA			; store
+		LDX	#1
+
+decode_line_number_loop:					
+		PLA			; get last byte
+		ROL
+		ROL			; <<2
+		PHA			; save
+		AND	#%11000000
+		INY
+		EOR	(byte_27),Y
+		STA	byte_21,X
+		DEX
+		BPL	decode_line_number_loop
+		PLA
+		RTS
+; End of function decode_line_number
+
+
+

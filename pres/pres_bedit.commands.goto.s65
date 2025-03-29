@@ -1,0 +1,28 @@
+goto_line_command .proc				
+		LDA	byte_3F
+		STA	byte_2B
+		LDA	byte_3E
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#1
+		LDA	($2B),Y
+		BMI	loc_BBB0
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	loc_9DA8
+
+loc_BBB0:				
+		JMP	end_edit_mode_command
+.pend

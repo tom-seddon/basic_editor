@@ -1,0 +1,38 @@
+                ; `validate_mode' is a poor name for this. Pass MODE
+                ; 255 in to set things up for the current mode.
+validate_mode .proc
+                cpy #2
+                beq invalid_mode
+                cpy #5
+                beq invalid_mode
+                cpy #8
+                bcc L81BD
+invalid_mode:
+                ldy #7
+L81BD:
+                sty screen_mode
+                ldx screen_mode
+get_HIMEM_for_mode_X:                   
+                LDY     higher_order_address
+                INY
+                BNE     is_tube
+                LDY     higher_order_address+1
+                INY
+                BEQ     is_not_tube
+
+is_tube:
+                lda #0
+                sta HIMEM+0
+                lda #$80
+                sta HIMEM+1                
+                RTS
+
+is_not_tube:
+                LDA     #133    ;read HIMEM for given MODE
+                JSR     OSBYTE
+                STX     HIMEM
+                STY     HIMEM+1
+                RTS
+; End of function validate_mode
+                .endproc
+                

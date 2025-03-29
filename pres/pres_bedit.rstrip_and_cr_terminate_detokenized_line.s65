@@ -1,0 +1,25 @@
+rstrip_and_cr_terminate_detokenized_line: 
+		LDX	byte_400	; check	line length
+		BEQ	at_end		; taken	if line	empty
+
+find_last_non_space_loop:		
+		LDA	$400,X
+		CMP	#$20 ; ' '
+		BNE	at_end
+		DEX
+		BNE	find_last_non_space_loop
+
+at_end:					
+					
+		LDA	#$D		; CR
+		STA	$401,X		; store	at end of text
+		JSR	sub_B0AC
+		LDX	#$FF
+
+find_cr:				
+		INX
+		LDA	$401,X
+		CMP	#$D
+		BNE	find_cr
+		RTS
+; End of function rstrip_and_cr_terminate_detokenized_line

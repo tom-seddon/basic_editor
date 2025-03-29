@@ -1,0 +1,36 @@
+; entry: (unk_C) points	to input char, (unk_E) points to command table char
+; exit:	C set if matched
+
+compare_cmd_char_to_input_char:		
+		LDY	#0
+
+compare_cmd_char_to_input_char_loop:					
+		LDA	(byte_C),Y	; input	char
+		CMP	#$41 ; 'A'
+		BCC	not_alpha
+		CMP	#$5B ; '['
+		BCS	not_alpha
+		LDA	(byte_E),Y	; command table	char
+		BEQ	didnt_match	; end of command?
+		LDA	(byte_C),Y	; input	char
+		CMP	#$2E ; '.'      ; abbreviated?
+		BNE	loc_8E35
+
+not_alpha:				
+					
+		CPY	#0		; non-alpha at start?
+		BEQ	didnt_match	; if so, didn't match
+		SEC			; otherwise, did match (e.g., "MO6" = "MO.6" = "MODE 6")
+		RTS
+
+loc_8E35:				
+		CMP	(byte_E),Y
+		BNE	didnt_match
+		INY
+		BNE	compare_cmd_char_to_input_char_loop		; input	char
+
+didnt_match:				
+					
+		CLC
+		RTS
+; End of function compare_cmd_char_to_input_char

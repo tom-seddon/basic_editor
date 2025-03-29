@@ -1,0 +1,460 @@
+sub_B0AC:				
+		TSX
+		STX	old_stack_ptr
+		LDA	#1
+		STA	byte_27
+		LDA	#4
+		STA	byte_28
+		JMP	sub_B196
+; End of function sub_B0AC
+
+
+
+
+sub_B0BB:				
+					
+		PHA
+		CLC
+		TYA
+		ADC	byte_27
+		STA	byte_25
+		LDY	#0
+		TYA
+		ADC	byte_28
+		STA	byte_26
+		PLA
+		STA	($27),Y
+
+loc_B0CC:				
+		INY
+		LDA	($25),Y
+		STA	($27),Y
+		CMP	#$D
+		BNE	loc_B0CC
+		RTS
+; End of function sub_B0BB
+
+
+
+
+sub_B0D6:				
+		AND	#$F
+		STA	byte_21
+		STY	byte_22
+
+loc_B0DC:				
+		INY
+		LDA	($27),Y
+		CMP	#$3A ; ':'
+		BCS	loc_B119
+		CMP	#$30 ; '0'
+		BCC	loc_B119
+		AND	#$F
+		PHA
+		LDX	byte_22
+		LDA	byte_21
+		ASL
+		ROL	byte_22
+		BMI	loc_B114
+		ASL
+		ROL	byte_22
+		BMI	loc_B114
+		ADC	byte_21
+		STA	byte_21
+		TXA
+		ADC	byte_22
+		ASL	byte_21
+		ROL
+		BMI	loc_B114
+		BCS	loc_B114
+		STA	byte_22
+		PLA
+		ADC	byte_21
+		STA	byte_21
+		BCC	loc_B0DC
+		INC	byte_22
+		BPL	loc_B0DC
+		PHA
+
+loc_B114:				
+		PLA
+		LDY	#0
+		SEC
+		RTS
+
+loc_B119:				
+		JSR	ensure_4_bytes_spare
+		DEY
+		LDA	#$8D ;-$73 ;	''
+		JSR	sub_B0BB
+		LDA	byte_27
+		ADC	#2
+		STA	byte_25
+		LDA	byte_28
+		ADC	#0
+		STA	byte_26
+
+loc_B12E:				
+		LDA	($27),Y
+		STA	($25),Y
+		DEY
+		BNE	loc_B12E
+		LDY	#3
+		LDA	byte_22
+		ORA	#$40 ; '@'
+		STA	($27),Y
+		DEY
+		LDA	byte_21
+		AND	#$3F ; '?'
+		ORA	#$40 ; '@'
+		STA	($27),Y
+		DEY
+		LDA	byte_21
+		AND	#-$40 ;	'À'
+		STA	byte_21
+		LDA	byte_22
+		AND	#-$40 ;	'À'
+		LSR
+		LSR
+		ORA	byte_21
+		LSR
+		LSR
+		EOR	#$54 ; 'T'
+		STA	($27),Y
+		JSR	increment_27
+		JSR	increment_27
+		JSR	increment_27
+		LDY	#0
+
+clc_then_rts:				
+		CLC
+		RTS
+; End of function sub_B0D6
+
+; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	)
+
+issymchar:				
+		CMP	#$7B ; '{'
+		BCS	clc_then_rts	; branch taken if >'z'
+		CMP	#$5F ; '_'
+		BCS	locret_B17E	; branch taken if >='_' (0x5F='_', 0x60='', 0x61='A', ...)
+		CMP	#$5B ; '['
+		BCS	clc_then_rts	; branch taken if >'Z'
+		CMP	#$41 ; 'A'
+		BCS	locret_B17E	; branch taken if >='A'
+; End of function issymchar
+
+
+
+; sets C if A is a digit char
+
+isdigit:				
+		CMP	#$3A ; ':'      ; >'9'?
+		BCS	clc_then_rts	; branch taken if >'9'
+		CMP	#$30 ; '0'
+
+locret_B17E:				
+		RTS
+; End of function isdigit
+
+
+
+; sets C if A is a number char (0-9 or '.')
+
+isnumchar:				
+		CMP	#$2E ; '.'
+		BNE	isdigit		; sets C if A is a digit char
+		RTS
+; End of function isnumchar
+
+		.byte  $B1 ; ±
+		.byte  $27 ; '
+
+increment_27:				
+		JSR	ensure_1_byte_spare
+		INC	byte_27
+		BNE	locret_B17E
+		INC	byte_28
+		RTS
+; End of function increment_27
+
+
+
+
+fetch_next_byte:			
+		JSR	increment_27
+		LDA	($27),Y
+		RTS
+; End of function fetch_next_byte
+
+sub_B196:				
+		LDY	#0
+		STY	byte_23
+		STY	byte_24
+
+sub_B196_scan_line:				
+		LDA	(byte_27),Y
+		CMP	#$D
+		BEQ	locret_B17E
+		CMP	#$20 ; ' '
+		BNE	check_for_hex
+
+skip_byte:				
+		JSR	increment_27
+		BNE	sub_B196_scan_line
+
+check_for_hex:				
+		CMP	#$26 ; '&'
+		BNE	check_for_string
+
+check_hex_value:			
+		JSR	fetch_next_byte
+		JSR	isdigit		; sets C if A is a digit char
+		BCS	check_hex_value
+		CMP	#$41 ; 'A'
+		BCC	sub_B196_scan_line
+		CMP	#$47 ; 'G'
+		BCC	check_hex_value
+		BCS	sub_B196_scan_line
+
+check_for_string:			
+		CMP	#$22 ; '"'
+		BNE	check_for_colon
+
+loc_B1C5:				
+		JSR	fetch_next_byte
+		CMP	#$22 ; '"'
+		BEQ	skip_byte
+		CMP	#$D
+		BNE	loc_B1C5
+		RTS
+
+check_for_colon:			
+		CMP	#$3A ; ':'
+		BNE	check_for_comma
+		STY	byte_23
+		STY	byte_24
+		BEQ	skip_byte
+
+check_for_comma:			
+		CMP	#$2C ; ','
+		BEQ	skip_byte
+		CMP	#$2A ; '*'
+		BNE	check_for_dot
+		LDA	byte_23
+		BNE	loc_B228
+		RTS
+
+check_for_dot:				
+		CMP	#$2E ; '.'
+		BEQ	got_dot
+		JSR	isdigit		; sets C if A is a digit char
+		BCC	loc_B224
+		LDX	byte_24
+		BEQ	got_dot
+		JSR	sub_B0D6
+		BCC	loc_B22E
+
+got_dot:				
+		LDA	($27),Y
+		JSR	isnumchar	; sets C if A is a number char (0-9 or '.')
+		BCC	loc_B207
+		JSR	increment_27
+		JMP	got_dot
+
+loc_B207:				
+		LDX	#-1
+		STX	byte_23
+		STY	byte_24
+		JMP	sub_B196_scan_line
+
+loc_B210:				
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	)
+		BCC	loc_B228
+
+loc_B215:				
+		LDY	#0
+
+loc_B217:				
+		LDA	(byte_27),Y
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	)
+		BCC	loc_B207
+		JSR	increment_27
+		JMP	loc_B217
+
+loc_B224:				
+		CMP	#$41 ; 'A'
+		BCS	loc_B231
+
+loc_B228:				
+		LDX	#-1
+		STX	byte_23
+		STY	byte_24
+
+loc_B22E:				
+		JMP	skip_byte
+
+loc_B231:				
+		CMP	#'X'
+		BCS	loc_B210	; skip out if >=X, since no tokens start with X, Y or Z
+		LDX	#<token_table
+		STX	byte_25
+		LDX	#>token_table
+		STX	byte_26
+
+loc_B23D:				
+		CMP	(byte_25),Y	; compare to char in table
+		BCC	loc_B217	; taken	if char	in table is less
+		BNE	find_token_byte	; taken	if char	is different
+
+loc_B243:				
+		INY			; next char
+		LDA	(byte_25),Y	; get next char	from table
+		BMI	loc_B27C	; taken	if token value found
+		CMP	(byte_27),Y	; compare to byte in program
+		BEQ	loc_B243	; taken	if chars equal
+		LDA	(byte_27),Y	; get byte from	program
+		CMP	#'.'            ; is it an abbreviation?
+		BEQ	loc_B25D	; taken	if abbreviated
+
+find_token_byte:			
+		INY
+		LDA	(byte_25),Y
+		BPL	find_token_byte
+		CMP	#$FE		; reached WIDTH	in the table?
+		BNE	loc_B26A	; taken	if not WIDTH
+		BCS	loc_B215	; taken	if WIDTH or OSCLI (???)
+
+loc_B25D:				
+		INY
+
+loc_B25E:				
+		LDA	($25),Y
+		BMI	loc_B27C
+		INC	byte_25
+		BNE	loc_B25E
+		INC	byte_26
+		BNE	loc_B25E
+
+loc_B26A:				
+		SEC
+		INY
+		TYA
+		ADC	byte_25
+		STA	byte_25
+		BCC	loc_B275
+		INC	byte_26
+
+loc_B275:				
+		LDY	#0
+		LDA	($27),Y
+		JMP	loc_B23D
+
+loc_B27C:				
+		TAX
+		INY
+		LDA	($25),Y
+		STA	byte_21
+		DEY
+		LSR
+		BCC	loc_B28D
+		LDA	($27),Y
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	)
+		BCS	loc_B215
+
+loc_B28D:				
+		TXA
+		BIT	byte_21
+		BVC	loc_B299
+		LDX	byte_23
+		BNE	loc_B299
+		CLC
+		ADC	#$40 ; '@'
+
+loc_B299:				
+		DEY
+		JSR	sub_B0BB
+		LDY	#0
+		LDX	#-1
+		LDA	byte_21
+		LSR
+		LSR
+		BCC	loc_B2AB
+		STX	byte_23
+		STY	byte_24
+
+loc_B2AB:				
+		LSR
+		BCC	loc_B2B2
+		STY	byte_23
+		STY	byte_24
+
+loc_B2B2:				
+		LSR
+		BCC	loc_B2C6
+		PHA
+		INY
+
+loc_B2B7:				
+		LDA	($27),Y
+		JSR	issymchar	; sets C if A is a valid symbol	char (A-Z, a-z,	0-9, _,	)
+		BCC	loc_B2C4
+		JSR	increment_27
+		JMP	loc_B2B7
+
+loc_B2C4:				
+		DEY
+		PLA
+
+loc_B2C6:				
+		LSR
+		BCC	loc_B2CB
+		STX	byte_24
+
+loc_B2CB:				
+		LSR
+		BCS	locret_B2D1
+		JMP	skip_byte
+
+locret_B2D1:				
+		RTS
+; End of function sub_B196
+
+ensure_1_byte_spare:			
+		PHP
+		PHA
+		LDA	#1
+		BNE	loc_B2DC	; JMP, in effect
+; End of function ensure_1_byte_spare
+
+
+
+
+ensure_4_bytes_spare:			
+		PHP
+		PHA
+		LDA	#4
+
+loc_B2DC:				
+		CLC
+		ADC	byte_27
+		BCS	longjmp
+		CMP	#$FC
+		BEQ	loc_B2E7
+		BCS	longjmp
+
+loc_B2E7:				
+		PLA
+		PLP
+		RTS
+
+longjmp:				
+					
+		LDY	#0
+		LDA	#$D
+		STA	($27),Y
+		STA	byte_6A8
+		LDX	old_stack_ptr
+		TXS
+		RTS
+; End of function ensure_4_bytes_spare

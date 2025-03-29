@@ -1,0 +1,149 @@
+help_command:
+		LDA	#<command_table
+		STA	unk_33
+		LDA	#>command_table
+                STA	unk_34
+
+                lda #<command_table_help_column_2
+                sta byte_35
+                lda #>command_table_help_column_2
+                sta byte_36
+
+                lda #<command_table_help_column_3
+                sta unk_37
+                lda #>command_table_help_column_3
+                sta byte_38
+
+                jsr osnewl
+
+                lda #1
+                sta byte_39
+
+LBAD7:
+                lda byte_39
+                cmp byte_8C95
+                beq LBAE0
+                bcs print_help_footer
+
+LBAE0:
+                ldx #0
+                jsr print_help_column_row
+                ldx #2
+                jsr print_help_column_row
+                ldx #4
+                jsr print_help_column_row
+
+                inc byte_39
+                bne LBAD7
+
+print_help_footer:
+                ldx #<help_footer_begin
+                ldy #>help_footer_begin
+                lda #help_footer_end-help_footer_begin
+                jmp print_n_chars
+
+print_help_column_row:
+                stx unk_32
+                .if acornsoft_version
+                cpx #4
+                .else
+                cpx #0
+                .endif
+                bne x_not_4
+                lda byte_39
+                cmp byte_8C96
+                beq x_not_4
+                bcc x_not_4
+                .if acornsoft_version
+                cmp byte_8C95
+                bne newline
+                .endif
+                rts
+
+x_not_4:
+                lda (unk_33,x)
+                beq end_of_command
+                jsr oswrch
+                jsr inc_help_column_X_ptr
+                bne print_help_column_row
+
+end_of_command:
+                lda #' '
+                jsr oswrch
+                jsr inc_help_column_X_ptr
+                lda (unk_33,x)
+                tay
+                and #$20
+                beq LBB30
+                lda #'c'
+                bne print_single_char_arg
+
+LBB30:
+                tya
+                and #$10
+                beq LBB41
+                ldx #<aS1S2
+                ldy #>aS1S2
+                lda #size(aS1S2)
+                jsr print_n_chars
+                jmp LBB71
+
+LBB41:
+                tya
+                and #$40
+                beq LBB52
+                ldx #<aN1N2
+                ldy #>aN1N2
+                lda #size(aN1N2)
+                jsr print_n_chars
+                jmp LBB71
+
+LBB52:
+                tya
+                and #8
+                beq LBB5F
+                lda #'p'
+print_single_char_arg:
+                jsr oswrch
+                jmp LBB71
+
+LBB5F:
+                tya
+                and #2
+                beq LBB68
+                lda #'n'
+                bne print_single_char_arg
+
+LBB68:
+                tya
+                and #5
+                beq LBB71
+                lda #'s'
+                bne print_single_char_arg
+
+LBB71:
+                ldx unk_32
+                jsr inc_help_column_X_ptr
+                jsr inc_help_column_X_ptr
+                lda #134
+                jsr osbyte
+                cpx #15
+                bcs LBB87
+                ldx #15
+do_gotoxy:
+                jmp gotoxy
+
+LBB87:
+                cpx #25
+                bcs newline
+                ldx #25
+                bne do_gotoxy
+newline:
+                jmp osnewl
+
+inc_help_column_X_ptr:
+                inc unk_33,x
+                bne LBB98
+                inc unk_34,x
+LBB98:
+                rts

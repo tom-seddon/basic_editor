@@ -1,0 +1,237 @@
+sub_A8C0:				
+					
+		LDA	byte_6B3
+		BNE	loc_A8C6
+		RTS
+
+loc_A8C6:				
+		LDA	#0
+		STA	byte_6A8
+		PHA
+
+loc_A8CC:				
+		JSR	rstrip_and_cr_terminate_detokenized_line
+		CLC
+		TXA
+		ADC	#4
+		STA	unk_503
+		LDA	#$D
+		STA	unk_500
+		LDA	current_line_no_lsb
+		STA	unk_501
+		LDA	current_line_no_msb
+		STA	unk_502
+		LDA	#1
+		STA	byte_C
+		LDA	#4
+		STA	byte_D
+		LDA	#4
+		STA	byte_E
+		LDA	#5
+		STA	byte_F
+		LDX	#0
+		LDY	#$FC
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		JMP	loc_A905
+
+loc_A8FF:				
+		LDA	#0
+		STA	byte_6A8
+		PHA
+
+loc_A905:				
+		LDA	#0
+		STA	byte_2B
+		LDA	#5
+		STA	byte_2C
+		JSR	detokenize_line	; detokenize line and store result.
+					;
+					; Entry:
+					; (byte_2B) points to line
+					;
+					; Exit:
+					; $400 = line length
+					; $401... = line text
+					; unk_6A8 incremented if line too long
+		LDA	byte_6A8
+		BEQ	loc_A928
+		LDA	byte_6A7
+		BNE	loc_A91F
+		LDA	#$25 ; '%'      ; "Updates would make line too long"
+		JMP	loc_859D
+
+loc_A91F:				
+		PLA
+		BNE	loc_A929
+		LDA	#1
+		PHA
+		JMP	loc_A8CC
+
+loc_A928:				
+		PLA
+
+loc_A929:				
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#1
+		LDA	($2B),Y
+		CMP	current_line_no_lsb
+		BNE	loc_A943
+		INY
+		LDA	($2B),Y
+		CMP	current_line_no_msb
+		BEQ	loc_A947
+
+loc_A943:				
+		LDX	#-1
+		STX	byte_2C
+
+loc_A947:				
+		LDX	byte_2C
+		INX
+		STX	byte_25
+		LDA	unk_503
+		CPX	#0
+		BEQ	loc_A958
+		SEC
+		LDY	#3
+		SBC	($2B),Y
+
+loc_A958:				
+		STA	byte_27
+		LDA	#0
+		SBC	#0
+		STA	byte_28
+		JSR	find_program
+		JSR	sub_9FF2
+		LDX	current_line_no_msb
+		LDY	current_line_no_lsb
+		INX
+		BNE	loc_A96E
+		INY
+
+loc_A96E:				
+		STX	byte_2C
+		STY	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDA	byte_2C
+		STA	byte_D
+		LDA	byte_2B
+		STA	byte_C
+		CLC
+		ADC	byte_27
+		STA	byte_E
+		LDA	byte_2C
+		ADC	byte_28
+		STA	byte_F
+		SEC
+		LDA	TOP
+		SBC	byte_C
+		TAY
+		LDA	TOP+1
+		SBC	byte_D
+		TAX
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	#0
+		STA	byte_C
+		LDA	#5
+		STA	byte_D
+		LDY	#4
+		LDX	byte_25
+		BNE	loc_A9A6
+		LDY	#0
+
+loc_A9A6:				
+		LDA	$2B,Y
+		STA	byte_E
+		LDA	$2C,Y
+		STA	byte_F
+		LDA	editor_mode_id	; 1=command mode, 2=edit mode
+		CMP	#1
+		BEQ	loc_A9F3
+		LDX	byte_2D
+		LDA	byte_3B
+		ASL
+		TAY
+
+loc_A9BD:				
+		LDA	byte_E
+		STA	byte_2B
+		STA	$6C0,Y
+		INY
+		LDA	byte_F
+		STA	byte_2C
+		STA	$6C0,Y
+		INY
+		DEX
+		BNE	loc_A9BD
+
+loc_A9D0:				
+		TYA
+		LSR
+		CMP	screen_height
+		BEQ	loc_A9D9
+		BCS	loc_A9F3
+
+loc_A9D9:				
+		LDA	$6C1,Y
+		BEQ	loc_A9F3
+		CLC
+		LDA	$6C0,Y
+		ADC	byte_27
+		STA	$6C0,Y
+		INY
+		LDA	$6C0,Y
+		ADC	byte_28
+		STA	$6C0,Y
+		INY
+		BNE	loc_A9D0
+
+loc_A9F3:				
+					
+		LDX	#0
+		LDY	unk_503
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	byte_6A8
+		BEQ	locret_AA05
+		LDA	#$24 ; '$'
+		JMP	loc_859D
+
+locret_AA05:				
+		RTS
+; End of function sub_A8C0

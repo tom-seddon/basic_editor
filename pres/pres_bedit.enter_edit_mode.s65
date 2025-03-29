@@ -1,0 +1,120 @@
+enter_edit_mode:			
+					
+		LDA	#1
+		STA	byte_6AB
+
+loc_9D2D:
+                lda #22
+                jsr oswrch
+                lda screen_mode
+                jsr oswrch
+		JSR	find_program
+		BCC	loc_9D3F
+		JMP	language_entry.loc_814D
+
+loc_9D3F:				
+		JSR	set_palette
+		LDA	#2
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		LDA	#13
+		JSR	OSWRCH
+		LDX	#9		; VDU variable 9 - text	window coordinates, bottom (X) + right (Y) (AUG	p275)
+		LDA	#160		; read VDU variable value (AUG p179)
+		JSR	OSBYTE
+		STX	screen_height	; store	screen height
+		TYA			; get screen width in A
+		SEC
+		SBC	#6		; subtract 6 to	account	for line number	display
+		STA	code_area_width	; store	usable screen width
+		LDX	#9		; set TAB key to produce CHR$9
+		LDA	#219		; Read/write character value returned by pressing TAB key (AUG p222)
+		JSR	osbyte_with_y0
+		JMP	loc_8437
+; End of function enter_edit_mode
+
+
+loc_9D67:				
+		JSR	enter_edit_mode
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	loc_9DA8
+		LDA	byte_50
+		STA	byte_2B
+		LDA	byte_51
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#1
+		LDA	($2B),Y
+		BMI	loc_9DA8
+		LDA	byte_2B
+		STA	byte_6C0
+		LDA	byte_2C
+		STA	byte_6C1
+		JSR	sub_9698
+		BCS	loc_9DA8
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		JSR	sub_9706
+		JSR	cls_and_reset_6c0_to_6ff
+		CLC
+		JSR	sub_9DEA
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JMP	loc_9DE4
+
+loc_9DA8:				
+					
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_9DC9
+		JSR	clear_program
+		JSR	cls_and_reset_6c0_to_6ff
+		LDX	#<empty_program_string
+		LDY	#>empty_program_string
+		LDA	#5
+		JSR	print_n_chars
+		LDX	#$FF
+		STX	byte_6C0
+		STX	byte_6C1
+		STX	byte_2C
+		JMP	loc_9DE4
+
+loc_9DC9:				
+		LDA	current_line_no_msb
+		STA	byte_2C
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		JSR	cls_and_reset_6c0_to_6ff
+		LDA	#0
+		STA	byte_3B
+		CLC
+		JSR	sub_9DEA
+		LDX	#1
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+
+loc_9DE4:				
+		JSR	sub_9FD8
+		JMP	edit_mode_loop

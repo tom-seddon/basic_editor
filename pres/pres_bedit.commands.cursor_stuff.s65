@@ -1,0 +1,300 @@
+cursor_left_edit_mode_command:		
+		JSR	sub_A775
+		BCC	loc_A768
+		LDA	unk_9
+		STA	unk_11
+		LDA	unk_8
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_A7A2
+
+loc_A768:				
+		SEC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		SBC	#1
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		BCS	loc_A7A2
+		DEC	unk_11
+                BEQ	loc_A7A2
+; End of function cursor_left_edit_mode_command
+
+sub_A775: .proc
+					
+		CLC
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		DEX
+		BNE	locret_A783
+		LDA	unk_11
+		BNE	locret_A783
+		JSR	sub_BE98
+		SEC
+
+locret_A783:				
+                RTS
+.pend
+; End of function sub_A775
+
+cursor_right_edit_mode_command:		
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	unk_8
+		BNE	loc_A79C
+		LDA	unk_11
+		CMP	unk_9
+		BNE	loc_A79C
+		JSR	sub_B7A1
+
+loc_A793:				
+					
+		LDX	#0
+		STX	unk_11
+		INX
+		STX	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_A7A2
+
+loc_A79C:				
+					
+		INC	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_A7A2
+		INC	unk_11
+
+loc_A7A2:				
+					
+		JMP	position_edit_mode_cursor
+; End of function cursor_right_edit_mode_command
+
+shift_cursor_left_edit_mode_command:	
+		JSR	cursor_left_edit_mode_command
+		JMP	cursor_left_edit_mode_command
+
+shift_cursor_right_edit_mode_command:	
+		JSR	cursor_right_edit_mode_command
+		JMP	cursor_right_edit_mode_command
+
+ctrl_cursor_left_edit_mode_command:	
+		JSR	sub_A775
+		JMP	loc_A793
+
+
+
+ctrl_cursor_right_edit_mode_command:	
+					
+		JSR	sub_B7A1
+		JMP	loc_A793
+; End of function ctrl_cursor_right_edit_mode_command
+
+sub_A7BD:				
+		CLC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		ADC	code_area_width
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		BCC	locret_A7C9
+		INC	unk_11
+
+locret_A7C9:				
+		RTS
+; End of function sub_A7BD
+
+cursor_down_edit_mode_command:		
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		PHA
+		LDA	unk_11
+		PHA
+		JSR	sub_A7BD
+		SEC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		SBC	unk_8
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	unk_11
+		SBC	unk_9
+		STA	unk_11
+		JSR	sub_A804
+		BCC	loc_A7EA
+		PLA
+		PLA
+		JMP	loc_A834
+
+loc_A7EA:				
+		PLA
+		TAX
+		PLA
+		TAY
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		PHA
+		LDA	unk_11
+		PHA
+		STX	unk_11
+		STY	cursor_offset	; offset of cursor in detokenized buffer
+		JSR	sub_B7A1
+		PLA
+		STA	unk_11
+		PLA
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		JMP	position_edit_mode_cursor
+
+
+
+sub_A804:				
+		SEC
+		LDA	unk_11
+		BMI	locret_A812
+		BEQ	loc_A80D
+		BNE	loc_A811
+
+loc_A80D:				
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		BEQ	locret_A812
+
+loc_A811:				
+		CLC
+
+locret_A812:				
+		RTS
+; End of function sub_A804
+
+sub_A813:				
+		SEC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		SBC	code_area_width
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		BCS	locret_A81F
+		DEC	unk_11
+
+locret_A81F:				
+		RTS
+; End of function sub_A813
+
+
+cursor_up_edit_mode_command:		
+		JSR	sub_A813
+
+loc_A823:
+		JSR	sub_A804
+		BCS	loc_A82B
+		JMP	loc_A7A2
+
+loc_A82B:				
+		JSR	sub_A7BD
+		JSR	sub_BE98
+		JSR	sub_A813
+loc_A834:				
+		CLC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		ADC	unk_8
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	unk_11
+		ADC	unk_9
+		STA	unk_11
+		JMP	position_edit_mode_cursor
+
+ctrl_cursor_up_edit_mode_command:	
+		JSR	sub_AA06
+		LDA	byte_6C0
+		STA	byte_2B
+		LDA	byte_6C1
+		STA	byte_2C
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_A069
+		JMP	loc_A793
+
+ctrl_cursor_down_edit_mode_command:	
+		JSR	sub_AA06
+		LDA	#0
+		STA	byte_2B
+		STA	byte_2C
+		JSR	sub_BA69
+		LDA	$6BF,X
+		STA	byte_2C
+		LDA	$6BE,X
+		STA	byte_2B
+		JSR	sub_BA69
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	sub_9FD8
+
+shift_cursor_up_edit_mode_command:	
+		LDX	byte_6C0
+		LDY	byte_6C1
+		CPX	#0
+		BNE	loc_A88E
+		CPY	oshwm+1
+		BNE	loc_A88E
+		JMP	top_edit_mode_command
+
+loc_A88E:				
+		STX	byte_2B
+		STY	byte_2C
+		JMP	loc_AA41
+
+shift_cursor_down_edit_mode_command:	
+		LDA	#0
+		STA	byte_2B
+		STA	byte_2C
+		JSR	sub_BA69
+		DEX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	loc_9DA8
+
+
+
+position_edit_mode_cursor:		
+					
+		LDY	unk_11
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		BNE	loc_A8AF
+		DEY
+
+loc_A8AF:				
+		DEX
+		JSR	get_line_dimensions ; work out dimensions of line.
+					;
+					; Entry:
+					; X=line length
+					; Y=starting Y
+					;
+					; Exit:
+					; X=line length	MOD screen width
+					; Y=ending Y
+		TXA
+		CLC
+		ADC	#6
+		TAX
+		TYA
+		CLC
+		ADC	byte_3B
+		TAY
+		JMP	gotoxy
+; End of function position_edit_mode_cursor
+                

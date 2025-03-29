@@ -1,0 +1,352 @@
+info_command:				
+                JSR	osnewl
+
+                lda scroll_status
+                bne print_scroll_on
+                ldx #<aScrollOff
+                ldy #>aScrollOff
+                bne print_scroll_status
+
+print_scroll_on:
+                ldx #<aScrollOn
+                ldy #>aScrollOn
+print_scroll_status:
+                lda #size(aScrollOn)
+                .cerror size(aScrollOn)!=size(aScrollOff)
+                jsr print_n_chars
+                jsr osnewl
+
+                lda is_insert_mode
+                bne print_insert_mode
+                ldx #<aOvertypeMode
+                ldy #>aOvertypeMode
+                bne print_insert_status
+print_insert_mode:
+                ldx #<aInsertMode
+                ldy #>aInsertMode
+print_insert_status:
+                lda #size(aInsertMode)
+                .cerror size(aInsertMode)!=size(aOvertypeMode)
+                jsr print_n_chars
+                jsr osnewl
+                
+		LDA	#$87		; get MODE in Y
+		JSR	OSBYTE		; get MODE in Y
+		CPY	#7		; MODE 7?
+		BNE	print_colours
+                cpy screen_mode
+                bne print_colours
+		LDA	background_colour
+		PHA
+		LDA	foreground_colour
+		PHA
+		LDA	#7
+		STA	foreground_colour ; foreground is white
+		LDA	#0
+		STA	background_colour ; background is black
+		JSR	print_colour_scheme
+		PLA
+		STA	foreground_colour
+		PLA
+		STA	background_colour
+		BPL	loc_BC0B
+
+print_colours:				
+					
+		JSR	print_colour_scheme
+
+loc_BC0B:				
+		JSR	OSNEWL
+		JSR	OSNEWL
+		LDX	#<aProgramName
+		LDY	#>aProgramName
+		LDA	#$E
+		JSR	print_n_chars
+		LDA	#2
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		LDX	#<program_name
+		LDY	#>program_name
+		LDA	#$F
+		JSR	print_n_chars
+		JSR	OSNEWL
+		LDX	#<aLastSearch
+		LDY	#>aLastSearch
+		LDA	byte_62
+		BNE	loc_BC37
+		LDA	#$12
+		BNE	loc_BC42
+
+loc_BC37:				
+		LDA	#$E
+		JSR	print_n_chars
+		LDX	#<unk_643
+		LDY	#>unk_643
+		LDA	byte_62
+
+loc_BC42:				
+		JSR	print_n_chars
+		LDA	#1
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		JSR	OSNEWL
+		JSR	OSNEWL
+		LDX	#<aTabValue
+		LDY	#>aTabValue
+		LDA	#$E
+		JSR	print_n_chars
+		LDX	unk_61
+		LDY	#0
+		JSR	sub_BD96
+		JSR	sub_BD83
+		LDX	#<aNo_ofLines
+		LDY	#>aNo_ofLines
+		LDA	#$D
+		JSR	print_n_chars
+		LDA	unk_16
+		BNE	loc_BC94
+		LDX	#0
+		STX	byte_38
+		STX	byte_39
+		STX	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_BC7C:				
+		LDY	#1
+		LDA	($2B),Y
+		BMI	loc_BC8D
+		JSR	advance_2b_to_next_line
+		INC	byte_38
+		BNE	loc_BC8B
+		INC	byte_39
+
+loc_BC8B:				
+		BNE	loc_BC7C
+
+loc_BC8D:				
+		LDX	byte_38
+		LDY	byte_39
+		JSR	sub_BD96
+
+loc_BC94:				
+		JSR	OSNEWL
+		LDA	unk_16
+		BEQ	loc_BC9C
+		RTS
+
+loc_BC9C:				
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_BCA4
+		JMP	loc_BD22
+
+loc_BCA4:				
+		LDX	#<aFirstLine
+		LDY	#>aFirstLine
+		LDA	#$E
+		JSR	print_n_chars
+		JSR	sub_BD8D
+		JSR	sub_BD83
+		LDX	#<aLastLine
+		LDY	#>aLastLine
+		LDA	#$D
+		JSR	print_n_chars
+		LDA	#-1
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#2
+		LDA	($2F),Y
+		TAX
+		DEY
+		LDA	($2F),Y
+		TAY
+		JSR	sub_BD96
+		JSR	OSNEWL
+		LDX	#<aCurrentLine
+		LDY	#>aCurrentLine
+		LDA	#$E
+		JSR	print_n_chars
+		LDX	current_line_no_msb
+		LDY	current_line_no_lsb
+		JSR	sub_BD96
+		JSR	sub_BD83
+		JSR	sub_B37B
+		PHP
+		LDX	#<aMarkedLine
+		LDY	#>aMarkedLine
+		PLP
+		BNE	loc_BCFF
+		LDA	#$D
+		JSR	print_n_chars
+		LDX	unk_4E
+		LDY	unk_4D
+		JSR	sub_BD96
+		JMP	loc_BD04
+
+loc_BCFF:				
+		LDA	#$11
+		JSR	print_n_chars
+
+loc_BD04:				
+		JSR	OSNEWL
+		JSR	OSNEWL
+		LDX	#<aPendingCommands
+		LDY	#>aPendingCommands
+		LDA	byte_40
+		CMP	#$20 ; ' '
+		BNE	loc_BD25
+		LDA	byte_46
+		CMP	#$20 ; ' '
+		BNE	loc_BD25
+		LDA	#$16
+		JSR	print_n_chars
+
+loc_BD1F:				
+		JSR	OSNEWL
+
+loc_BD22:				
+		JMP	OSNEWL
+
+loc_BD25:				
+					
+		LDA	#$12
+		JSR	print_n_chars
+		JSR	OSNEWL
+		LDA	byte_40
+		CMP	#$20 ; ' '
+		BEQ	loc_BD46
+		LDA	byte_43
+		CMP	#$20 ; ' '
+		BEQ	loc_BD46
+		JSR	sub_AD1A
+		BCC	loc_BD46
+		LDX	byte_40
+		LDY	byte_43
+		STX	byte_43
+		STY	byte_40
+
+loc_BD46:				
+					
+		LDA	#0
+		STA	byte_39
+
+loc_BD4A:				
+		LDX	byte_39
+		CPX	#7
+		BCS	loc_BD1F
+		LDA	$40,X
+		CMP	#$20 ; ' '
+		BEQ	loc_BD7B
+		CMP	#$60 ; '`'
+		BCC	loc_BD60
+		SEC
+		SBC	#$20 ; ' '
+		JSR	OSWRCH
+
+loc_BD60:				
+		JSR	OSWRCH
+		LDA	#$20 ; ' '
+		JSR	OSWRCH
+		LDA	$41,X
+		TAY
+		LDA	$42,X
+		TAX
+		JSR	sub_BD96
+		LDX	#3
+		LDA	#$20 ; ' '
+
+loc_BD75:				
+		JSR	OSWRCH
+		DEX
+		BNE	loc_BD75
+
+loc_BD7B:				
+		INC	byte_39
+		INC	byte_39
+		INC	byte_39
+		BNE	loc_BD4A
+; End of function info_command
+
+sub_BD83:				
+					
+		LDA	#$86 ; -$7A 
+		JSR	OSBYTE
+		LDX	#$15
+		JMP	gotoxy
+; End of function sub_BD83
+
+sub_BD8D:				
+		LDY	#2		; offset of line number	MSB
+		LDA	($17),Y		; get line number MSB
+		TAX
+		DEY			; offset of line number	LSB
+		LDA	($17),Y		; get line number LSB
+		TAY
+; End of function sub_BD8D
+
+sub_BD96:				
+					
+		JSR	itoa		; Gets string representation of	16-bit number.
+					;
+					; Entry:
+					; Y,X =	value
+					;
+					; Exit:
+					; unk_0	holds digit count
+					; unk_1... filled with string
+		JMP	print_number	; print	number.
+; End of function sub_BD96		;
+					; Suitable for use with	the result of itoa.
+					;
+					; Entry:
+					; unk_0	= digit	count
+					; unk_1... = digits
+
+print_colour_scheme:			
+					
+		LDA	foreground_colour ; get	foreground colour
+		CLC			; capitalize
+		JSR	print_colour_name
+		LDX	#<aOn
+		LDY	#>aOn
+		LDA	#4
+		JSR	print_n_chars	; print	" on "
+		LDA	background_colour
+		SEC			; don't capitalize
+
+print_colour_name:			
+		PHP
+		STA	byte_3A
+		LDX	#$FF		; index	of current colour name
+		LDY	#0		; offset into table
+
+loc_BDB5:				
+		LDA	colour_names_table,Y ; get next	byte
+		BPL	next_byte	; if +ve, still	current	name
+		INX			; just found new colour	name, so inc X
+		CPX	byte_3A		; is it	the one?
+		BEQ	print_name	; print	if so.
+
+next_byte:				
+		INY
+		BNE	loc_BDB5
+
+print_name:				
+		AND	#$7F		; make printable
+		PLP
+		BCC	print_chars	; capitalize?
+		ORA	#$20 ; ' '      ; toupper
+
+print_chars:				
+					
+		JSR	OSWRCH
+		INY
+		LDA	colour_names_table,Y
+		BPL	print_chars
+		RTS
+; End of function print_colour_scheme

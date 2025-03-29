@@ -1,0 +1,133 @@
+loc_967A:				
+		JSR	sub_9698
+		BCS	loc_9695
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		JSR	sub_9706
+		SEC
+		JSR	sub_9DEA
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JMP	sub_9FD8
+
+loc_9695:				
+		JMP	loc_9DA8
+
+sub_9698:				
+		LDA	byte_6C0
+		STA	byte_27
+		LDA	byte_6C1
+		STA	byte_28
+		CMP	#-1
+		BEQ	loc_96BB
+		LDY	#1
+		LDA	current_line_no_lsb
+		CMP	($27),Y
+		BCS	loc_96B0
+
+loc_96AE:				
+		SEC
+		RTS
+
+loc_96B0:				
+		BNE	loc_96BD
+		INY
+		LDA	current_line_no_msb
+		CMP	($27),Y
+		BCC	loc_96AE
+		BNE	loc_96BD
+
+loc_96BB:				
+		CLC
+		RTS
+
+loc_96BD:				
+		LDX	#$3F ; '?'
+
+loc_96BF:				
+		LDA	$6C0,X
+		STA	$700,X
+		DEX
+		BPL	loc_96BF
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	#0
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		JSR	sub_9706
+		SEC
+		JSR	sub_9DEA
+		LDA	#2
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_BA69
+		TXA
+		LSR
+		CMP	screen_height
+		BEQ	loc_96F7
+		BCS	loc_96F8
+
+loc_96F7:				
+		CLC
+
+loc_96F8:				
+		PHP
+		LDX	#$3F ; '?'
+
+loc_96FB:				
+		LDA	$700,X
+		STA	$6C0,X
+		DEX
+		BPL	loc_96FB
+		PLP
+		RTS
+; End of function sub_9698
+
+sub_9706:				
+		LDA	#0
+		STA	byte_3B
+		LDX	#1
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		RTS
+; End of function sub_9706

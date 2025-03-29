@@ -1,0 +1,47 @@
+; work out dimensions of line.
+;
+; Entry:
+; X=line length
+; Y=starting Y
+;
+; Exit:
+; X=line length	MOD screen width
+; Y=ending Y
+get_line_dimensions: .proc
+					
+		LDA	byte_39
+		PHA
+		LDA	byte_3A
+		PHA
+		STX	byte_39
+		STY	byte_3A
+		LDY	#0
+
+loc_8F5A:				
+		LDA	byte_3A		; get Y
+		BNE	loc_8F65	; taken	if Y not zero
+		LDA	byte_39		; get X
+		CMP	code_area_width	; reached effective screen width?
+		BCC	loc_8F74	; taken	if effective screen width not yet reached.
+
+loc_8F65:				
+		SEC
+		LDA	byte_39		; get X
+		SBC	code_area_width	; subtract effective screen width
+		STA	byte_39		; save X
+		BCS	loc_8F71	; taken	if no borrow
+		DEC	byte_3A		; borrow occurred, so decrement	Y
+
+loc_8F71:				
+		INY
+		BNE	loc_8F5A
+
+loc_8F74:				
+		LDX	byte_39
+		PLA
+		STA	byte_3A
+		PLA
+		STA	byte_39
+                RTS
+                .pend
+; End of function get_line_dimensions
