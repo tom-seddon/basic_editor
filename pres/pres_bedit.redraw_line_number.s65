@@ -1,0 +1,408 @@
+redraw_line_number:			
+		LDA	editor_mode_id	; 1=command mode, 2=edit mode
+		BEQ	locret_A1D8
+		JSR	make_cursor_invisible
+		JSR	goto_start_of_line ; Entry:
+					; byte_3B is Y coordinate.
+		LDA	#0
+		STA	readline_ptr_msb
+; Line command slot 0
+		TAX
+		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; readline_ptr_msb bumped by number of chars printed.
+; Line command slot 3
+		LDX	#3
+		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; readline_ptr_msb bumped by number of chars printed.
+; Line command slot 6
+		LDX	#6
+		JSR	print_line_command_chars ; prints line command chars for the current line, if any.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; readline_ptr_msb bumped by number of chars printed.
+		LDA	readline_ptr_msb
+		BNE	print_post_line_command_padding	; branch taken if any line command chars printed
+		LDX	current_line_no_msb
+		LDY	current_line_no_lsb
+		JSR	itoa		; Gets string representation of	16-bit number.
+					;
+					; Entry:
+					; Y,X =	value
+					;
+					; Exit:
+					; unk_0	holds digit count
+					; unk_1... filled with string
+		SEC
+		LDA	#5
+		SBC	byte_0
+; Right-justify number
+		JSR	print_n_spaces	; prints N spaces.
+					;
+					; Entry:
+					; A = number of	spaces to print	(max 6)
+		JSR	print_number	; print	number.
+					;
+					; Suitable for use with	the result of itoa.
+					;
+					; Entry:
+					; unk_0	= digit	count
+					; unk_1... = digits
+
+print_space_or_marker:			
+		LDX	#12
+		JSR	is_current_line	; checks if the	given line command is set on the current line.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; C set	if command is on current line.
+		LDA	#$20 ; ' '
+		BCC	redraw_line_number_print_char
+		LDA	#$2E ; '.'
+
+redraw_line_number_print_char:				
+		JMP	OSWRCH
+; End of function redraw_line_number
+
+
+
+; Entry:
+; byte_3B is Y coordinate.
+
+goto_start_of_line:			
+		LDX	#0
+		LDY	byte_3B
+		JMP	gotoxy
+; End of function goto_start_of_line
+
+
+
+; prints N spaces.
+;
+; Entry:
+; A = number of	spaces to print	(max 6)
+
+print_n_spaces:				
+					
+		LDX	#<six_spaces_string
+		LDY	#>six_spaces_string
+		JMP	print_n_chars
+; End of function print_n_spaces
+
+
+
+; prints line command chars for	the current line, if any.
+;
+; Entry:
+; current_line_no_lsb,
+; current_line_no_msb =	current	line
+; X = line command slot	ID
+;
+; Exit:
+; readline_ptr_msb bumped by number of chars printed.
+
+print_line_command_chars:		
+					
+		LDA	$40,X		; fetch	control	byte
+		CMP	#$20 ; ' '
+		BEQ	locret_A1D8	; branch taken if no line command here
+		JSR	is_current_line	; checks if the	given line command is set on the current line.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; C set	if command is on current line.
+		BCC	locret_A1D8	; branch taken if no command here
+; If char stored is lower-case, print it in upper case, but twice.
+		CMP	#$60 ; '`'
+		BCC	loc_A1D3
+		SEC
+		SBC	#$20 ; ' '
+		JSR	OSWRCH
+		INC	readline_ptr_msb
+
+loc_A1D3:				
+		JSR	OSWRCH
+		INC	readline_ptr_msb
+
+locret_A1D8:				
+					
+		RTS
+; End of function print_line_command_chars
+
+
+print_post_line_command_padding:	
+		SEC
+		LDA	#5
+		SBC	readline_ptr_msb
+		JSR	print_n_spaces	; prints N spaces.
+					;
+					; Entry:
+					; A = number of	spaces to print	(max 6)
+		JMP	print_space_or_marker
+
+
+
+clear_line_commands:			
+					
+		LDA	#$20 ; ' '
+		STA	byte_40
+		STA	byte_43
+		STA	byte_46
+		RTS
+; End of function clear_line_commands
+
+set_primary_line_command:		
+		LDX	#0
+		JSR	is_line_command_slot_free ; check availability of line command slot.
+					;
+					; Entry:
+					; X = slot ID
+					;
+					; Exit:
+					; C set	if slot	is free.
+		BCS	use_slot
+		LDX	#3
+		JSR	is_line_command_slot_free ; check availability of line command slot.
+					;
+					; Entry:
+					; X = slot ID
+					;
+					; Exit:
+					; C set	if slot	is free.
+
+use_slot:				
+		LDA	current_command_id
+		CLC
+		ADC	#$40		; make letter from command ID -- 'C', 'D' or 'M'
+		LDY	$40,X		; get old command
+		CPY	#$20 ; ' '      ; no command?
+		BEQ	set_line_command ; branch taken	if no command.
+					; just set command if taken.
+		CMP	$40,X		; is this the command that's there already?
+		BNE	set_line_command ; branch taken	if not same command.
+					; overwrite old	command	with new one if	taken.
+		CLC
+		ADC	#$20 ; ' '      ; +$20 to indicate doubling of command
+
+set_line_command:			
+					
+		STA	$40,X		; store	command
+		LDA	current_line_no_lsb
+		STA	$41,X		; store	line no	LSB
+		LDA	current_line_no_msb
+		STA	$42,X		; store	line no	MSB
+
+loc_A216:				
+		JSR	redraw_line_number ; update line number	with new commands
+		JMP	position_edit_mode_cursor
+; End of function set_primary_line_command
+
+; checks if the	given line command is set on the current line.
+;
+; Entry:
+; current_line_no_lsb,
+; current_line_no_msb =	current	line
+; X = line command slot	ID
+;
+; Exit:
+; C set	if command is on current line.
+
+is_current_line:			
+					
+		PHA
+		LDA	current_line_no_lsb
+		CMP	$41,X
+		BNE	loc_A22C
+		LDA	current_line_no_msb
+		CMP	$42,X
+		BNE	loc_A22C
+		SEC
+		BCS	loc_A22D
+
+loc_A22C:				
+					
+		CLC
+
+loc_A22D:				
+		PLA
+
+locret_A22E:				
+					
+		RTS
+; End of function is_current_line
+
+; check	availability of	line command slot.
+;
+; Entry:
+; X = slot ID
+;
+; Exit:
+; C set	if slot	is free.
+
+is_line_command_slot_free:		
+					
+		LDA	$40,X		; get line command flag
+		CMP	#$20 ; ' '      ; is it free?
+		BEQ	locret_A22E	; branch taken if slot free.
+					; return with C	set if taken.
+		JSR	is_current_line	; checks if the	given line command is set on the current line.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; C set	if command is on current line.
+		BCS	locret_A22E	; branch taken if this slot is on the current line.
+					; return with C	set if taken. (can change commands on current line.)
+; slot is not free.
+		CPX	#0		; was it slot ID 0 being checked?
+		CLC			; clear	carry to indicate it isn't free
+		BEQ	locret_A22E	; if it	was slot ID 0, just return with	carry clear
+		JSR	beep		; otherwise, beep
+		JMP	edit_mode_loop
+; End of function is_line_command_slot_free
+
+
+loc_A245:				
+		CLC
+		LDA	current_command_id
+		ADC	#$40 ; '@'
+		STA	byte_46
+		LDA	current_line_no_lsb
+		STA	byte_47
+		LDA	current_line_no_msb
+		STA	byte_48
+		JMP	loc_AC08
+
+loc_A258:				
+		LDX	#0
+		STX	readline_ptr_msb
+		JSR	sub_A280
+		LDX	#3
+		JSR	sub_A280
+		LDX	#6
+		JSR	sub_A280
+		LDX	#$C
+		JSR	is_current_line	; checks if the	given line command is set on the current line.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; C set	if command is on current line.
+		BCC	loc_A276
+		JSR	sub_B358
+		JMP	loc_A216
+
+loc_A276:				
+		LDA	readline_ptr_msb
+		BNE	loc_A216
+		JSR	clear_line_commands
+		JMP	loc_AC08
+
+
+
+sub_A280:				
+		LDA	$40,X
+		CMP	#$20 ; ' '
+		BEQ	locret_A2A0
+		JSR	is_current_line	; checks if the	given line command is set on the current line.
+					;
+					; Entry:
+					; current_line_no_lsb,
+					; current_line_no_msb =	current	line
+					; X = line command slot	ID
+					;
+					; Exit:
+					; C set	if command is on current line.
+		BCC	locret_A2A0
+		CPX	#0
+		BNE	loc_A29A
+		LDX	#3
+
+loc_A291:				
+		LDA	$42,X
+		STA	$3F,X
+		DEX
+		BNE	loc_A291
+		LDX	#3
+
+loc_A29A:				
+		LDA	#$20 ; ' '
+		STA	$40,X
+		INC	readline_ptr_msb
+
+locret_A2A0:				
+		RTS
+; End of function sub_A280
+
+sub_A2A1:				
+					
+		LDA	byte_46
+		CMP	#$54 ; 'T'
+		BNE	loc_A2B1
+		LDY	#1
+		LDA	($17),Y
+		TAX
+		INY
+		LDA	($17),Y
+		TAY
+		RTS
+
+loc_A2B1:				
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		LDA	#-1
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#1
+		LDA	($2F),Y
+		TAX
+		INY
+		LDA	($2F),Y
+		TAY
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		RTS
+; End of function sub_A2A1

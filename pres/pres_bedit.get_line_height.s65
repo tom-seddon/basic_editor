@@ -1,0 +1,34 @@
+; get height of	current	line
+;
+; Entry:
+; ?byte_400 = line length
+;
+; Exit:
+; X = line height
+
+get_line_height:			
+					
+		LDY	#0
+		LDX	byte_400	; get line length
+		JSR	get_line_dimensions ; work out dimensions of line.
+					;
+					; Entry:
+					; X=line length
+					; Y=starting Y
+					;
+					; Exit:
+					; X=line length	MOD screen width
+					; Y=ending Y
+		TXA			; get width
+		BEQ	loc_9ECF	; taken	if it fits exactly
+		INY			; add an extra line, because it	needs it
+
+loc_9ECF:				
+		TYA
+		TAX			; X = line height
+		BNE	locret_9ED4
+		INX			; set height to	1 if line is empty
+
+locret_9ED4:				
+		RTS
+; End of function get_line_height

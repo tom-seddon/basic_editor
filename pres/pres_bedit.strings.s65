@@ -1,0 +1,124 @@
+aSearchString:	.text "  Search string  : "
+aReplaceString:	.text "  Replace string : "
+
+hud_text_begin:
+                .byte 22,7
+                .byte 10
+aTheBasicEditor:
+                .if acornsoft_version
+                .text "The BASIC Editor"
+                .else
+                .text "BASIC Editor & Toolkit"
+                .endif
+                .byte 0
+                .byte 13,10,10
+                .text "Program size"
+                .if acornsoft_version
+                .text " "
+                .endif
+                .text ":",13,10
+                .text "Bytes free  "
+                .if acornsoft_version
+                .text " "
+                .endif
+                .text ":",13,10
+                .text "Screen mode "
+                .if acornsoft_version
+                .text " "
+                .endif
+                .text ":"
+                .if bet2_version
+                .text "  "
+                .endif
+hud_text_end:
+                
+empty_program_string:.byte  $1F	;
+		.byte	 3 ;
+		.byte	 0 ;
+		.byte  $31 ; 1
+		.byte  $30 ; 0
+nur_dlo_string:	.byte	$D 
+		.byte  $4E ; N
+		.byte  $55 ; U
+		.byte  $52 ; R
+		.byte	$D ;
+		.byte  $44 ; D
+		.byte  $4C ; L
+		.byte  $4F ; O
+six_spaces_string:.byte	 $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+		.byte  $20 ;
+byte_89C1:	.byte 7, 7, 7, 7, 7, 7,	7, $12 
+byte_89C9:	.byte 7, 7, 7, 9, 7, 7,	9, $13 
+byte_89D1:	.byte 7, 7, 7, 7, 7, 7,	7, $13 
+colour_chars:	.text "NRGYBMCW"        
+colour_names_table:.byte  $C2 
+					
+aLack:		.text "lack"
+		.byte  $D2
+aEd:		.text "ed"
+		.byte  $C7
+aReen:		.text "reen"
+		.byte  $D9
+aEllow:		.text "ellow"
+		.byte  $C2
+aLue:		.text "lue"
+		.byte  $CD
+aAgenta:	.text "agenta"
+		.byte  $C3
+aYan:		.text "yan"
+		.byte  $D7
+aHite:		.text "hite"
+                .byte  $FF ;
+
+help_footer_begin:
+                .text "n",$D,$A
+                .if acornsoft_version
+		.byte $A
+                .endif
+                .text "Where: p is a program;",13,10
+                .text "       s, s1, s2 are strings;",13,10
+                .text "       n, n1, n2 are numbers;",13,10
+                .text "       c is a colour (N,R,G,Y,B,M,C,W).",$D,$A
+help_footer_end:
+                
+aS1S2:		.text "s1 s2"
+aN1N2:		.text "n1 n2"
+aInsertMode: .text "Insert mode  "
+aOvertypeMode:  .text "Overtype mode"
+aProgramName:	.text "Program name: "
+aScrollOn: .text "Scroll on "
+aScrollOff: .text "Scroll off"
+; aInsertEnd:
+; aScroll: .text "Scroll: "
+; aScrollEnd:
+; aCase: .text "Ignore search case: "
+; aCaseEnd:
+aFirstLine:	.text "First line  : "
+aLastLine:	.text "Last line  : "
+aCurrentLine:	.text "Current line: "
+aMarkedLine:	.text "Marked line: "
+aNone:		.text "None"
+on_off:
+aNo_ofLines:	.text "No.of lines: "
+aPendingCommands:.text "Pending commands: "
+aNone_1:	.text "None"
+aOn:		.text " on "
+aTabValue:	.text "Tab value   : "
+aLastSearch:	.text "Last search : "
+aNone_0:	.text "None"
+be_cmd: .text "BE",0
+                .if acornsoft_version
+                .text " From the pens of Pete Morris & Chris Gibson"
+                .else
+                .text "By Chris Gibson & Pete Morris"
+                .endif
+                .text ". P.S. many thanks Pat!"
+                .if bet2_version
+litub_string:
+                .text 13,"LITUB*"
+                .endif
+                

@@ -1,0 +1,279 @@
+loc_AD39:				
+		LDA	byte_46
+		CMP	#$20 ; ' '
+		BNE	loc_AD44
+		LDA	#$1E
+		JMP	loc_859D
+
+loc_AD44:				
+		LDA	byte_46
+		PHA
+		LDA	byte_47
+		PHA
+		LDA	byte_48
+		PHA
+		JSR	sub_AE78
+		LDA	byte_6C0
+		STA	byte_39
+		LDA	byte_6C1
+		STA	byte_3A
+		LDA	current_command_id
+		CMP	#$6D ; 'm'
+		BNE	loc_AD74
+		LDY	#1
+		LDA	($39),Y
+		CMP	byte_41
+		BEQ	loc_AD6D
+		BCS	loc_AD87
+		BCC	loc_AD74
+
+loc_AD6D:				
+		INY
+		LDA	($39),Y
+		CMP	byte_42
+		BCS	loc_AD87
+
+loc_AD74:				
+		LDY	#1
+		LDA	($39),Y
+		CMP	byte_47
+		BNE	loc_AD87
+		INY
+		LDA	($39),Y
+		CMP	byte_48
+		BNE	loc_AD87
+		LDA	byte_46
+		CMP	#$42 ; 'B'
+
+loc_AD87:				
+		PHP
+		JSR	find_program
+		LDX	#3
+		JSR	sub_AE93
+		LDY	#3
+		LDA	($2B),Y
+		LDX	#2
+		JSR	sub_AE9E
+		LDX	#0
+		JSR	sub_AE93
+		LDA	#0
+		TAX
+		JSR	sub_AE9E
+		SEC
+		LDA	unk_37
+		SBC	byte_35
+		STA	byte_27
+		LDA	byte_38
+		SBC	byte_36
+		STA	byte_28
+		PLA
+		TAY
+		PLA
+		STA	byte_48
+		PLA
+		STA	byte_47
+		PLA
+		STA	byte_46
+		TYA
+		PHA
+		JSR	sub_9FF2
+		STA	unk_34
+		STX	unk_33
+		JSR	sub_AE78
+		LDX	#6
+		JSR	sub_AE93
+		LDA	byte_46
+		CMP	#$42 ; 'B'
+		BNE	loc_ADDA
+		JSR	sub_AEAA
+		LDA	#0
+		BEQ	loc_ADE3
+
+loc_ADDA:				
+		STA	unk_32
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDY	#3
+		LDA	($2B),Y
+
+loc_ADE3:				
+		LDX	#4
+		JSR	sub_AE9E
+		LDA	byte_3A
+		CMP	byte_36
+		BEQ	loc_ADF2
+		BCS	loc_AE0D
+		BCC	loc_ADFA
+
+loc_ADF2:				
+		LDA	byte_39
+		CMP	byte_35
+		BEQ	loc_ADFA
+		BCS	loc_AE0D
+
+loc_ADFA:				
+		LDX	#2
+
+loc_ADFC:				
+		CLC
+		LDA	byte_27
+		ADC	$35,X
+		STA	$35,X
+		LDA	byte_28
+		ADC	$36,X
+		STA	$36,X
+		DEX
+		DEX
+		BPL	loc_ADFC
+
+loc_AE0D:				
+		CLC
+		LDA	byte_39
+		STA	byte_C
+		ADC	byte_27
+		STA	byte_E
+		LDA	byte_3A
+		STA	byte_D
+		ADC	byte_28
+		STA	byte_F
+		SEC
+		LDA	TOP
+		SBC	byte_39
+		TAY
+		LDA	TOP+1
+		SBC	byte_3A
+		TAX
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	byte_35
+		STA	byte_C
+		LDA	byte_36
+		STA	byte_D
+		LDA	byte_39
+		STA	byte_E
+		LDA	byte_3A
+		STA	byte_F
+		LDX	byte_28
+		LDY	byte_27
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	current_command_id
+		CMP	#$6D ; 'm'
+		BNE	loc_AE68
+		LDA	unk_37
+		STA	byte_C
+		LDA	byte_38
+		STA	byte_D
+		LDA	byte_35
+		STA	byte_E
+		LDA	byte_36
+		STA	byte_F
+		SEC
+		LDA	unk_33
+		SBC	unk_37
+		TAY
+		LDA	unk_34
+		SBC	byte_38
+		TAX
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+
+loc_AE68:				
+		JSR	clear_line_commands
+		JSR	sub_8492
+		LDA	unk_32
+		BNE	loc_AE75
+		JSR	sub_8314
+
+loc_AE75:				
+		JMP	loc_AF48
+
+
+
+sub_AE78:				
+		LDX	#$42 ; 'B'
+		LDA	byte_46
+		CMP	#$54 ; 'T'
+		BEQ	loc_AE86
+		CMP	#$45 ; 'E'
+		BNE	locret_AE92
+		LDX	#$41 ; 'A'
+
+loc_AE86:				
+		TXA
+		PHA
+		JSR	sub_A2A1
+		STX	byte_47
+		STY	byte_48
+		PLA
+		STA	byte_46
+
+locret_AE92:				
+		RTS
+; End of function sub_AE78
+
+sub_AE93:				
+		LDY	$41,X
+		STY	byte_2B
+		LDY	$42,X
+		STY	byte_2C
+		JMP	find_line_by_number ; finds a line, given a line number
+; End of function sub_AE93		;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+
+
+
+sub_AE9E:				
+		CLC
+		ADC	byte_2B
+		STA	$35,X
+		LDA	#0
+		ADC	byte_2C
+		STA	$36,X
+
+locret_AEA9:				
+		RTS
+; End of function sub_AE9E
+
+
+
+
+sub_AEAA:				
+		LDA	unk_30
+		STA	unk_32
+		BEQ	locret_AEA9
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+; End of function sub_AEAA

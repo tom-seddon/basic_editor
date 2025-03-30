@@ -1,0 +1,82 @@
+loc_AC08:				
+		JSR	make_cursor_invisible
+		LDA	byte_3B
+		PHA
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDX	#-1
+		STX	byte_3B
+		INX
+		STX	byte_2B
+		STX	byte_2C
+
+loc_AC1D:				
+		INC	byte_3B
+		LDA	byte_3B
+		CMP	screen_height
+		BEQ	loc_AC28
+		BCS	loc_AC5D
+
+loc_AC28:				
+		ASL
+		TAX
+		LDA	$6C0,X
+		CMP	byte_2B
+		BNE	loc_AC38
+		LDA	$6C1,X
+		CMP	byte_2C
+		BEQ	loc_AC1D
+
+loc_AC38:				
+		LDA	$6C0,X
+		STA	byte_2B
+		LDY	$6C1,X
+		STY	byte_2C
+		BEQ	loc_AC5D
+		INY
+		BNE	loc_AC54
+		PLA
+		TAX
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		PHA
+		TXA
+		PHA
+		JMP	loc_AC57
+
+loc_AC54:				
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+
+loc_AC57:				
+		JSR	redraw_line_number
+		JMP	loc_AC1D
+
+loc_AC5D:				
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		PLA
+		STA	byte_3B
+		ASL
+		TAX
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JMP	position_edit_mode_cursor
+
