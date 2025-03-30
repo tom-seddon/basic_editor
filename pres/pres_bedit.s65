@@ -892,6 +892,7 @@ L99E6:
                 .include "pres_bedit.find_line_by_number.s65"
                 .include "pres_bedit.execute_command.s65"
                 .include "pres_bedit.commands.split_statement.s65"
+                .include "pres_bedit.commands.toggle_insert_overtype.s65"
 
                 .endif
 
@@ -4337,54 +4338,9 @@ loc_A2B1:
 
                 .if acornsoft_version
                 .include "pres_bedit.token_table.s65"
+                .include "pres_bedit.commands.toggle_insert_overtype.s65"
                 .endif
 
-toggle_insert_overtype_command:		
-		LDX	#0
-		LDA	is_insert_mode	; 0=overtype 1=insert
-		BNE	loc_A5D9
-		LDX	#1
-
-loc_A5D9:				
-		STX	is_insert_mode	; 0=overtype 1=insert
-		RTS
-; End of function toggle_insert_overtype_command
-
-
-
-
-scroll_command:				
-		LDX	#1
-
-loc_A5DE:				
-		STX	scroll_status	; 1=scroll, 0=noscroll
-		RTS
-; End of function scroll_command
-
-
-noscroll_command:			
-		LDX	#0
-		BEQ	loc_A5DE
-
-background_edit_mode_command:		
-		LDY	#0
-		BEQ	loc_A5EB
-
-foreground_edit_mode_command:		
-		LDY	#1
-
-loc_A5EB:				
-		LDA	$A,Y
-		CLC
-		ADC	#1
-		CMP	#8
-		BCC	loc_A5F7
-		LDA	#0
-
-loc_A5F7:				
-		STA	$A,Y
-		JSR	set_palette
-		RTS
 
 run_or_exit_command:			
 		LDA	#0
