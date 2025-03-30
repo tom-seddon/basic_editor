@@ -1,0 +1,94 @@
+loc_AEB9:				
+		LDA	byte_46
+		CMP	#$20 ; ' '
+		BEQ	loc_AEC4
+		LDA	#$1C
+		JMP	loc_859D
+
+loc_AEC4:				
+		LDA	unk_4D
+		CMP	byte_41
+		BCC	loc_AEE3
+		LDA	unk_4E
+		CMP	byte_42
+		BCC	loc_AEE3
+		LDA	unk_4D
+		CMP	byte_44
+		BCC	loc_AEE0
+		BNE	loc_AEE3
+		LDA	unk_4E
+		CMP	byte_45
+		BEQ	loc_AEE0
+		BCS	loc_AEE3
+
+loc_AEE0:				
+		JSR	sub_B358
+
+loc_AEE3:				
+		LDA	byte_6C0
+		STA	byte_39
+		LDA	byte_6C1
+		STA	byte_3A
+		LDY	#1
+		LDA	($39),Y
+		CMP	byte_41
+		BEQ	loc_AEF8
+		JMP	loc_AEFD
+
+loc_AEF8:				
+		INY
+		LDA	($39),Y
+		CMP	byte_42
+
+loc_AEFD:				
+		PHP
+		JSR	find_program
+		LDX	#3
+		JSR	sub_AE93
+		LDY	#3
+		LDA	($2B),Y
+		LDX	#2
+		JSR	sub_AE9E
+		LDX	#0
+		JSR	sub_AE93
+		JSR	sub_AEAA
+		LDA	unk_37
+		STA	byte_C
+		LDA	byte_38
+		STA	byte_D
+		LDA	byte_2B
+		STA	byte_E
+		LDA	byte_2C
+		STA	byte_F
+		SEC
+		LDA	TOP
+		SBC	unk_37
+		TAY
+		LDA	TOP+1
+		SBC	byte_38
+		TAX
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_AF3D
+		JMP	loc_9DA8
+
+loc_AF3D:				
+		JSR	clear_line_commands
+		LDA	unk_32
+		BNE	loc_AF48
+		PLA
+		JMP	top_edit_mode_command
+
+loc_AF48:				
+		PLP
+		BCC	loc_AF4E
+		JMP	loc_9DA8
+
+loc_AF4E:				
+		JMP	loc_967A

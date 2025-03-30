@@ -1,0 +1,354 @@
+label_command:				
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	#0
+		STA	unk_1E
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_B5C3:				
+		LDY	#1
+		LDA	($2B),Y
+		BMI	loc_B5EC
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	#0
+		STA	byte_6B3
+		JMP	loc_B65A
+
+loc_B5D4:				
+		LDA	byte_6B3
+		BEQ	loc_B5DC
+		JSR	sub_B4A7
+
+loc_B5DC:				
+		LDY	#3
+		CLC
+		LDA	($2B),Y
+		ADC	byte_2B
+		STA	byte_2B
+		BCC	loc_B5E9
+		INC	byte_2C
+
+loc_B5E9:				
+		JMP	loc_B5C3
+
+loc_B5EC:				
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		LDA	unk_1E
+		BNE	locret_B5FB
+		LDA	#$13
+		JMP	loc_859D
+
+locret_B5FB:				
+		RTS
+
+label_edit_mode_command:		
+		LDA	#$13
+		PHA
+		LDA	#<label_command ; $B3 ; -$4D
+		STA	unk_6B1
+		LDA	#>label_command ; $B5 ; -$4B
+		STA	unk_6B2
+		BNE	loc_B618
+
+number_edit_mode_command:		
+		LDA	#$F
+		PHA
+		LDA	#<number_command ; $AB ; -$55
+		STA	unk_6B1
+		LDA	#>number_command ; $B3 ; -$4D
+		STA	unk_6B2
+
+loc_B618:				
+		JSR	is_program_empty ; sets	C if no	program
+		PLA
+		BCC	loc_B621
+		JMP	loc_859D
+
+loc_B621:				
+		LDA	byte_6C0
+		STA	byte_39
+		LDA	byte_6C1
+		STA	byte_3A
+		LDY	#1
+		LDA	($39),Y
+		PHA
+		INY
+		LDA	($39),Y
+		PHA
+		LDA	#1
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		JSR	make_cursor_invisible
+		JSR	unk_6B0
+		LDA	#2
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDA	byte_2B
+		STA	byte_6C0
+		LDA	byte_2C
+		STA	byte_6C1
+		JMP	loc_967A
+
+loc_B65A:				
+		LDA	byte_2B
+		STA	byte_C
+		LDA	byte_2C
+		STA	byte_D
+		LDA	#0
+		STA	byte_E
+		LDA	#5
+		STA	byte_F
+		LDX	#0
+		LDY	#3
+		LDA	($2B),Y
+		TAY
+		INY
+		BNE	loc_B675
+		INX
+
+loc_B675:				
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDY	#0
+		STY	unk_37
+		STY	unk_11
+		INY
+		STY	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	#4
+		STA	unk_1F
+		LDA	#5
+		STA	byte_20
+
+loc_B689:				
+		SEC
+		LDA	unk_503
+		SBC	#7
+		BCC	loc_B695
+		CMP	cursor_offset	; offset of cursor in detokenized buffer
+		BCS	loc_B698
+
+loc_B695:				
+		JMP	loc_B5D4
+
+loc_B698:				
+		LDY	#0
+		LDA	($1F),Y
+		CMP	#$22 ; '"'
+		BNE	loc_B6A6
+		LDA	unk_37
+		EOR	#1
+		STA	unk_37
+
+loc_B6A6:				
+		LDX	unk_37
+		BEQ	loc_B6AD
+
+loc_B6AA:				
+		JMP	loc_B78C
+
+loc_B6AD:				
+		LDA	($1F),Y
+		CMP	#$8d ; -$73
+		BNE	loc_B6AA
+		LDA	unk_1F
+		STA	byte_27
+		LDA	byte_20
+		STA	byte_28
+		LDY	#0
+		JSR	decode_line_number ; decode line number	from program.
+					;
+					; Entry:
+					; (unk_27),Y points to 8D token
+					;
+					; Exit:
+					; unk_21.w is line number.
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		LDA	byte_21
+		STA	byte_2B
+		LDA	byte_22
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JMP	loc_B6DF
+
+loc_B6D4:				
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+
+loc_B6DA:				
+		LDX	#4
+		JMP	loc_B78E
+
+loc_B6DF:				
+		LDY	#1
+		LDA	($2B),Y
+		CMP	byte_21
+		BNE	loc_B6D4
+		INY
+		LDA	($2B),Y
+		CMP	byte_22
+		BNE	loc_B6D4
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		LDY	#4
+
+loc_B6F9:				
+		LDA	($2F),Y
+		CMP	#$20 ; ' '
+		BNE	loc_B703
+		INY
+		JMP	loc_B6F9
+
+loc_B703:				
+		CMP	#$f4
+		BNE	loc_B6DA
+		INY
+
+loc_B708:				
+		LDA	($2F),Y
+		CMP	#$20 ; ' '
+		BNE	loc_B712
+		INY
+		JMP	loc_B708
+
+loc_B712:				
+		CMP	#$40 ; '@'
+		BNE	loc_B6DA
+		LDX	#1
+		CLC
+		TYA
+		LDY	#0
+		ADC	unk_2F
+		STA	unk_2F
+		BCC	loc_B724
+		INC	unk_30
+
+loc_B724:				
+		INY
+		LDA	($2F),Y
+		JSR	sub_B484
+		BCC	loc_B72F
+		INX
+		BNE	loc_B724
+
+loc_B72F:				
+		CPX	#1
+		BEQ	loc_B6DA
+		STX	byte_36
+		SEC
+		LDA	unk_503
+		SBC	#4
+		CLC
+		ADC	byte_36
+		BCC	loc_B745
+		LDA	#$12
+		JMP	loc_859D
+
+loc_B745:				
+		STA	unk_503
+		CLC
+		LDA	unk_1F
+		ADC	#4
+		STA	byte_C
+		LDA	byte_20
+		STA	byte_D
+		STA	byte_F
+		CLC
+		LDA	unk_1F
+		ADC	byte_36
+		STA	byte_E
+		SEC
+		LDA	unk_503
+		SBC	byte_36
+		SBC	cursor_offset	; offset of cursor in detokenized buffer
+		SBC	#2
+		TAY
+		LDX	#0
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	unk_2F
+		STA	byte_C
+		LDA	unk_30
+		STA	byte_D
+		LDA	unk_1F
+		STA	byte_E
+		LDA	byte_20
+		STA	byte_F
+		LDY	byte_36
+		LDX	#0
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDX	byte_36
+		STX	byte_6B3
+		STX	unk_1E
+		BNE	loc_B78E
+
+loc_B78C:				
+		LDX	#1
+
+loc_B78E:				
+		TXA
+		CLC
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		TXA
+		CLC
+		ADC	unk_1F
+		STA	unk_1F
+		BCC	loc_B79E
+		INC	byte_20
+
+loc_B79E:				
+		JMP	loc_B689
