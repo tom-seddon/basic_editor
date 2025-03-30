@@ -1,0 +1,50 @@
+sub_AA06:				
+		LDA	byte_6B3
+		PHA
+		JSR	sub_A8C0
+		PLA
+		BNE	sub_AA17
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+		CPX	byte_2D
+		BEQ	locret_AA40
+; End of function sub_AA06
+
+
+
+
+sub_AA17:				
+		LDA	unk_8
+		PHA
+		LDA	unk_9
+		PHA
+		JSR	sub_A069
+		PLA
+		TAX
+		PLA
+		CPX	unk_9
+		BNE	loc_AA2E
+		CMP	unk_8
+		BNE	loc_AA2E
+		JMP	sub_9F00
+
+loc_AA2E:				
+		LDA	byte_3B
+		PHA
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		SEC
+		JSR	sub_9DEA
+		PLA
+		STA	byte_3B
+
+locret_AA40:				
+		RTS
+; End of function sub_AA17

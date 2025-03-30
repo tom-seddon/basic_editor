@@ -33,13 +33,11 @@ bet2_version=false
                 
 call_other_rom=$bb35
 LBC8B=$bc8b
-;be_help_subject=$abc1
 LBFEE=$bfee
 is_Electron=$bc7a
 LB4EA=$b4ea
 LBFB2=$bfb2
 LBE85=$be85
-;update_command=$acea
 LB249=$b249
                 .endif
                 
@@ -1082,6 +1080,7 @@ LACF5:
                 ldx unk_60
                 cpx #$20
                 bne LACF2
+                lda #$52
                 sta byte_C
                 lda #0
                 sta byte_D
@@ -1097,6 +1096,11 @@ LACF5:
                 lda #$d
                 sta unk_700+$e
                 jmp save_command
+
+                .include "pres_bedit.AA06.s65"
+                .include "pres_bedit.find_first_non_alpha_char.s65"
+                .include "pres_bedit.do_command_line.s65"
+                .include "pres_bedit.memset.s65"
                 
                 .endif
 
@@ -1683,73 +1687,7 @@ error_messages_table:
 
                 .if acornsoft_version
                 .include "pres_bedit.strings.s65"
-                .endif
-                
-; aResetOSWRCH:
-;                 .byte 3          ;printer off
-;                 .byte 6          ;enable VDU drivers
-;                 .byte 4          ;use text cursor
-;                 .byte 26         ;restore default windows
-;                 .byte 12         ;CLS
-;                 .byte 15         ;disable paged mode
-;                 .byte 20         ;reset VDU19 stuff
-;                 .byte 17,7       ;COLOUR7
-;                 .byte 17,128     ;COLOUR128
-; aResetOSWRCHEnd:
-; print_on_off .proc
-;                 pha
-                
-;                 lda #'O'
-;                 jsr oswrch
-
-;                 pla
-;                 beq ff
-
-;                 lda #'n'
-;                 bne print
-
-; ff:
-;                 lda #'f'
-;                 jsr oswrch
-; print:
-;                 jmp oswrch
-; .pend
-do_command_line .proc		
-		JSR	clear_5B1_to_600
-		LDA	#0
-		STA	readline_ptr_lsb
-		LDA	#7
-		STA	readline_ptr_msb
-		LDA	#100
-		JSR	read_line
-		BCC got_command_line
-; ESCAPE was pressed
-
-                ; ldx #$ff        ;FF=shift, FE=ctrl
-                ; jsr poll_key
-                ; beq bye
-                
-		LDA	unk_16
-		BNE do_command_line_done
-		JMP	loc_9D67	; enter	editing	mode
-
-got_command_line:			
-		JSR	parse_command_line
-		JMP	execute_command	; unk_6BD = command to run
-
-do_command_line_done:					
-                RTS
-
-; bye:
-;                 lda #CMD_EXIT
-;                 sta current_command_id
-;                 jmp run_or_exit_command
-                
-                
-; End of function do_command_line
-.pend
-
-                .if acornsoft_version
+                .include "pres_bedit.do_command_line.s65"
                 .include "pres_bedit.command_table.s65"
                 .endif
 
@@ -2000,100 +1938,13 @@ got_command:
                 .if acornsoft_version
                 .include "pres_bedit.itoa.s65"
                 .include "pres_bedit.compare_cmd_char_to_input_char.s65"
+                .include "pres_bedit.find_first_non_alpha_char.s65"
+                .include "pres_bedit.memset.s65"
                 .endif
 
 
 
 
-
-
-find_first_non_alpha_char:		
-		LDY	#0
-
-find_first_non_alpha_char_loop:					
-		LDA	($C),Y
-		CMP	#$41 ; 'A'
-		BCC	locret_8E6B
-		CMP	#$5B ; '['
-		BCC	next_char
-		CMP	#$61 ; 'a'
-		BCC	locret_8E6B
-		CMP	#$7B ; '{'
-		BCS	locret_8E6B
-		EOR	#$20 ; ' '
-		STA	($C),Y
-
-next_char:				
-		INY
-		BNE	find_first_non_alpha_char_loop		; don't think Y is ever supposed to get to 0 again...
-; End of function find_first_non_alpha_char
-
-
-
-
-toggle_case:				
-		CMP	#$41 ; 'A'
-		BCC	locret_8E6B
-		CMP	#$5B ; '['
-		BCC	loc_8E69
-		CMP	#$61 ; 'a'
-		BCC	locret_8E6B
-		CMP	#$7B ; '{'
-		BCS	locret_8E6B
-
-loc_8E69:				
-		EOR	#$20 ; ' '
-
-locret_8E6B:				
-					
-		RTS
-; End of function toggle_case
-
-
-
-; Set memory to	value.
-;
-; ($C) points to memory	to clear.
-; X holds number of pages to clear.
-; Y holds number of bytes to clear in Xth page.
-; A holds value	to write.
-
-memset:.proc
-					
-		STA	byte_3A
-		TYA
-		PHA			; save old Y
-		LDA	byte_3A
-		LDY	#0
-		CPX	#0
-		BEQ	fill_last_page
-
-fill_pages_loop:			
-		STA	($C),Y		; write	byte
-		INY			; next byte...
-		BNE	fill_pages_loop	; do a whole page
-		INC	byte_D		; next page
-		DEX			; done all pages?
-		BNE	fill_pages_loop	; taken	if not all pages done yet
-
-fill_last_page:				
-		TAY			; Y = value to store
-		PLA			; get original Y back
-		BEQ	memset_done		; if 0 bytes to	fill in	last page, done
-		TAX			; X = #	bytes to fill in last page
-		TYA			; A = value to store
-		LDY	#0
-
-fill_last_page_loop:			
-		STA	($C),Y		; write	byte
-		INY			; next byte...
-		DEX			; done all bytes?
-		BNE	fill_last_page_loop ; taken if not all bytes done yet
-
-memset_done:					
-                RTS
-.pend
-; End of function memset
 
 
 
@@ -3278,60 +3129,7 @@ locret_A16C:
                 .include "pres_bedit.commands.toggle_insert_overtype.s65"
                 .include "pres_bedit.commands.cursor_stuff.s65"
                 .include "pres_bedit.A8C0.s65"
-                .endif
-
-sub_AA06:				
-		LDA	byte_6B3
-		PHA
-		JSR	sub_A8C0
-		PLA
-		BNE	sub_AA17
-		JSR	get_line_height	; get height of	current	line
-					;
-					; Entry:
-					; ?byte_400 = line length
-					;
-					; Exit:
-					; X = line height
-		CPX	byte_2D
-		BEQ	locret_AA40
-; End of function sub_AA06
-
-
-
-
-sub_AA17:				
-		LDA	unk_8
-		PHA
-		LDA	unk_9
-		PHA
-		JSR	sub_A069
-		PLA
-		TAX
-		PLA
-		CPX	unk_9
-		BNE	loc_AA2E
-		CMP	unk_8
-		BNE	loc_AA2E
-		JMP	sub_9F00
-
-loc_AA2E:				
-		LDA	byte_3B
-		PHA
-		LDA	current_line_no_lsb
-		STA	byte_2B
-		LDA	current_line_no_msb
-		STA	byte_2C
-		SEC
-		JSR	sub_9DEA
-		PLA
-		STA	byte_3B
-
-locret_AA40:				
-		RTS
-; End of function sub_AA17
-
-                .if acornsoft_version
+                .include "pres_bedit.AA06.s65"
                 .include "pres_bedit.AA41.s65"
                 .include "pres_bedit.commands.delete_stuff.s65"
                 .include "pres_bedit.AB1E.s65"
@@ -3926,7 +3724,6 @@ loc_B476:
 loc_B47E:				
 		JSR	advance_2b_to_next_line
 		JMP	loc_B3BB
-
 
 
 sub_B484:				

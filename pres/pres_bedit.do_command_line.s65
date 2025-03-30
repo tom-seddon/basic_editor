@@ -1,0 +1,27 @@
+do_command_line .proc		
+		JSR	clear_5B1_to_600
+		LDA	#0
+		STA	readline_ptr_lsb
+		LDA	#7
+		STA	readline_ptr_msb
+		LDA	#100
+		JSR	read_line
+		BCC got_command_line
+; ESCAPE was pressed
+
+                ; ldx #$ff        ;FF=shift, FE=ctrl
+                ; jsr poll_key
+                ; beq bye
+                
+		LDA	unk_16
+		BNE do_command_line_done
+		JMP	loc_9D67	; enter	editing	mode
+
+got_command_line:			
+		JSR	parse_command_line
+		JMP	execute_command	; unk_6BD = command to run
+
+do_command_line_done:					
+                RTS
+; End of function do_command_line
+.pend

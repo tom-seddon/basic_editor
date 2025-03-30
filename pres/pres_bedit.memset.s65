@@ -1,0 +1,43 @@
+; Set memory to	value.
+;
+; ($C) points to memory	to clear.
+; X holds number of pages to clear.
+; Y holds number of bytes to clear in Xth page.
+; A holds value	to write.
+
+memset:.proc
+					
+		STA	byte_3A
+		TYA
+		PHA			; save old Y
+		LDA	byte_3A
+		LDY	#0
+		CPX	#0
+		BEQ	fill_last_page
+
+fill_pages_loop:			
+		STA	($C),Y		; write	byte
+		INY			; next byte...
+		BNE	fill_pages_loop	; do a whole page
+		INC	byte_D		; next page
+		DEX			; done all pages?
+		BNE	fill_pages_loop	; taken	if not all pages done yet
+
+fill_last_page:				
+		TAY			; Y = value to store
+		PLA			; get original Y back
+		BEQ	memset_done		; if 0 bytes to	fill in	last page, done
+		TAX			; X = #	bytes to fill in last page
+		TYA			; A = value to store
+		LDY	#0
+
+fill_last_page_loop:			
+		STA	($C),Y		; write	byte
+		INY			; next byte...
+		DEX			; done all bytes?
+		BNE	fill_last_page_loop ; taken if not all bytes done yet
+
+memset_done:					
+                RTS
+.pend
+; End of function memset

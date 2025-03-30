@@ -1,0 +1,41 @@
+find_first_non_alpha_char:		
+		LDY	#0
+
+find_first_non_alpha_char_loop:					
+		LDA	($C),Y
+		CMP	#$41 ; 'A'
+		BCC	locret_8E6B
+		CMP	#$5B ; '['
+		BCC	next_char
+		CMP	#$61 ; 'a'
+		BCC	locret_8E6B
+		CMP	#$7B ; '{'
+		BCS	locret_8E6B
+		EOR	#$20 ; ' '
+		STA	($C),Y
+
+next_char:				
+		INY
+		BNE	find_first_non_alpha_char_loop		; don't think Y is ever supposed to get to 0 again...
+; End of function find_first_non_alpha_char
+
+
+
+
+toggle_case:				
+		CMP	#$41 ; 'A'
+		BCC	locret_8E6B
+		CMP	#$5B ; '['
+		BCC	loc_8E69
+		CMP	#$61 ; 'a'
+		BCC	locret_8E6B
+		CMP	#$7B ; '{'
+		BCS	locret_8E6B
+
+loc_8E69:				
+		EOR	#$20 ; ' '
+
+locret_8E6B:				
+					
+		RTS
+; End of function toggle_case
