@@ -28,20 +28,6 @@ bet2_version=false
 
 ;-------------------------------------------------------------------------
 
-                .if bet2_version
-; bodge region
-                
-call_other_rom=$bb35
-;LBFEE=$bfee
-;LBFB2=$bfb2
-LBE85=$be85
-;error_messages_table=$ffff
-;LBFE8=$bfe8
-;get_error=$ffff
-                .endif
-                
-;-------------------------------------------------------------------------
-
 *=0
                 .dsection zp
                 .cerror *>$8f,"zp overflow"
@@ -352,7 +338,7 @@ L87DC:
                 adc unk_11
                 tay
                 lda #1
-                jsr LBE85
+                jsr print_n_chars
                 jmp position_edit_mode_cursor
 
                 .include "pres_bedit.967A.s65"
@@ -1187,7 +1173,7 @@ LBA74:
                 .include "pres_bedit.commands.mode.s65"
                 .include "pres_bedit.memmove.s65"
 
-LBB35:
+call_other_rom:
                 tay
                 ldx #0
 LBB38:
