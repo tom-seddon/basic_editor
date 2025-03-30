@@ -3,6 +3,12 @@ enter_edit_mode:
 		LDA	#1
 		STA	byte_6AB
 
+                .if bet2_version
+L9717:
+                lda #$a
+                jmp call_other_rom
+                .endif
+
 loc_9D2D:
                 lda #22
                 jsr oswrch
@@ -26,9 +32,16 @@ loc_9D3F:
 		SEC
 		SBC	#6		; subtract 6 to	account	for line number	display
 		STA	code_area_width	; store	usable screen width
+                .if bet2_version
+                jsr is_Electron
+                bcs L9758
+                .endif
 		LDX	#9		; set TAB key to produce CHR$9
 		LDA	#219		; Read/write character value returned by pressing TAB key (AUG p222)
 		JSR	osbyte_with_y0
+                .if bet2_version
+L9758:
+                .endif
 		JMP	loc_8437
 ; End of function enter_edit_mode
 

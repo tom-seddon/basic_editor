@@ -1,0 +1,168 @@
+sub_9FD8:				
+		JSR	sub_A069
+		LDX	#1
+		STX	cursor_offset	; offset of cursor in detokenized buffer
+		DEX
+		STX	unk_11
+		LDX	#6
+		LDY	byte_3B
+		JMP	gotoxy
+; End of function sub_9FD8
+
+
+
+; sets C if no program
+
+is_program_empty:			
+					
+		CLC
+		LDY	#1
+		LDA	(oshwm),Y
+		BPL	locret_9FF1
+		SEC
+
+locret_9FF1:				
+		RTS
+; End of function is_program_empty
+
+sub_9FF2:				
+		CLC
+		LDA	TOP
+		ADC	byte_27
+		TAX
+		LDA	TOP+1
+		ADC	byte_28
+		CMP	HIMEM+1
+		BCC	locret_A00D
+		BEQ	loc_A007
+
+loc_A002:				
+		LDA	#5
+		JMP	loc_859D
+
+loc_A007:				
+		CPX	HIMEM
+		BEQ	locret_A00D
+		BCS	loc_A002
+
+locret_A00D:				
+		RTS
+; End of function sub_9FF2
+
+
+
+
+cls_and_reset_6c0_to_6ff:		
+					
+		LDA	#12     ;cls_and_reset_6c0_to_6ff
+		JSR	OSWRCH
+		LDA	#0
+		LDY	#$3F
+
+loc_A017:				
+		STA	byte_6C0,Y
+		DEY
+		BPL	loc_A017
+		RTS
+; End of function cls_and_reset_6c0_to_6ff
+
+sub_A01E:				
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+
+loc_A021:				
+		STX	byte_2D
+		LDA	#0
+		STA	unk_8
+		STA	unk_9
+
+loc_A029:				
+		LDA	code_area_width
+		CLC
+		ADC	unk_8
+		STA	unk_8
+		BCC	loc_A035
+		INC	unk_9
+
+loc_A035:				
+		DEX
+		BNE	loc_A029
+		RTS
+; End of function sub_A01E
+
+; saves	line number from program.
+;
+; Entry:
+; (byte_2b) points to current line
+;
+; Exit:
+; current_line_no_lsb, current_line_no_msb = the line number
+
+save_line_number:			
+					
+		LDY	#1
+		LDA	(byte_2B),Y
+		STA	current_line_no_lsb
+		INY
+		LDA	(byte_2B),Y
+		STA	current_line_no_msb
+		RTS
+; End of function save_line_number
+
+
+
+; gets pointer to line visible on screen.
+;
+; Entry:
+; X = screen line number * 2 + 1
+;
+; Exit:
+; (byte_2B) points to BASIC line
+; X decremented
+
+get_line_ptr:				
+					
+		LDA	$6C0,X
+		STA	byte_2C
+		DEX
+		LDA	$6C0,X
+		STA	byte_2B
+		RTS
+; End of function get_line_ptr
+
+; determines whether current line is empty.
+;
+; Entry:
+; detokenized line at $400...
+;
+; Exit:
+; C set	if line	empty.
+
+is_line_empty:				
+					
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	is_not_empty
+		LDY	byte_400
+		BEQ	is_empty
+
+loc_A05B:				
+		LDA	$400,Y
+		CMP	#$20 ; ' '
+		BNE	is_not_empty
+		DEY
+		BNE	loc_A05B
+
+is_empty:				
+		SEC
+		RTS
+
+is_not_empty:				
+					
+		CLC
+		RTS
+; End of function is_line_empty

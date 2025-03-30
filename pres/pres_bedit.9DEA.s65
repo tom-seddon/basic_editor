@@ -1,0 +1,125 @@
+sub_9DEA:				
+					
+		PHP
+		JSR	make_cursor_invisible
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+
+loc_9DF1:				
+		LDY	#1
+		LDA	($2B),Y
+		BMI	loc_9E19
+		JSR	detokenize_one_line
+		JSR	sub_9E5F
+		BCC	loc_9E19
+		PLP
+		PHP
+		BCC	loc_9E09
+		JSR	sub_9F00
+		JMP	loc_9E0C
+
+loc_9E09:				
+		JSR	sub_9E82
+
+loc_9E0C:				
+		CLC
+		LDA	byte_3B
+		ADC	byte_2D
+		STA	byte_3B
+		JSR	advance_2b_to_next_line
+		JMP	loc_9DF1
+
+loc_9E19:				
+		PLP
+		PHP
+		BCC	loc_9E5D
+		LDA	#1
+		STA	byte_C
+		LDA	#4
+		STA	byte_D
+		LDX	#0
+		LDY	#$4F ; 'O'
+		LDA	#$20 ; ' '
+		JSR	memset		; Set memory to	value.
+					;
+					; ($C) points to memory	to clear.
+					; X holds number of pages to clear.
+					; Y holds number of bytes to clear in Xth page.
+					; A holds value	to write.
+
+loc_9E2E:				
+		LDA	byte_3B
+		CMP	screen_height
+		BEQ	loc_9E37
+		BCS	loc_9E5D
+
+loc_9E37:				
+		ASL
+		TAY
+		LDA	$6C1,Y
+		BEQ	loc_9E5D
+		LDX	#0
+		TXA
+		STA	$6C0,Y
+		STA	$6C1,Y
+		LDY	byte_3B
+		JSR	gotoxy
+		CLC
+		LDA	code_area_width
+		ADC	#6
+		LDX	#<unk_401
+		LDY	#>unk_401
+		JSR	print_n_chars
+		INC	byte_3B
+		BNE	loc_9E2E
+
+loc_9E5D:				
+		PLA
+		RTS
+; End of function sub_9DEA
+
+sub_9E5F:				
+					
+		JSR	sub_A01E
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	screen_height
+		SEC
+		SBC	byte_3B
+		CLC
+		ADC	#1
+		CMP	byte_2D
+		BCC	locret_9E81
+		LDA	byte_3B
+		ASL
+		TAY
+		LDA	byte_2B
+		STA	$6C0,Y
+		LDA	byte_2C
+		STA	$6C1,Y
+		SEC
+
+locret_9E81:				
+		RTS
+; End of function sub_9E5F
+
+sub_9E82:				
+					
+		LDA	#1
+		LDX	byte_400
+		LDY	#0
+		JSR	sub_A0B1
+		JMP	redraw_line_number
+; End of function sub_9E82
+

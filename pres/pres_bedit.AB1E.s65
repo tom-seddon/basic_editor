@@ -1,0 +1,145 @@
+sub_AB1E:				
+		LDA	unk_9
+		BNE	locret_AB2D
+		LDA	unk_8
+		CMP	cursor_offset	; offset of cursor in detokenized buffer
+		BEQ	loc_AB3C
+		CMP	byte_400
+		BEQ	loc_AB2E
+
+locret_AB2D:				
+		RTS
+
+loc_AB2E:				
+		LDA	is_insert_mode	; 0=overtype 1=insert
+		BEQ	locret_AB2D
+		LDX	byte_400
+		LDA	$400,X
+		CMP	#$20 ; ' '
+		BEQ	locret_AB2D
+
+loc_AB3C:				
+		LDA	#4
+		STA	byte_D
+		LDA	#7
+		STA	byte_F
+		JSR	sub_ABDB
+		LDA	unk_8
+		PHA
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	screen_height
+		ASL
+		TAX
+		LDA	$6C0,X
+		CMP	byte_2B
+		BNE	loc_AB6A
+		LDA	$6C1,X
+		CMP	byte_2C
+		BNE	loc_AB6A
+		LDA	#1
+		STA	unk_37
+		JSR	sub_B8BD
+
+loc_AB6A:				
+		CLC
+		LDA	byte_3B
+		PHA
+		ADC	byte_2D
+		PHA
+		TAY
+		LDX	#0
+		JSR	gotoxy
+		LDA	#6
+		LDX	#<six_spaces_string
+		LDY	#>six_spaces_string
+		JSR	print_n_chars
+		CLC
+		LDA	unk_8
+		ADC	code_area_width
+		TAX
+		LDA	#0
+		ADC	#0
+		TAY
+		CLC
+		LDA	unk_8
+		ADC	#1
+		JSR	sub_A0B1
+		PLA
+		CMP	screen_height
+		BEQ	loc_ABB0
+		STA	byte_3B
+		INC	byte_3B
+		LDY	current_line_no_lsb
+		LDX	current_line_no_msb
+		INX
+		BNE	loc_ABA8
+		INY
+		BMI	loc_ABB0
+
+loc_ABA8:				
+		STX	byte_2C
+		STY	byte_2B
+		SEC
+		JSR	sub_9DEA
+
+loc_ABB0:				
+		PLA
+		STA	byte_3B
+		ASL
+		TAX
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		CLC
+		PLA
+		ADC	code_area_width
+		STA	unk_8
+		TAX
+		LDA	#0
+		ADC	#0
+		STA	unk_9
+		TAY
+		JSR	get_line_dimensions ; work out dimensions of line.
+					;
+					; Entry:
+					; X=line length
+					; Y=starting Y
+					;
+					; Exit:
+					; X=line length	MOD screen width
+					; Y=ending Y
+		STY	byte_2D
+		LDA	#7
+		STA	byte_D
+		LDA	#4
+		STA	byte_F
+; End of function sub_AB1E
+
+
+
+
+sub_ABDB:				
+		LDY	#0
+		STY	byte_C
+		STY	byte_E
+		LDX	#1
+		JMP	memmove		; move (maybe overlapping) memory regions.
+; End of function sub_ABDB		;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
