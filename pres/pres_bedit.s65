@@ -895,6 +895,7 @@ L99E6:
                 .include "pres_bedit.commands.split_statement.s65"
                 .include "pres_bedit.commands.toggle_insert_overtype.s65"
                 .include "pres_bedit.command_jump_table.s65"
+                .include "pres_bedit.commands.continue_edit_mode.s65"
 
                 .endif
 
@@ -3141,10 +3142,6 @@ clear_escape_condition:
 
                 .if acornsoft_version
                 .include "pres_bedit.command_jump_table.s65"
-                .endif
-                
-
-                .if acornsoft_version
                 .include "pres_bedit.967A.s65"
                 .endif
 
@@ -3235,88 +3232,8 @@ loc_9783:
 		STA	unk_6AA
 		JMP	loc_9720
 
-continue_edit_mode_command:		
-		LDA	byte_62
-		BNE	loc_9794
-		LDA	#$23 ; '#'
-
-loc_9791:				
-		JMP	loc_859D
-
-loc_9794:				
-		JSR	is_program_empty ; sets	C if no	program
-		BCC	loc_979D
-
-loc_9799:				
-		LDA	#8
-		BNE	loc_9791
-
-loc_979D:				
-		LDA	#$43 ; 'C'
-		STA	byte_3E
-		LDA	#6
-		STA	byte_3F
-		LDA	byte_62
-		STA	byte_6BE
-		INC	cursor_offset	; offset of cursor in detokenized buffer
-		BNE	loc_97B0
-		INC	unk_11
-
-loc_97B0:				
-		LDA	unk_11
-		BEQ	loc_97C4
-		BNE	loc_97F0
-
-loc_97B6:				
-		LDY	#0
-		STY	unk_11
-		INY
-		STY	cursor_offset	; offset of cursor in detokenized buffer
-		LDA	($2B),Y
-		BMI	loc_9799
-		JSR	detokenize_one_line
-
-loc_97C4:				
-		JSR	sub_9260
-		BCC	loc_97F0
-		LDA	byte_2B
-		CMP	byte_6C0
-		BNE	loc_97ED
-		LDA	byte_2C
-		CMP	byte_6C1
-		BNE	loc_97ED
-		LDA	byte_6B3
-		BEQ	loc_97EA
-		JSR	sub_AA17
-		LDX	#1
-		JSR	get_line_ptr	; gets pointer to line visible on screen.
-					;
-					; Entry:
-					; X = screen line number * 2 + 1
-					;
-					; Exit:
-					; (byte_2B) points to BASIC line
-					; X decremented
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JSR	sub_A069
-
-loc_97EA:				
-		JMP	position_edit_mode_cursor
-
-loc_97ED:				
-		JMP	loc_9163
-
-loc_97F0:				
-		JSR	advance_2b_to_next_line
-		JMP	loc_97B6
-
                 .if acornsoft_version
+                .include "pres_bedit.commands.continue_edit_mode.s65"
                 .include "pres_bedit.commands.split_statement.s65"
                 .include "pres_bedit.commands.renumber.s65"
                 .include "pres_bedit.edit_mode_loop.s65"
