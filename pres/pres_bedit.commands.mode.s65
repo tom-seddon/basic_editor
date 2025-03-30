@@ -1,0 +1,64 @@
+mode_command:
+                lda screen_mode
+                pha
+                ldy byte_3F
+                beq loc_B304
+
+loc_B2FF:				
+		LDA	#$D		; "Only	modes 0,1,3,4,6,7 are valid"
+		JMP	loc_859D
+
+loc_B304:				
+		LDY	byte_3E
+                cpy #2
+                beq loc_B2FF
+                cpy #5
+                beq loc_B2FF
+                cpy #8
+                bcs loc_B2FF
+                sty screen_mode
+		JSR	validate_mode
+		JSR	find_program
+                pla
+		LDX	byte_15
+		BEQ	locret_B329
+                sta screen_mode
+		JSR	clear_5B1_to_600
+		LDA	#$E		; "No room for this mode"
+		JMP	loc_859D
+
+locret_B329:
+		RTS
+; End of function mode_command
+
+
+mode_edit_mode_command:			
+                LDY	screen_mode
+                
+
+loc_B32C:				
+		DEY
+		CPY	#2
+		BEQ	loc_B32C
+		CPY	#5
+		BEQ	loc_B32C
+		CPY	#-1
+		BNE	loc_B33B
+		LDY	#7
+
+loc_B33B:				
+		STY	screen_mode
+		JSR	validate_mode
+		JSR	find_program
+		LDA	byte_15
+		BEQ	loc_B34A
+		JMP	language_entry.loc_814D
+
+loc_B34A:				
+		JSR	loc_9D2D
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	loc_B355
+		JMP	loc_967A
+
+loc_B355:				
+		JMP	loc_9DA8

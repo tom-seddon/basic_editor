@@ -1,0 +1,273 @@
+
+
+
+return_key_command:			
+		LDA	#0
+		PHA
+
+loc_AF54:				
+		LDA	byte_3B
+		ASL
+		TAX
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+
+loc_AF5C:				
+		JSR	advance_2b_to_next_line
+		LDY	#2
+		LDA	($2B),Y
+		STA	byte_38
+		DEY
+		LDA	($2B),Y
+		STA	unk_37
+		BPL	loc_AF70
+		LDA	#$A
+		BNE	loc_AF72
+
+loc_AF70:				
+		LDA	#1
+
+loc_AF72:				
+		TAY
+		CLC
+		ADC	current_line_no_msb
+		STA	byte_3A
+		LDA	#0
+		ADC	current_line_no_lsb
+		STA	byte_39
+		BPL	loc_AF8C
+		DEY
+		BNE	loc_AF70
+
+loc_AF83:				
+		JSR	sub_8492
+		PLA
+		LDA	#1
+		PHA
+		BNE	loc_AF54
+
+loc_AF8C:				
+		LDX	byte_39
+		LDY	byte_3A
+		CPX	unk_37
+		BNE	loc_AF9A
+		CPY	byte_38
+		BNE	loc_AF9A
+		BEQ	loc_AF83
+
+loc_AF9A:				
+		PLA
+		STA	byte_36
+		TXA
+		PHA
+		TYA
+		PHA
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	byte_36
+		PHA
+		STX	current_line_no_lsb
+		STY	current_line_no_msb
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+		LDA	#1
+		STA	byte_400
+		LDA	#$20 ; ' '
+		STA	unk_401
+
+loc_AFBB:				
+		STX	byte_36
+		LDA	byte_6B3
+		PHA
+		LDA	#1
+		STA	byte_6B3
+		LDA	#-1
+		STA	byte_2C
+		LDA	#1
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		JSR	sub_A8C0
+		LDA	#2
+		STA	editor_mode_id	; 1=command mode, 2=edit mode
+		PLA
+		STA	byte_6B3
+		PLA
+		BEQ	loc_AFE9
+		CMP	#1
+		BEQ	loc_B03B
+		CMP	#3
+		BNE	loc_B01B
+		JMP	end_edit_mode_command
+
+loc_AFE9:				
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+		TXA
+		CLC
+		ADC	byte_3B
+		ADC	byte_36
+		SEC
+		SBC	#1
+		CMP	screen_height
+		BEQ	loc_B025
+		BCC	loc_B025
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		PLA
+		PLA
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+
+loc_B00D:				
+		LDA	scroll_status	; 1=scroll, 0=noscroll
+		PHA
+		LDA	#1
+		STA	scroll_status	; 1=scroll, 0=noscroll
+		JSR	ctrl_cursor_right_edit_mode_command
+		PLA
+		STA	scroll_status	; 1=scroll, 0=noscroll
+		RTS
+
+loc_B01B:				
+		JSR	cls_and_reset_6c0_to_6ff
+		LDA	#0
+		STA	byte_3B
+		CLC
+		BCC	loc_B026
+
+loc_B025:				
+		SEC
+
+loc_B026:				
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	sub_9DEA
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JSR	sub_9FD8
+		JMP	edit_mode_loop
+
+loc_B03B:				
+		PLA
+		PLA
+		PLA
+		TAX
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		PHA
+		TXA
+		PHA
+		JSR	sub_9698
+		BCS	loc_B05C
+
+loc_B04C:				
+		JSR	sub_9706
+		SEC
+		JSR	sub_9DEA
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JMP	sub_9FD8
+
+loc_B05C:				
+		JSR	sub_AA47
+		LDA	byte_2B
+		STA	byte_6C0
+		LDA	byte_2C
+		STA	byte_6C1
+		JMP	loc_B04C
+
+it_cmd:					
+		JSR	sub_B0A3
+		LDY	#1
+		LDA	($17),Y
+		BNE	loc_B07F
+		INY
+		LDA	($17),Y
+		CMP	#2
+		BCS	loc_B07F
+		JSR	sub_8492
+
+loc_B07F:				
+		LDA	#2
+		PHA
+		LDX	#0
+		LDY	#1
+		STX	current_line_no_lsb
+		STY	current_line_no_msb
+		JMP	loc_AF9A
+
+ie_cmd:					
+		JSR	sub_B0A3
+		LDA	#3
+		PHA
+		LDA	#-1
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JMP	loc_AF5C
+
+
+
+sub_B0A3:				
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	loc_B0A9
+		RTS
+
+loc_B0A9:				
+		JMP	loc_9DA8
+; End of function sub_B0A3

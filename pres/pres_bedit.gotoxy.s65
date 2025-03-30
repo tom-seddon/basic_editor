@@ -1,0 +1,13 @@
+gotoxy: .proc					
+					
+		LDA	#31		; set cursor location
+		JSR	OSWRCH
+		TXA
+		JSR	OSWRCH
+		TYA
+		JMP	OSWRCH
+; End of function gotoxy
+
+
+
+.pend

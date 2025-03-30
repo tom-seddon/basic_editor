@@ -262,3 +262,91 @@ loc_922E:
 		STA	byte_2B
 		JMP	loc_91AA
 ; End of function find_command
+
+sub_9247:				
+					
+		LDA	byte_3B
+		ASL
+		TAX
+		INX
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JMP	save_line_number ; saves line number from program.
+; End of function sub_9247		;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+
+advance_2b_to_next_line:		
+					
+		LDY	#3		; offset of line length
+		CLC
+		LDA	($2B),Y		; get line length
+		ADC	byte_2B
+		STA	byte_2B
+		BCC	advance_2b_to_next_line_done
+		INC	byte_2C
+
+advance_2b_to_next_line_done:					
+		RTS
+                ; End of function advance_2b_to_next_line
+
+sub_9260 .proc			
+					
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CMP	byte_400
+		BEQ	loc_926B
+		BCC	loc_926B
+
+loc_9269:				
+		CLC
+
+locret_926A:				
+		RTS
+
+loc_926B:				
+		CLC
+		ADC	byte_6BE
+		BCC	loc_9275
+		CMP	#$26 ; '&'
+		BCS	loc_9269
+
+loc_9275:				
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		CLC
+		ADC	#<byte_400
+		STA	byte_C
+                LDA	#0
+		ADC	#>byte_400
+		STA	byte_D
+
+                ldx #0
+                ldy #0
+
+loc_9286:
+                lda (byte_C,X)
+                cmp (byte_3E),Y
+                BNE	loc_929A
+next_byte:
+		INY
+		INC	byte_C
+		BNE	loc_9293
+		INC	byte_D
+
+loc_9293:				
+		CPY	byte_6BE
+		BCS	locret_926A
+		BCC	loc_9286
+
+loc_929A:				
+		INC	cursor_offset	; offset of cursor in detokenized buffer
+                BNE	sub_9260
+.pend

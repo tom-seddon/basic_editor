@@ -1,0 +1,92 @@
+; move (maybe overlapping) memory regions.
+;
+; Entry:
+; (byte_C) points to src
+; (byte_E) points to dest
+; X is MSB of size
+; Y is LSB of size
+
+memmove: .proc			
+		LDA	byte_D		; get src MSB
+		CMP	byte_F		; compare to dest MSB
+		BCC	copy_down	; taken	if src<dest
+		BEQ	copying_same_page ; taken if src MSB==dest MSB
+
+copy_up:				
+		TYA
+		PHA			; save original	Y
+		LDY	#0
+		CPX	#0		; Any whole pages?
+		BEQ	copy_up_last_page ; branch taken if no whole pages to copy
+
+copy_up_pages_loop:			
+		LDA	(byte_C),Y	; load from src...
+		STA	(byte_E),Y	; store	to dest...
+		INY
+		BNE	copy_up_pages_loop ; branch taken if not copied	whole page yet
+		INC	byte_D		; next src page
+		INC	byte_F		; next dest page
+		DEX			; one more page	done
+		BNE	copy_up_pages_loop ; branch taken if not done all pages	yet
+
+copy_up_last_page:			
+		PLA
+		TAX			; get original Y in X
+		BNE	copy_up_last_page_loop ; branch	taken if any bytes to copy in last page
+		RTS
+
+copy_up_last_page_loop:			
+		LDA	(byte_C),Y	; load from src...
+		STA	(byte_E),Y	; store	to dest...
+		INY
+		DEX			; one more byte	done
+		BNE	copy_up_last_page_loop ; branch	taken if not done all bytes yet
+		RTS
+
+copying_same_page:			
+		LDA	byte_C		; get src LSB
+		CMP	byte_E		; compare to dest LSB
+		BCS	copy_up		; branch taken if src>=dest
+
+copy_down:				
+		TXA			; get page count
+; Point src and dest at last page of each
+		CLC
+		ADC	byte_D
+		STA	byte_D
+		TXA
+		CLC
+		ADC	byte_F
+		STA	byte_F
+		CPY	#0		; any bytes to copy at the end?
+		BEQ	copy_down_pages	; branch taken if no bytes to copy at the end
+
+copy_down_last_page_loop:		
+		DEY
+		LDA	(byte_C),Y	; load from src...
+		STA	(byte_E),Y	; store	to dest...
+		CPY	#0		; was that the last byte just copied?
+		BNE	copy_down_last_page_loop ; branch taken	if not on last byte
+
+copy_down_pages:			
+		CPX	#0		; any pages to copy?
+		BEQ	memmove_done		; branch taken if no pages to copy
+
+copy_down_pages_loop:			
+		DEC	byte_D		; point	to last	whole page in src
+		DEC	byte_F		; point	to last	whole page in dest
+
+copy_down_page_loop:			
+		DEY
+		LDA	(byte_C),Y	; load from src...
+		STA	(byte_E),Y	; store	to dest...
+		CPY	#0		; was that the last byte just copied?
+		BNE	copy_down_page_loop ; branch taken if not on last byte
+		DEX			; one more page	done
+		BNE	copy_down_pages_loop ; branch taken if more pages to copy
+
+memmove_done:					
+		RTS
+; End of function memmove
+                .endproc
+                

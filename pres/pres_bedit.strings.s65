@@ -122,6 +122,7 @@ be_cmd: .text "BE",0
 litub_string:
                 .text 13,"LITUB*"
 be_help_subject: .text "  BE"
+new_osword_stuff:
                 .byte 2
 load_string: .text "Load",0
 append_string: .text "Append",0

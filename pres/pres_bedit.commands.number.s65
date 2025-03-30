@@ -1,0 +1,201 @@
+number_command:				
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	#0
+		STA	unk_1E
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_B3BB:				
+		LDY	#1
+		LDA	($2B),Y
+		BPL	loc_B3DB
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		LDA	unk_1E
+		AND	#1
+		BEQ	loc_B3D2
+		LDA	#$10
+
+loc_B3CF:				
+		JMP	loc_859D
+
+loc_B3D2:				
+		LDA	unk_1E
+		BNE	locret_B3DA
+		LDA	#$F
+		BNE	loc_B3CF
+
+locret_B3DA:				
+		RTS
+
+loc_B3DB:				
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	byte_2B
+		STA	byte_C
+		LDA	byte_2C
+		STA	byte_D
+		LDA	#0
+		STA	byte_E
+		LDA	#5
+		STA	byte_F
+		LDX	#0
+		LDY	#3
+		LDA	($2B),Y
+		TAY
+		INY
+		BNE	loc_B3F9
+		INX
+
+loc_B3F9:				
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDX	#0
+		STX	unk_11
+		STX	unk_37
+		STX	byte_36
+		STX	byte_6B3
+		INX
+		STX	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	#4
+		STA	unk_1F
+		LDA	#5
+		STA	byte_20
+
+loc_B412:				
+		SEC
+		LDA	unk_503
+		SBC	#4
+		CMP	cursor_offset	; offset of cursor in detokenized buffer
+		BCC	loc_B476
+		LDY	#0
+		LDA	($1F),Y
+		CMP	#$20 ; ' '
+		BEQ	loc_B461
+		CMP	#$22 ; '"'
+		BNE	loc_B430
+		STA	byte_36
+		LDA	unk_37
+		EOR	#1
+		STA	unk_37
+
+loc_B430:				
+		LDA	unk_37
+		BNE	loc_B461
+		LDA	($1F),Y
+		CMP	#$f4 ;-$C ; REM
+		BEQ	loc_B476
+		CMP	#$DC ; -$24 ; DATA
+		BEQ	loc_B476
+		CMP	#$2A ; '*'
+		BNE	loc_B446
+		LDX	byte_36
+		BEQ	loc_B476
+
+loc_B446:				
+		CMP	#$3A ; ':'
+		BNE	loc_B44E
+		STY	byte_36
+		BEQ	loc_B461
+
+loc_B44E:				
+		LDX	#1
+		STX	byte_36
+		CMP	#$8D ; -$73 ; line number
+		BNE	loc_B45A
+		LDX	#4
+		BNE	loc_B463
+
+loc_B45A:				
+		CMP	#$40 ; '@'
+		BNE	loc_B461
+		JMP	loc_B4B7
+
+loc_B461:				
+		LDX	#1
+
+loc_B463:				
+		CLC
+		TXA
+		ADC	unk_1F
+		STA	unk_1F
+		BCC	loc_B46D
+		INC	byte_20
+
+loc_B46D:				
+		CLC
+		TXA
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		JMP	loc_B412
+
+loc_B476:				
+		LDA	byte_6B3
+		BEQ	loc_B47E
+		JSR	sub_B4A7
+
+loc_B47E:				
+		JSR	advance_2b_to_next_line
+		JMP	loc_B3BB
+
+
+sub_B484:				
+		CMP	#'0'
+		BCC	loc_B49C
+		CMP	#':'
+		BCC	loc_B49E
+		CMP	#'A'
+		BCC	loc_B49C
+		CMP	#'['
+		BCC	loc_B49E
+		CMP	#'_'
+		BCC	loc_B49C
+		CMP	#'{'
+		BCC	loc_B49E
+
+loc_B49C:				
+		CLC
+		RTS
+
+loc_B49E:				
+		SEC
+		RTS
+; End of function sub_B484
+
+sub_B4A0:				
+		LDY	#1
+		LDA	($C),Y
+		JMP	sub_B484
+; End of function sub_B4A0
+
+
+
+
+sub_B4A7:				
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	loc_A8FF
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		RTS
+; End of function sub_B4A7

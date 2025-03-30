@@ -1,0 +1,178 @@
+loc_B4B7:				
+		LDA	unk_1F
+		STA	byte_C
+		LDA	byte_20
+		STA	byte_D
+		JSR	sub_B4A0
+		BCS	loc_B4C7
+
+loc_B4C4:				
+		JMP	loc_B461
+
+loc_B4C7:				
+		LDA	#0
+		STA	unk_33
+		LDA	oshwm+1
+		STA	unk_34
+
+loc_B4CF:				
+		LDY	#1
+		LDA	($33),Y
+		BPL	loc_B4DD
+		LDA	unk_1E
+		ORA	#1
+		STA	unk_1E
+		BNE	loc_B4C4
+
+loc_B4DD:				
+		LDA	unk_33
+		PHA
+		LDA	unk_34
+		PHA
+		LDY	#4
+
+loc_B4E5:				
+		LDA	($33),Y
+		CMP	#$20 ; ' '
+		BNE	loc_B4EF
+		INY
+		JMP	loc_B4E5
+
+loc_B4EF:				
+		CMP	#$F4 ; -$C
+		BNE	loc_B52F
+		INY
+
+loc_B4F4:				
+		LDA	($33),Y
+		CMP	#$20 ; ' '
+		BNE	loc_B4FE
+		INY
+		JMP	loc_B4F4
+
+loc_B4FE:				
+		CLC
+		TYA
+		ADC	unk_33
+		STA	unk_33
+		BCC	loc_B508
+		INC	unk_34
+
+loc_B508:				
+		LDY	#0
+		LDA	($33),Y
+		CMP	#$40 ; '@'
+		BEQ	loc_B512
+		BNE	loc_B52F
+
+loc_B512:				
+		INY
+
+loc_B513:				
+		LDA	($33),Y
+		CMP	($1F),Y
+		BNE	loc_B521
+		JSR	sub_B484
+		BCC	loc_B532
+		INY
+		BNE	loc_B513
+
+loc_B521:				
+		JSR	sub_B484
+		BCS	loc_B52F
+		LDA	($1F),Y
+		JSR	sub_B484
+		BCS	loc_B52F
+		BCC	loc_B532
+
+loc_B52F:				
+		CLC
+		BCC	loc_B533
+
+loc_B532:				
+		SEC
+
+loc_B533:				
+		PLA
+		STA	unk_34
+		PLA
+		STA	unk_33
+		BCS	loc_B53E
+		JMP	loc_B5A3
+
+loc_B53E:				
+		STY	byte_35
+		LDA	unk_503
+		SEC
+		SBC	byte_35
+		CLC
+		ADC	#4
+		BCS	loc_B59E
+		STA	unk_503
+		CLC
+		LDA	unk_1F
+		ADC	byte_35
+		STA	byte_C
+		LDA	byte_20
+		STA	byte_D
+		STA	byte_F
+		CLC
+		LDA	unk_1F
+		ADC	#4
+		STA	byte_E
+		SEC
+		LDA	unk_503
+		SBC	cursor_offset	; offset of cursor in detokenized buffer
+		SEC
+		SBC	#6
+		TAY
+		LDX	#0
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDY	#1
+		LDA	($33),Y
+		TAX
+		INY
+		LDA	($33),Y
+		TAY
+		JSR	sub_85D8
+		PHA
+		TYA
+		LDY	#3
+		STA	($1F),Y
+		DEY
+		TXA
+		STA	($1F),Y
+		DEY
+		PLA
+		STA	($1F),Y
+		DEY
+		LDA	#$8d ; -$73
+		STA	($1F),Y
+		STA	byte_6B3
+		LDA	unk_1E
+		ORA	#2
+		STA	unk_1E
+		LDX	#4
+		JMP	loc_B463
+
+loc_B59E:				
+		LDA	#$11
+		JMP	loc_859D
+
+loc_B5A3:				
+		LDY	#3
+		CLC
+		LDA	($33),Y
+		ADC	unk_33
+		STA	unk_33
+		BCC	loc_B5B0
+		INC	unk_34
+
+loc_B5B0:				
+		JMP	loc_B4CF

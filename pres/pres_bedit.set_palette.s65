@@ -1,0 +1,27 @@
+set_palette:				
+					
+		LDX	#0		; set colour 0
+		LDY	background_colour ; get	BACK colour
+                JSR	set_palette_entry ; X=logical colour, Y=physical colour
+                inx                       ; set colour 1
+                lda screen_mode
+                cmp #1
+                bne L9EE5
+                ldx #3
+L9EE5:
+                ldy foreground_colour
+
+set_palette_entry:			
+		LDA	#19		; X=logical colour, Y=physical colour
+		JSR	OSWRCH
+		TXA
+		JSR	OSWRCH
+		TYA
+		JSR	OSWRCH
+		LDA	#0
+		JSR	OSWRCH
+		JSR	OSWRCH
+                JSR	OSWRCH
+set_palette_done:
+		RTS
+; End of function set_palette

@@ -1,0 +1,242 @@
+parse_command_line:			
+		LDY	#0
+		STY	current_command_id
+		LDA	#0
+		STA	byte_C
+		LDA	#7
+		STA	byte_D
+; Skip spaces at the start of the command line
+
+skip_initial_spaces_loop:		
+		LDA	(byte_C),Y
+		CMP	#32
+		BNE	found_non_space
+		INC	byte_C
+		BNE	loc_8CB0
+		INC	byte_D
+
+loc_8CB0:				
+		BNE	skip_initial_spaces_loop
+
+found_non_space:			
+		CMP	#$D
+		BEQ	done2
+
+try_star:				; is it	looking	like a * command?
+		CMP	#'*'
+		BNE	try_number	; branch taken if it's not a * command
+		LDA	#CMD_star	; ok, it IS a *	command
+
+store_current_command:			
+					
+		STA	current_command_id
+
+done2:					
+		RTS
+
+try_number:				
+		JSR	atoi		; entry: (unk_C) points	to text;
+					; exit:	C set if error,	or (byte_3E,byte_3F) holds value
+		BCS	try_command	; branch taken if it doesn't look like a number
+		LDY	#0
+
+skip_number_loop:			
+		LDA	(byte_C),Y	; get number char
+		CMP	#13
+		BEQ	is_line_number	; branch taken if end of command line
+		CMP	#32
+		BEQ	skip_post_number_spaces_loop ; branch taken if end of number
+		INY
+		BNE	skip_number_loop
+
+skip_post_number_spaces_loop:		
+					
+		INY
+		LDA	(byte_C),Y	; get whitespace char
+		CMP	#13		; end of command line?
+		BEQ	is_line_number	; branch taken if end of command line
+		CMP	#32            ; just a space?
+		BEQ	skip_post_number_spaces_loop ; keep going if so
+; any non-space chars after the line number are invalid.
+		LDA	#$16		; "Invalid line	number"
+		JMP	loc_859D
+
+is_line_number:				
+					
+		LDA	#CMD_goto_line
+		BNE	store_current_command ;	JMP, in	effect
+
+try_command:				
+		JSR	find_first_non_alpha_char
+		LDA	#<command_table
+		STA	byte_E
+		LDA	#>command_table
+		STA	byte_F
+
+try_this_command:			
+		LDY	#0
+		LDA	(byte_E),Y	; get next char	from command table
+		BMI	invalid_command	; invalid, if reached end of table
+		JSR	compare_cmd_char_to_input_char ; entry:	(unk_C)	points to input	char, (unk_E) points to	command	table char
+					; exit:	C set if matched
+		BCS	char_matched
+; advance to next command in table
+
+find_end_of_command_name_loop:		
+		LDA	(byte_E),Y
+		BEQ	found_end_of_command_name
+		INY
+		BNE	find_end_of_command_name_loop
+
+found_end_of_command_name:		
+		INY			; skip terminating 0
+		INY			; skip args byte
+		INY			; skip command ID
+; add Y to table pointer
+		CLC
+		TYA
+		ADC	byte_E
+		STA	byte_E
+		BCC	loc_8D12
+		INC	byte_F
+
+loc_8D12:				
+		BNE	try_this_command ; JMP,	in effect
+
+invalid_command:			
+		LDA	#9		; "Invalid command"
+		JMP	loc_859D
+
+char_matched:				
+		STY	byte_3A
+
+find_end_of_command_name_loop_2:	
+		LDA	(byte_E),Y
+		BEQ	found_end_of_command_name_2
+		INY
+		BNE	find_end_of_command_name_loop_2
+
+found_end_of_command_name_2:		
+		INY			; skip terminating 0
+		STY	byte_39		; $39 =	Y pointing into	data
+		LDA	($E),Y		; get first byte of command data
+		STA	byte_49		; $49 =	first byte of command data
+		LDY	byte_3A
+		LDA	($C),Y		; get last matched input char
+		LDX	#0
+		CMP	#13		; end of line there?
+		BEQ	loc_8D52
+		CMP	#'.'            ; abbreviated input?
+		BNE	skip_spaces	; branch taken if not abbreviated
+		INY			; just skip the	'.'
+; Skip spaces after command
+
+skip_spaces:				
+					
+		LDA	(byte_C),Y
+		CMP	#32
+		BNE	spaces_skipped
+		INY
+		BNE	skip_spaces
+
+spaces_skipped:				
+		CMP	#13		; end of command line?
+		BEQ	loc_8D52
+		INX			; X=1
+; Set ($3E) to point to remainder of command line
+		CLC
+		TYA
+		ADC	byte_C
+		STA	byte_3E
+		LDA	byte_D
+		ADC	#0
+		STA	byte_3F
+
+loc_8D52:				
+					
+		TXA			; get 0	(no args entered) or 1 (args entered)
+		EOR	byte_49		; Set bit 0 if state differs from command's requirements
+		AND	#1		; Extract bit 0
+		BEQ	loc_8D69	; Branch taken if command wants	args and some were entered/it doesn't and there weren't
+		LDA	byte_49
+		AND	#4		; String arg?
+		BNE	loc_8D69	; branch taken if string arg wanted but	one wasn't supplied
+; "Invalid argument" if an unnecessary one was specified; "Argument missing" if a necessary one wasn't.
+		LDA	#$A		; "Invalid argument"
+		DEX
+		BEQ	loc_8D66
+		LDA	#$20 ; ' '      ; "Argument missing"
+
+loc_8D66:				
+		JMP	loc_859D
+
+loc_8D69:				
+					
+		TXA			; get 0	(no args entered) or 1 (args entered)
+		BEQ	no_args_entered	; branch taken if no args entered
+		LDA	byte_49		; get args byte
+		AND	#2		; test bit 1 (single numeric arg)
+		BEQ	loc_8D94	; branch taken if command wants	something else
+; command wants single numeric argument
+		JSR	atoi_from_command_line ; entry:	(byte_3E) points to command line;
+					; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
+		BCC	skip_post_number_spaces
+		LDA	#$B		; "Bad number"
+		JMP	loc_859D
+
+skip_post_number_spaces:		
+					
+		LDA	(byte_C),Y
+		CMP	#32
+		BNE	skipped_post_number_spaces
+		INY
+		BNE	skip_post_number_spaces
+
+skipped_post_number_spaces:		
+		CMP	#13		; end of command line after the	number?
+		BEQ	loc_8D94	; branch taken if so
+					;
+					; (This	branch is wrong, I think, as 8D94...
+					; keeps	scanning from (byte_3E), even
+					; though that now contains the number.
+					; It wants to go to got_command	instead.)
+		LDA	#$C		; "Too many arguments"
+		JMP	loc_859D
+
+no_args_entered:			
+		LDA	#$FF		; mark lack of args ($FF isn't the MSB of any valid number)
+		STA	byte_3F
+		BNE	got_command	; JMP, in effect
+
+loc_8D94:				
+					
+		LDY	#0
+
+find_end_of_command_line_loop:		
+		LDA	(byte_3E),Y
+		CMP	#$D
+		BEQ	found_end_of_command_line
+		INY
+		BNE	find_end_of_command_line_loop
+
+found_end_of_command_line:		
+		DEY
+
+find_end_of_last_argument_loop:		
+		LDA	(byte_3E),Y
+		CMP	#$20 ; ' '
+		BNE	found_end_of_last_argument
+		DEY
+		JMP	find_end_of_last_argument_loop
+
+found_end_of_last_argument:		
+		INY
+		STY	byte_6BE
+
+got_command:				
+		LDY	byte_39		; get index into table (currently pointing at args byte)
+		INY
+		LDA	($E),Y		; get command ID
+		JMP	store_current_command
+; End of function parse_command_line
+

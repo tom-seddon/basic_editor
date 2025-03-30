@@ -1,0 +1,28 @@
+sub_BA69:				
+					
+		LDA	screen_height
+		ASL
+		STA	byte_3A
+		LDX	#0
+
+loc_BA71:				
+		LDA	$6C0,X
+		CMP	byte_2B
+		BNE	loc_BA82
+		INX
+		LDA	$6C0,X
+		CMP	byte_2C
+		BNE	loc_BA83
+		DEX
+		RTS
+
+loc_BA82:				
+		INX
+
+loc_BA83:				
+		INX
+		CPX	byte_3A
+		BEQ	loc_BA71
+		BCC	loc_BA71
+		RTS
+; End of function sub_BA69
