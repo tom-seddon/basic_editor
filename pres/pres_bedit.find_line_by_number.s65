@@ -1,0 +1,46 @@
+; finds	a line,	given a	line number
+;
+; Entry:
+; byte_2B: line	number MSB
+; byte_2C: line	number LSB
+;
+; Exit:
+; (byte_2B) points to most suitable line
+
+find_line_by_number:			
+					
+		LDA	byte_2B
+		STA	byte_39
+		LDA	byte_2C
+		STA	byte_3A
+		LDA	oshwm
+		STA	unk_30
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_9EA1:				
+		LDY	#1
+		LDA	(byte_2B),Y	; get line MSB
+		BMI	find_line_by_number_done		; -ve =	done
+		CMP	byte_39
+		BCC	loc_9EB4	; MSB<?39 -> 9eb4
+		BNE	find_line_by_number_done
+		INY			; offset of line LSB
+		LDA	(byte_2B),Y	; get line LSB
+		CMP	byte_3A
+		BCS	find_line_by_number_done
+; MSB<?39 && LSB<=?3A
+
+loc_9EB4:				
+		LDA	byte_2B
+		STA	unk_2F
+		LDA	byte_2C
+		STA	unk_30
+		JSR	advance_2b_to_next_line
+		JMP	loc_9EA1
+
+find_line_by_number_done:					
+					
+		RTS
+; End of function find_line_by_number
