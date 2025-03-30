@@ -206,3 +206,109 @@ loc_A6BE:
 
 locret_A6C8:				
 		RTS
+
+reset_program_name:			
+					
+		LDX	#$E
+		LDA	#' '
+
+loc_A6CD:				
+		STA	program_name,X
+		DEX
+		BPL	loc_A6CD
+		RTS
+; End of function reset_program_name
+
+
+
+old_command .proc				
+		JSR	is_program_empty ; sets	C if no	program
+		BCC good_program
+		LDY	#1
+		LDA	#0
+		STA	($17),Y
+		JSR	find_program
+		BCC good_program
+		JMP	language_entry.loc_814D
+
+good_program:				
+					
+                JSR	sub_8314
+                JMP	loc_A6BE
+.pend
+; End of function old_command
+
+extend_statement_edit_mode_command .proc	
+		LDX	unk_9
+		DEX
+		BNE	loc_A6F4
+		JMP	beep
+
+loc_A6F4:				
+		JSR	loc_AB3C
+		JMP	position_edit_mode_cursor
+.pend
+                
+swap_case_edit_mode_command: .proc
+		LDX	unk_11
+		DEX
+		BEQ	loc_A715
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	$400,X
+		JSR	toggle_case
+		STA	$400,X
+		LDA	#1
+		STA	byte_6B3
+		TXA
+		LDY	#0
+		JSR	sub_A0B1
+
+loc_A715:				
+		JMP	cursor_right_edit_mode_command
+.pend
+
+renumber_edit_mode_command:		
+					
+		JSR	sub_8492
+		JMP	loc_967A
+
+undo_edit_mode_command:			
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_A726
+		JMP	loc_9DA8
+
+loc_A726:				
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		JSR	sub_AA17
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JSR	sub_9FD8
+		JMP	position_edit_mode_cursor
+
+copy_key_edit_mode_command:		
+		LDX	#0
+		LDA	unk_31
+		BNE	loc_A745
+		LDX	#$40 ; '@'
+		BNE	loc_A74B
+
+loc_A745:				
+		CMP	#$60 ; '`'
+		BEQ	loc_A74B
+		LDX	#$60 ; '`'
+
+loc_A74B:				
+		STX	unk_31
+		RTS
+
+top_of_screen_edit_mode_command:	
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		JMP	loc_A661
