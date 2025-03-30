@@ -43,6 +43,7 @@ LB4EA=$b4ea
 LBFB2=$bfb2
 LBE85=$be85
 L93C4=$93c4
+litub_string=$abba
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -4342,140 +4343,7 @@ loc_A2B1:
                 .endif
 
 
-run_or_exit_command:			
-		LDA	#0
-		STA	is_insert_mode	; 0=overtype 1=insert
-		LDA	#$60 ; '`'
-		STA	unk_31
-		JSR	reset_cursor_shape
-		LDA	#26		; reset	text and graphics windows
-		JSR	OSWRCH
-		LDA	#12		; CLS (run_or_exit_command)
-		JSR	OSWRCH
-		JSR	reset_keys_settings
-		LDX	#0
-		LDA	#228
-		JSR	osbyte_with_y0
-		LDA	unk_16
-		BNE	loc_A64D
-		JSR	is_program_empty ; sets	C if no	program
-		BCS	loc_A64D
-		LDA	#8
-		STA	byte_3A		; position in "OLD|MRUN|M" string
-		LDX	#4		; ending position is by	default	after "OLD|M" part
-		LDA	current_command_id
-		CMP	#CMD_RUN	; is the command RUN?
-		BNE	type_commands	; if not, just typing "OLD|M" is fine
-		LDX	#0		; if RUN, type "OLD|MRUN|M"
 
-type_commands:				
-		STX	byte_39		; ending position in string
-
-type_commands_loop:			
-		LDX	byte_3A
-		DEX
-		LDA	nur_dlo_string,X ; get next character
-		TAY			; put char into	Y for OSBYTE
-		LDX	#0		; 0 = keyboard buffer
-		LDA	#138		; insert into keyboard buffer
-		JSR	OSBYTE
-		DEC	byte_3A		; next char in string
-		LDA	byte_3A
-		CMP	byte_39		; reached the end?
-		BNE	type_commands_loop
-
-loc_A64D:				
-		LDX	#0
-		LDY	#255
-		LDA	#187		; get ROM containing BASIC
-		JSR	OSBYTE
-		LDA	#142		; enter	language ROM
-		JSR	OSBYTE
-
-top_edit_mode_command:			
-					
-		LDA	#0
-		STA	byte_2B
-		STA	byte_2C
-
-loc_A661:				
-		LDA	#0
-		STA	byte_3B
-		SEC
-		JSR	sub_9DEA
-		JSR	sub_8314
-		JSR	sub_9FD8
-		JMP	edit_mode_loop
-
-top_command:				
-		JSR	sub_8314
-		JMP	loc_9DA8
-
-end_command:				
-		JSR	cls_and_reset_6c0_to_6ff
-		LDA	#0
-		BEQ	loc_A681
-
-end_edit_mode_command:			
-					
-		LDA	#1
-
-loc_A681:				
-		PHA
-		LDA	#$FF
-		STA	byte_2B
-		JSR	find_line_by_number ; finds a line, given a line number
-					;
-					; Entry:
-					; byte_2B: line	number MSB
-					; byte_2C: line	number LSB
-					;
-					; Exit:
-					; (byte_2B) points to most suitable line
-		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		PLA
-		TAX
-		LDA	current_line_no_lsb
-		PHA
-		LDA	current_line_no_msb
-		PHA
-		TXA
-		PHA
-		JSR	sub_AA47
-		LDA	#0
-		STA	byte_3B
-		LDA	current_line_no_lsb
-		STA	byte_2B
-		LDA	current_line_no_msb
-		STA	byte_2C
-		PLP
-		JSR	sub_9DEA
-		PLA
-		STA	current_line_no_msb
-		PLA
-		STA	current_line_no_lsb
-		JSR	sub_9FD8
-		JMP	edit_mode_loop
-
-new_command:				
-		JSR	clear_program
-		JSR	reset_program_name
-
-loc_A6BE:				
-		LDA	editor_mode_id	; 1=command mode, 2=edit mode
-		CMP	#1
-		BEQ	locret_A6C8
-		JMP	loc_9DA8
-
-locret_A6C8:				
-		RTS
 
 
 
