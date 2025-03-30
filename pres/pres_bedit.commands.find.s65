@@ -1,0 +1,264 @@
+find_command:				
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	byte_50
+		PHA
+		LDA	byte_51
+		PHA
+		LDX	byte_3F		; get MSB of pointer to	arg
+		INX			; X=0 if it was	FF before
+		BNE	got_search_string ; branch taken if pointer to arg appears valid
+		JSR	get_search_string ; gets search	string.
+					;
+					; Exit:
+					; (byte_3E) points to result
+					; byte_6BE is length of	input excluding	final CR.
+					; C set	if nothing entered.
+		BCS	loc_912C
+
+got_search_string:			
+		LDY	byte_6BE
+		STY	byte_62		; ?byte_62 = search string length
+
+copy_search_string_loop:		
+		DEY
+		LDA	(byte_3E),Y
+		STA	unk_643,Y
+		CPY	#0
+		BNE	copy_search_string_loop
+		LDA	#0
+		STA	byte_6AF
+; point (byte_2B) at OSHWM
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_910F:				
+		LDA	#0
+		STA	byte_3B		; reset	"found anything" flag
+
+loc_9113:				
+		LDY	#1		; index	of MSB of line number
+		STY	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	(byte_2B),Y	; fetch	MSB of line number
+		BPL	line_valid	; branch taken if line appears valid
+; reached end of program
+		LDA	byte_3B		; was anything found?
+		BEQ	loc_9122	; branch taken if nothing was found
+		JMP	loc_91A6
+
+loc_9122:				
+		LDA	byte_6AF
+		BNE	loc_912C
+		LDA	#8		; "String not found"
+		JSR	get_error	; A = error code
+
+loc_912C:				
+					
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDA	byte_2B
+		STA	byte_6C0
+		LDA	byte_2C
+		STA	byte_6C1
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		JMP	language_entry.loc_814D
+
+line_valid:				
+		JSR	detokenize_one_line
+		JSR	sub_9260
+		BCC	loc_91A0
+		LDY	byte_6AF
+		BNE	loc_918A
+		INY
+		STY	byte_6AF
+		JSR	enter_edit_mode
+		LDA	current_command_id
+                CMP	#CMD_EDIT ;was this EDIT?
+                BNE	loc_918A  ;taken if not EDIT (i.e., FIND)
+                
+loc_9163:
+                ; command was EDIT.
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	cls_and_reset_6c0_to_6ff
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		LDA	#0
+		STA	byte_3B
+		CLC
+		JSR	sub_9DEA
+		LDX	#1
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_A069
+		JSR	position_edit_mode_cursor
+		JMP	edit_mode_loop
+
+loc_918A:				
+
+                ; command was FIND.
+		LDA	byte_3B
+		BNE	loc_9191
+		JSR	cls_and_reset_6c0_to_6ff
+
+loc_9191:				
+		JSR	sub_9E5F
+		BCC	loc_91A6
+		JSR	sub_9E82
+		CLC
+		LDA	byte_3B
+		ADC	byte_2D
+		STA	byte_3B
+
+loc_91A0:				
+		JSR	advance_2b_to_next_line
+		JMP	loc_9113
+
+loc_91A6:				
+					
+		LDA	#0
+		STA	byte_3B
+
+loc_91AA:				
+					
+		LDX	#0
+		LDY	byte_3B
+		JSR	gotoxy
+                JSR	find_mode_getch
+
+		CMP	#$1B
+		BNE	loc_91BB
+		JMP	loc_912C
+
+loc_91BB:				
+		CMP	#$A7 ; -$59
+                bne loc_91C5
+edit_found_line:
+		JSR	sub_9247
+		JMP	loc_9DA8
+
+loc_91C5:				
+		CMP	#$AF ; -$51
+		BNE	loc_91E3
+		LDA	byte_3B
+		BNE	loc_91DE
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		STA	byte_2B
+		STA	byte_2C
+		JSR	sub_BA69
+		TXA
+		LSR
+		STA	byte_3B
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+
+loc_91DE:				
+		DEC	byte_3B
+		JMP	loc_91AA
+
+loc_91E3:				
+		CMP	#$AE
+		BNE	loc_9203
+		LDX	byte_3B
+		INX
+		CPX	screen_height
+		BEQ	loc_91F5
+		BCC	loc_91F5
+		LDX	#0
+		BEQ	loc_91FE
+
+loc_91F5:				
+					
+		TXA
+		ASL
+		TAY
+		LDA	$6C1,Y
+		BNE	loc_91FE
+		TAX
+
+loc_91FE:				
+					
+		STX	byte_3B
+
+loc_9200:				
+		JMP	loc_91AA
+
+loc_9203:				
+		CMP	#$A5
+		BNE	loc_920A
+		JMP	loc_910F
+
+loc_920A:				
+		CMP	#$A2
+		BNE	loc_9211
+		JMP	top_edit_mode_command
+
+loc_9211:				
+		CMP	#$A3
+		BNE	loc_9218
+		JMP	end_edit_mode_command
+
+loc_9218:				
+		CMP	#$C1
+		BNE	loc_922E
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	goto_edit_mode_command
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JMP	loc_91AA
+
+loc_922E:				
+		CMP	#$C0
+		BNE	loc_9200
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	sub_9247
+		JSR	mark_edit_mode_command
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JMP	loc_91AA
+; End of function find_command

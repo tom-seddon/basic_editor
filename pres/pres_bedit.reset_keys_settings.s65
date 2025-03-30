@@ -1,0 +1,60 @@
+reset_keys_settings:			
+					
+		LDX	#0		; Enable cursor	editing	(default)
+		LDA	#4		; Enable/disable cursor	editing	(AUG P120)
+		JSR	OSBYTE
+                .if bet2_version
+                jsr is_Electron
+                bcs LB4C3
+                .endif
+		LDX	#9
+		LDA	#219		; set TAB key to 9
+		JSR	osbyte_with_y0
+                .if acornsoft_version
+		JSR	kbflush
+                .else
+LB4C3:
+                .endif
+		LDX	#1
+		LDA	#225		; reset	F key status?
+		JSR	osbyte_with_y0
+		LDX	#128
+		LDA	#226		; reset	Shift+F	key status?
+		JSR	osbyte_with_y0
+		LDX	#0
+		LDA	#227
+		JMP	osbyte_with_y0
+; End of function reset_keys_settings
+
+
+
+
+run_star_command:			
+		LDX	#7
+		JSR	validate_mode.get_HIMEM_for_mode_X
+		JSR	reset_keys_settings
+		LDX	#0
+		LDY	#7
+		JSR	OSCLI
+		JMP	clear_5B1_to_600
+; End of function run_star_command
+
+
+
+
+getch:					
+					
+		JSR	OSRDCH
+; End of function getch
+
+
+
+
+clear_escape_condition:			
+		PHA
+		LDA	#$7E ; '~'
+		JSR	OSBYTE
+		PLA
+; End of function clear_escape_condition
+
+		RTS

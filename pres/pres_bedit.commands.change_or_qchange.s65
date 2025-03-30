@@ -1,0 +1,243 @@
+change_or_qchange_command: .proc	
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	byte_50
+		PHA
+		LDA	byte_51
+		PHA
+		LDX	byte_3F
+		INX
+		BEQ	loc_9308
+		LDY	#0
+
+loc_92B1:				
+		LDA	($3E),Y
+		CMP	#$20 ; ' '
+		BEQ	loc_92C3
+		CMP	#$D
+		BEQ	loc_92BE
+		INY
+		BNE	loc_92B1
+
+loc_92BE:				
+		LDA	#$17
+
+loc_92C0:				
+		JMP	loc_859D
+
+loc_92C3:				
+		STY	byte_6BE
+
+loc_92C6:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_92BE
+		CMP	#$20 ; ' '
+		BNE	loc_92D3
+		INY
+		BNE	loc_92C6
+
+loc_92D3:				
+		CLC
+		TYA
+		ADC	byte_3E
+		STA	unk_6BA
+		LDA	byte_3F
+		ADC	#0
+		STA	unk_6BB
+		LDX	#0
+
+loc_92E3:				
+		LDA	($3E),Y
+		CMP	#$20 ; ' '
+		BEQ	loc_92F1
+		CMP	#$D
+		BEQ	loc_9302
+		INX
+		INY
+		BNE	loc_92E3
+
+loc_92F1:				
+		LDA	($3E),Y
+		CMP	#$D
+		BEQ	loc_9302
+		CMP	#$20 ; ' '
+		BNE	loc_92FE
+		INY
+		BNE	loc_92F1
+
+loc_92FE:				
+		LDA	#$18
+		BNE	loc_92C0
+
+loc_9302:				
+		STX	unk_6BC
+		JMP	loc_932C
+
+loc_9308:				
+		JSR	get_search_string ; gets search	string.
+					;
+					; Exit:
+					; (byte_3E) points to result
+					; byte_6BE is length of	input excluding	final CR.
+					; C set	if nothing entered.
+		BCS	loc_9312
+		JSR	get_replace_string
+		BCC	loc_932C
+
+loc_9312:				
+					
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDA	byte_2B
+		STA	byte_6C0
+		LDA	byte_2C
+		STA	byte_6C1
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		RTS
+
+loc_932C:				
+		LDA	#0
+		STA	byte_6AF
+		STA	byte_2B
+		LDA	oshwm+1
+		STA	byte_2C
+
+loc_9337:				
+		LDY	#0
+		STY	byte_6B3
+		STY	unk_11
+		INY
+		STY	cursor_offset	; offset of cursor in detokenized buffer
+		LDA	($2B),Y
+		BMI	loc_9369
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+
+loc_934B:				
+					
+		JSR	sub_9260
+		BCS	loc_9359
+		JSR	sub_93CF
+		JSR	advance_2b_to_next_line
+		JMP	loc_9337
+
+loc_9359:				
+		LDA	current_command_id
+		STA	byte_6AF
+		CMP	#$E2
+		BEQ	loc_937E
+		JSR	sub_BDD3
+		JMP	loc_934B
+
+loc_9369:				
+		LDA	byte_6AF
+		BNE	loc_9312
+		PLA
+		PLA
+		PLA
+		STA	current_line_no_msb
+		PLA
+		STA	current_line_no_lsb
+		LDA	#8
+		JSR	get_error	; A = error code
+
+loc_937B:				
+		JMP	language_entry.loc_814D
+
+loc_937E:				
+		LDA	editor_mode_id	; 1=command mode, 2=edit mode
+		CMP	#2
+		BEQ	loc_9388
+		JSR	enter_edit_mode
+
+loc_9388:				
+		JSR	cls_and_reset_6c0_to_6ff
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		LDA	#0
+		STA	byte_3B
+		CLC
+		JSR	sub_9DEA
+		LDX	#1
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_A069
+		JSR	position_edit_mode_cursor
+
+loc_93A9:				
+		JSR	find_mode_getch
+		CMP	#$1B
+		BEQ	loc_937B
+		CMP	#$A7
+		BNE	loc_93B7
+		JMP	edit_mode_loop
+
+loc_93B7:				
+		AND	#$DF
+		CMP	#'Y'
+		BNE	loc_93C6
+		JSR	sub_BDD3
+		JSR	sub_93CF
+		JMP	loc_934B
+
+loc_93C6:				
+		CMP	#'N'
+		BNE	loc_93A9
+		INC	cursor_offset	; offset of cursor in detokenized buffer
+		JMP	loc_934B
+; End of function sub_9260
+
+
+
+
+sub_93CF:				
+					
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	sub_A8C0
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+                RTS
+.pend
+; End of function sub_93CF
