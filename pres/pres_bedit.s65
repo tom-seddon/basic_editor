@@ -33,14 +33,12 @@ bet2_version=false
                 
 call_other_rom=$bb35
 LBC8B=$bc8b
-be_help_subject=$abc1
-aBasicEditorToolkit=$a998
+;be_help_subject=$abc1
 LBFEE=$bfee
 is_Electron=$bc7a
 LB4EA=$b4ea
 LBFB2=$bfb2
 LBE85=$be85
-;litub_string=$abba
 update_command=$acea
                 .endif
                 
@@ -233,7 +231,7 @@ L80C6:
                 lda be_help_subject,y
                 jsr oswrch
                 iny
-                cpy #4;size(be_help_subject)
+                cpy size(be_help_subject)
                 bcc L80C6
                 jmp osnewl
 
@@ -1015,6 +1013,56 @@ LA960:
                 rts
 
                 .include "pres_bedit.strings.s65"
+
+LABD2:
+                .byte $C1 
+                .byte $B8 
+                .byte $A8 
+                .byte $CF 
+                .byte $CE 
+                .byte $B6 
+                .byte $B7 
+                .byte $C5 
+                .byte $C6 
+                .byte $C0 
+                .byte   0
+                .byte $C4 
+                .byte $AC 
+                .byte $AD 
+                .byte $AE 
+                .byte $AF 
+                .byte $A2 
+                .byte $C7 
+                .byte $A5 
+                .byte $A6 
+                .byte $A0 
+                .byte $C8 
+                .byte   0
+                .byte $A7 
+                .byte $A1 
+                .byte $C3 
+                .byte $CC 
+                .byte $CD 
+                .byte $B5 
+                .byte $B0 
+                .byte $B1 
+                .byte   0
+                .byte $A9 
+                .byte $A4 
+                .byte $C2 
+                .byte $CA 
+                .byte $B2 
+                .byte   0
+                .byte   0
+                .byte $B4 
+                .byte   0
+                .byte $A3 
+                .byte $BD 
+                .byte $BC 
+                .byte $BA 
+                .byte $B3 
+                .byte $BF 
+                .byte $BE 
                 
                 .endif
 

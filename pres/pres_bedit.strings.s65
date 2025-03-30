@@ -4,10 +4,11 @@ aReplaceString:	.text "  Replace string : "
 hud_text_begin:
                 .byte 22,7
                 .byte 10
-aTheBasicEditor:
                 .if acornsoft_version
+aTheBasicEditor:
                 .text "The BASIC Editor"
                 .else
+aBasicEditorToolkit:
                 .text "BASIC Editor & Toolkit"
                 .endif
                 .byte 0
@@ -120,5 +121,9 @@ be_cmd: .text "BE",0
                 .if bet2_version
 litub_string:
                 .text 13,"LITUB*"
+be_help_subject: .text "  BE"
+                .byte 2
+load_string: .text "Load",0
+append_string: .text "Append",0
                 .endif
                 
