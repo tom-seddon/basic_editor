@@ -9,17 +9,27 @@ select the other.)
 The product looks a lot like the Acornsoft BASIC Editor, with an extra
 command (`UTILS`) that enters a separate UI that provides some
 additional stuff like program packing. And looking at the code, it
-looks like it is indeed related (though not identical).
+looks like it is indeed related (though not identical). 
 
 This folder contains any materials related to investigating it. Since
 it's apparently related to the Acornsoft BASIC Editor, it'd be nice to
 have an updated version of it too, based on the updated BASIC Editor,
 if that would be easy to do!
 
+# ROM layout
+
+The 32 KB ROM consists of two parts:
+
+- bedit: the editor part, related to the Acornsoft BASIC Editor
+- butils: the new utils part
+
 # Original source files
 
 Disk image posted here:
 https://stardot.org.uk/forums/viewtopic.php?f=3&t=7719&start=30#p108512
+
+There's no code for the bedit half, but most of the code for the
+butils half is here.
 
 The extracted contents of the disk images can be found in the repo.
 Largely text files with CR line endings, so comprehensible to many PC
@@ -47,22 +57,10 @@ it looks like just uncommenting the includes might not be enough.
 There's still some commented-out stuff in `Table2`, for example - I
 haven't tested this ROM either.
 
-There's a ROM image on the disk already: `../beeb/1/$.ELK`. It doesn't
-match either of the above, and I haven't tested it.
-
-# 64tass format source files
-
-There's a 64tass format source file converted from the BBC files in
-`butils.s65`, with some flags and updates so it can be built to match
-some of the existing ROMs.
-
-To build it, ensure the prerequisites for building are available (see
-[the build instructions](../docs/build.md)), then do `make
-_pres_stuff` from the root of the working copy. This will assemble
-each different version of the code and (when appropriate) check it
-matches the original. The build will fail if there's a problem.
-
-Consult `butils.s65` for more info about the different versions..
+There's a ROM image on the disk already: `../beeb/1/$.ELK`. It looks
+to be a sideways RAM dump, so it's 16 KB with a bunch of random stuff
+at the end - but a match for its first 10 KB or so can be built from
+the supplied code.
 
 # Original ROMs
 
@@ -332,3 +330,25 @@ ABE-ELK part  2:
 As this routine always switches between two non-BASIC paged ROMs, the
 2-step Electron ROM switching presumably doesn't apply, and the ROM
 select register can be written to directly.
+
+# 64tass format source files
+
+For butils, there's a 64tass format source file in
+`butils/pres_butils.s65`, with some flags and updates so it can be
+built to match some of the existing ROMs. (Consult the file for more
+info.)
+
+For bedit, there's a 64tass format source file in
+`bedit/pres_bedit.s65`, which can be built to match either the
+Acornsoft version or the bedit half of BET2. It isn't a very thorough
+disassembly, nor is the code particularly readable (the code is mostly
+unchanged, but the ROM layout changed a lot, so there's a lot of
+includes). It exists just to get an idea of what the actual code
+changes actually are.
+
+To build these, ensure the prerequisites for building are available
+(see [the build instructions](../docs/build.md)), then do `make
+_pres_stuff` from the root of the working copy. This will assemble
+each different version of the code and (when appropriate) check it
+matches the original. The build will fail if there's a problem.
+

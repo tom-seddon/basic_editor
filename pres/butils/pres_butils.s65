@@ -36,8 +36,6 @@ baseds1_elk_version=false
 ; If true, build ROM matching part 0 of the Advanced BASIC Editor.
 ; (The corresponding parts of The BASIC Editor Plus and BASIC Editor &
 ; Toolkit are very similar.)
-;
-; A work in progress.
 abe_version=false
                 
                 .endweak
