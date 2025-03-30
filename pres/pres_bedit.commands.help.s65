@@ -46,10 +46,11 @@ print_help_column_row:
                 stx unk_32
                 .if acornsoft_version
                 cpx #4
+                bne x_not_4
                 .else
                 cpx #0
+                beq x_not_4
                 .endif
-                bne x_not_4
                 lda byte_39
                 cmp byte_8C96
                 beq x_not_4

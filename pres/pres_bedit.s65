@@ -37,7 +37,7 @@ call_other_rom=$bb35
 LBE85=$be85
 ;error_messages_table=$ffff
 ;LBFE8=$bfe8
-get_error=$ffff
+;get_error=$ffff
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -55,11 +55,20 @@ get_error=$ffff
                 .include "../cmds.s65"
 
                 .if bet2_version
+CMD_unknown_BA=$ba              ; shift+tab??
+CMD_unknown_CA=$CA              ; tab??
 CMD_UTILS=$EC
 CMD_UPDATE=$ED
                 .endif
                 
                 .include "pres_constants.s65"
+
+                .if acornsoft_version
+brkv_routine=brk_handler
+                .else
+brkv_routine=LBFEB
+                .endif
+                
 
 ;-------------------------------------------------------------------------
 ; SLRE---1-
@@ -82,7 +91,11 @@ rom_start:
                 .byte ROM_FLAGS
 
                 .byte  copyright-rom_start ;
+                .if acornsoft_version
                 .byte     5
+                .else
+                .byte 1
+                .endif
                 .if bet2_version
                 .text "BASIC Editor & Toolkit"
                 .else
@@ -229,7 +242,7 @@ L80C6:
                 lda be_help_subject,y
                 jsr oswrch
                 iny
-                cpy size(be_help_subject)
+                cpy #size(be_help_subject)
                 bcc L80C6
                 jmp osnewl
 
@@ -274,7 +287,7 @@ L8109:
                 tax
                 lda ($a8),y
                 cmp #'.'
-                beq L811E
+                bne L811E
                 cpy #0
                 beq L8132
                 cpx #0
@@ -319,7 +332,11 @@ L8134: .block
                 .include "pres_bedit.edit_mode_loop.s65"
 
 L87DC:
+                .if acornsoft_version
                 ldx #$11
+                .else
+                lda #$11
+                .endif
                 jsr oswrch
                 txa
                 jsr oswrch
@@ -579,9 +596,9 @@ init_brkv_and_oshwm: .proc
                                         
                 CLI
                 CLD
-                LDA     #<brk_handler
+                LDA     #<brkv_routine
                 STA     $202            ; BRKV+0
-                LDA     #>brk_handler
+                LDA     #>brkv_routine
                 STA     $203            ; BRKV+1
                 LDA     #0
                 STA     oshwm
@@ -792,8 +809,12 @@ L9670:
                 ldy #$4e
                 .endif
 
-loc_82AE:                               
+loc_82AE:
+                .if acornsoft_version
                 LDA     $5D7,Y
+                .else
+                lda unk_5B1,y
+                .endif
                 CMP     #$20 ; ' '
                 BNE     loc_82BA
                 DEY
@@ -1150,7 +1171,7 @@ sub_8314:
                 .include "pres_bedit.commands.find.s65"
                 .include "pres_bedit.set_palette.s65"
 
-LBA64:
+get_error:
                 ldx byte_15
                 bne LBA74
                 pha
@@ -1206,7 +1227,7 @@ LBC8B:
                 pha
                 lda $f0
                 sta $a8
-                ldy $f1
+                lda $f1
                 sta $a9
                 lda $ef
                 cmp #$b5        ; osword code
@@ -1477,13 +1498,25 @@ LBE2B:
                 LDX     #27             ; ESCAPE key produces CHR$27
                 LDA     #220            ; read/write Escape char (AUG p223)
                 JSR     osbyte_with_y0
+                .if acornsoft_version
                 LDX     #0              ; ignore key
+                .else
+                ldx #1
+                .endif
                 LDA     #225            ; read/write function key status (AUG p225)
                 JSR     osbyte_with_y0
+                .if acornsoft_version
                 LDX     #0              ; ignore key
+                .else
+                ldx #1
+                .endif
                 LDA     #226            ; read/write SHIFT+function key status (AUG p225)
                 JSR     osbyte_with_y0
+                .if acornsoft_version
                 LDX     #0              ; ignore key
+                .else
+                ldx #1
+                .endif
                 LDA     #227            ; read/write CTRL+function key status (AUG p225)
                 JSR     osbyte_with_y0
                 LDX     #0              ; ESCAPE has normal action

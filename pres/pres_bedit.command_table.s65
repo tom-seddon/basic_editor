@@ -30,10 +30,15 @@ command_table
                 .text "HELP",0
                 .byte	 0 ;
                 .byte CMD_HELP
+                .if acornsoft_version
 command_table_help_column_2:
+                .endif
                 .text "IE",0
                 .byte	 0 ;
                 .byte CMD_IE
+                .if bet2_version
+command_table_help_column_2:
+                .endif
                 .text "INFO",0
                 .byte	 0 ;
                 .byte CMD_INFO
@@ -62,10 +67,15 @@ command_table_help_column_2:
                 .byte	 0 ;
                 .byte CMD_NUMBER
                 ;.text "NOCASE",0,0,CMD_NOCASE
+                .if acornsoft_version
 command_table_help_column_3:
+                .endif
                 .text "OLD",0
                 .byte	 0 ;
                 .byte CMD_OLD
+                .if bet2_version
+command_table_help_column_3:
+                .endif
                 .text "OVERTYPE",0
                 .byte	 0 ;
                 .byte CMD_OVERTYPE

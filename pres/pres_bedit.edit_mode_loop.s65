@@ -63,7 +63,11 @@ check_return_key:			; return?
 check_tab_key:				
 		CMP	#9
 		BNE	check_delete_key
+                .if acornsoft_version
 		LDA	#CMD_tab_key
+                .else
+                lda #CMD_unknown_CA
+                .endif
 		BNE	run_command
 
 check_delete_key:			
@@ -123,8 +127,12 @@ set_command:
 		STA	current_command_id
 		JMP	dispatch_command
 
-loc_9B4E:				
+loc_9B4E:
+                .if acornsoft_version
 		CMP	#CMD_tab_key
+                .else        
+                cmp #CMD_unknown_CA
+                .endif
 		BNE	loc_9B5D
 		LDX	#$DA		; I key
 		JSR	poll_key	; poll state of	key.
@@ -177,8 +185,12 @@ check_shift_delete_key:
 		STA	current_command_id
 		BNE	dispatch_command ; JMP,	in effect
 
-check_shift_tab_key:			
+check_shift_tab_key:
+                .if acornsoft_version
 		CMP	#CMD_tab_key
+                .else
+                cmp #CMD_unknown_CA
+                .endif
 		BNE	dispatch_command
                 .if bet2_version
                 lda byte_3A
@@ -187,7 +199,11 @@ check_shift_tab_key:
 		BIT	byte_38		; Check	SHIFT state
                 .endif
 		BEQ	dispatch_command ; Branch taken	if SHIFT not pressed
+                .if acornsoft_version
 		LDA	#CMD_shift_tab_key
+                .else
+                lda #CMD_unknown_BA
+                .endif
 		STA	current_command_id
 
 dispatch_command:			
@@ -316,7 +332,11 @@ L87AF:
 L87B1:
                 lda #23
                 jsr oswrch
+                .if acornsoft_version
                 lda #10
+                .else
+                lda #1
+                .endif
                 jsr oswrch
                 txa
                 jsr oswrch

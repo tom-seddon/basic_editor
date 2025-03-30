@@ -18,10 +18,18 @@ LB4C3:
 		LDX	#1
 		LDA	#225		; reset	F key status?
 		JSR	osbyte_with_y0
+                .if acornsoft_version
 		LDX	#128
+                .else
+                ldx #1
+                .endif
 		LDA	#226		; reset	Shift+F	key status?
 		JSR	osbyte_with_y0
+                .if acornsoft_version
 		LDX	#0
+                .else
+                ldx #1
+                .endif
 		LDA	#227
 		JMP	osbyte_with_y0
 ; End of function reset_keys_settings

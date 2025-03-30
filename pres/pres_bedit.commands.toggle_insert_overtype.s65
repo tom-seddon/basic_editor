@@ -91,11 +91,11 @@ type_commands_loop:
 		CMP	byte_39		; reached the end?
 		BNE	type_commands_loop
 
+loc_A64D:				
                 .if bet2_version
-L9D26:
                 lda current_command_id
                 cmp #CMD_UTILS
-                bne loc_A64D
+                bne L9D3E
                 ldx #6
                 stx byte_3A
 L9D31:
@@ -105,9 +105,9 @@ L9D31:
                 jsr L9D4C
                 dec byte_3A
                 bpl L9D31
+L9D3E:
                 .endif
 
-loc_A64D:				
 		LDX	#0
 		LDY	#255
 		LDA	#187		; get ROM containing BASIC
@@ -118,7 +118,7 @@ loc_A64D:
                 .if bet2_version
 L9D4C:
                 ldx #0
-                lda #128
+                lda #138
                 jmp osbyte
                 .endif
 

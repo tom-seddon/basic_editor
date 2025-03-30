@@ -158,7 +158,11 @@ command_jump_table:.byte $20		   ; unknown
 		.byte $AB		; command_id
 		.word copy_key_edit_mode_command; address
 		.byte 0			; unknown
+                .if acornsoft_version
 		.byte CMD_tab_key	; command_id
+                .else
+                .byte CMD_unknown_CA
+                .endif
 		.word tab_key_command	; address
 		.byte 0			; unknown
 		.byte CMD_RUN		; command_id
@@ -242,7 +246,11 @@ command_jump_table:.byte $20		   ; unknown
 		.byte CMD_END		; command_id
 		.word end_command	; address
 		.byte 0			; unknown
+                .if acornsoft_version
 		.byte CMD_shift_tab_key	; command_id
+                .else
+                .byte CMD_unknown_BA
+                .endif
                 .word loc_9783		; address
                 .if bet2_version
                 .byte 2

@@ -54,8 +54,12 @@ loc_B33B:
 		BEQ	loc_B34A
 		JMP	language_entry.loc_814D
 
-loc_B34A:				
+loc_B34A:
+                .if acornsoft_version
 		JSR	loc_9D2D
+                .else
+                jsr L9717
+                .endif
 		JSR	is_program_empty ; sets	C if no	program
 		BCS	loc_B355
 		JMP	loc_967A

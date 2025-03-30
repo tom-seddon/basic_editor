@@ -127,12 +127,9 @@ find_mode_getch:
 		JSR	reset_cursor_shape
 		PLA
 		STA	is_insert_mode	; 0=overtype 1=insert
-                .if bet2_version
-                ; TODO... original is jsr $b4ea, jsr $bfb2, jmp $8750
-                nop
-                nop
-                nop
-                .endif
 		JSR	getch
+                .if bet2_version
+                jsr LBFB2
+                .endif
 		JMP	make_cursor_invisible
 ; End of function find_mode_getch
