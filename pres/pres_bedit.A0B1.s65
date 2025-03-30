@@ -1,0 +1,134 @@
+sub_A0B1:				
+		CPX	#0
+		BNE	loc_A0B6
+		RTS
+
+loc_A0B6:				
+		STA	byte_28
+		DEC	byte_28
+		STY	byte_27
+		DEX
+		STX	byte_26
+		JSR	make_cursor_invisible
+		LDA	#$FF
+		STA	byte_24
+		STA	byte_23
+		LDA	#0
+		SEC
+		SBC	code_area_width
+		STA	byte_25
+
+loc_A0D0:				
+		CLC
+		LDA	byte_25
+		ADC	code_area_width
+		STA	byte_25
+		CLC
+		LDA	byte_23
+		ADC	code_area_width
+		STA	byte_23
+		BCC	loc_A0E4
+		INC	byte_24
+
+loc_A0E4:				
+		LDA	#1
+		STA	byte_20
+		LDA	#4
+		STA	byte_21
+; (byte_20) points at detokenized line
+		LDA	byte_24
+		BNE	loc_A0F8
+		LDA	byte_28
+		CMP	byte_23
+		BEQ	loc_A0F8
+		BCS	loc_A0D0
+
+loc_A0F8:				
+		LDA	byte_28
+		CMP	byte_25
+		BCS	loc_A100
+		LDA	byte_25
+
+loc_A100:				
+		STA	byte_22
+		CLC
+		ADC	byte_20
+		STA	byte_20
+		BCC	loc_A10B
+		INC	byte_21
+
+loc_A10B:				
+		LDA	byte_27
+		BNE	loc_A115
+		LDA	byte_26
+		CMP	byte_25
+		BCC	locret_A16C
+
+loc_A115:				
+		LDX	#0
+		LDA	byte_27
+		CMP	byte_24
+		BEQ	loc_A121
+		BCS	loc_A129
+		BCC	loc_A127
+
+loc_A121:				
+		LDA	byte_26
+		CMP	byte_23
+		BCS	loc_A129
+
+loc_A127:				
+		LDX	#3
+
+loc_A129:				
+		SEC
+		LDA	byte_23,X
+		SBC	byte_22
+		CLC
+		ADC	#1
+		PHA
+		LDX	byte_22
+		LDY	#0
+		JSR	get_line_dimensions ; work out dimensions of line.
+					;
+					; Entry:
+					; X=line length
+					; Y=starting Y
+					;
+					; Exit:
+					; X=line length	MOD screen width
+					; Y=ending Y
+		CLC
+		TXA			; get X	coordinate
+		ADC	#6		; offset by line numbers width
+		TAX			; back in X
+		CLC
+		TYA			; get Y	coordinate
+		ADC	byte_3B		; add base Y
+		TAY			; back in Y
+		JSR	gotoxy		; positino cursor
+		LDA	byte_3B		; get screen Y
+		ASL
+		TAX
+		LDA	$6C0,X
+		PHA
+		LDA	$6C1,X
+		PHA
+		TYA
+		ASL
+		TAX
+		PLA
+		STA	$6C1,X
+		PLA
+		STA	$6C0,X
+		PLA
+		LDX	byte_20
+		LDY	byte_21
+		JSR	print_n_chars
+		LDA	byte_24
+		BNE	locret_A16C
+		JMP	loc_A0D0
+
+locret_A16C:				
+		RTS
+; End of function sub_A0B1

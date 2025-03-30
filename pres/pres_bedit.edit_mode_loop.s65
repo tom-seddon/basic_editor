@@ -34,7 +34,7 @@ L864D:
 L8670:
                 jsr L87DC
 L8673:
-                jsr LB4EA
+                jsr getch
                 jsr LBFB2
                 pha
                 jsr is_Electron

@@ -32,14 +32,12 @@ bet2_version=false
 ; bodge region
                 
 call_other_rom=$bb35
-LBFEE=$bfee
-LB4EA=$b4ea
-LBFB2=$bfb2
+;LBFEE=$bfee
+;LBFB2=$bfb2
 LBE85=$be85
-LB249=$b249
-error_messages_table=$ffff
-LBCC2=$bcc2
-LBFE8=$bfe8
+;error_messages_table=$ffff
+;LBFE8=$bfe8
+get_error=$ffff
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -1075,7 +1073,7 @@ update_command:
                 bne LACF5
                 lda #$28
 LACF2:
-                jmp LB249
+                jmp loc_859D
 
 LACF5:
                 lda #$27
@@ -1238,7 +1236,7 @@ LBCB3:
                 iny
                 bne LBCB3
 
-LBCC3:
+LBCC2:
                 ldy #2
                 lda ($a8),y
                 bne LBCDC
@@ -1300,7 +1298,7 @@ LBD0C:
                 pla
                 tay
                 rts
-                
+
                 .endif
 
 find_program:                           
@@ -1436,8 +1434,9 @@ scan_next_line:
                 JMP     find_program_scan_line
 ; End of function find_program
 
-
-
+                .if bet2_version
+                .include "pres_bedit.validate_mode.s65"
+                .endif
 
 initialise:                             
                 JSR     init_brkv_and_oshwm
@@ -1465,9 +1464,16 @@ disable_all_events_loop:
                 LDA     #200            ; set ESCAPE, BREAK effect (AUG p205)
                 LDY     #%11111110      ; normal ESCAPE action (bit 0 reset)
                 JSR     OSBYTE
+                .if bet2_version
+                jsr is_Electron
+                bcs LBE2B
+                .endif
                 LDX     #0              ; TAB key produces CHR$0
                 LDA     #219            ; read/write TAB key char (AUG p222)
                 JSR     osbyte_with_y0
+                .if bet2_version
+LBE2B:
+                .endif
                 LDX     #27             ; ESCAPE key produces CHR$27
                 LDA     #220            ; read/write Escape char (AUG p223)
                 JSR     osbyte_with_y0
@@ -1638,9 +1644,6 @@ done:
                 .include "pres_bedit.atoi_from_command_line.s65"
                 .include "pres_bedit.execute_command.s65"
                 .include "pres_bedit.clear_5B1_to_600.s65"
-                .endif
-
-
 
 ; A = error code
 
@@ -1691,12 +1694,7 @@ copy_error_loop:
 		RTS
 ; End of function get_error
 
-                .if acornsoft_version
                 .include "pres_bedit.commands.find.s65"
-                .endif
-
-
-                .if acornsoft_version
                 .include "pres_bedit.commands.change_or_qchange.s65"
                 .include "pres_bedit.commands.load.s65"
                 .include "pres_bedit.read_line.s65"
@@ -1716,7 +1714,9 @@ copy_error_loop:
                 .include "pres_bedit.set_palette.s65"
                 .endif
 
-
+                .if bet2_version
+                .include "pres_bedit.A0B1.s65"
+                .endif
 
 
 
@@ -1750,160 +1750,49 @@ loc_9F26:
 		JMP	redraw_line_number
 ; End of function sub_9F00
 
+                .if bet2_version
+LBFB2:
+                pha
+                jsr is_Electron
+                bcc LBFC9
+                pla
+                pha
+                sec
+                sbc #$a0
+                bmi LBFC9
+                cmp #$30
+                bcs LBFC9
+                tax
+                pla
+                lda LABD2,x
+                pha
+LBFC9:
+                pla
+                rts
+
+                .fill $bfe2-*,0
+LBFE2:
+                jmp L99DC
+LBFE5:
+                jmp L99E6
+LBFE8:
+                .text "BE",13
+LBFEB:
+                jmp brk_handler
+LBFEE:
+                .word LA301
+
+                ; PLD paging region follows...
+                .cerror *!=$bff0
+                .fill 16,$20
+                .endif
+                
+
                 .if acornsoft_version
                 .include "pres_bedit.execute_key_command.s65"
                 .include "pres_bedit.9FD8.s65"
                 .include "pres_bedit.A069.s65"
-                .endif
-
-
-
-
-
-
-
-
-
-
-
-
-sub_A0B1:				
-		CPX	#0
-		BNE	loc_A0B6
-		RTS
-
-loc_A0B6:				
-		STA	byte_28
-		DEC	byte_28
-		STY	byte_27
-		DEX
-		STX	byte_26
-		JSR	make_cursor_invisible
-		LDA	#$FF
-		STA	byte_24
-		STA	byte_23
-		LDA	#0
-		SEC
-		SBC	code_area_width
-		STA	byte_25
-
-loc_A0D0:				
-		CLC
-		LDA	byte_25
-		ADC	code_area_width
-		STA	byte_25
-		CLC
-		LDA	byte_23
-		ADC	code_area_width
-		STA	byte_23
-		BCC	loc_A0E4
-		INC	byte_24
-
-loc_A0E4:				
-		LDA	#1
-		STA	byte_20
-		LDA	#4
-		STA	byte_21
-; (byte_20) points at detokenized line
-		LDA	byte_24
-		BNE	loc_A0F8
-		LDA	byte_28
-		CMP	byte_23
-		BEQ	loc_A0F8
-		BCS	loc_A0D0
-
-loc_A0F8:				
-		LDA	byte_28
-		CMP	byte_25
-		BCS	loc_A100
-		LDA	byte_25
-
-loc_A100:				
-		STA	byte_22
-		CLC
-		ADC	byte_20
-		STA	byte_20
-		BCC	loc_A10B
-		INC	byte_21
-
-loc_A10B:				
-		LDA	byte_27
-		BNE	loc_A115
-		LDA	byte_26
-		CMP	byte_25
-		BCC	locret_A16C
-
-loc_A115:				
-		LDX	#0
-		LDA	byte_27
-		CMP	byte_24
-		BEQ	loc_A121
-		BCS	loc_A129
-		BCC	loc_A127
-
-loc_A121:				
-		LDA	byte_26
-		CMP	byte_23
-		BCS	loc_A129
-
-loc_A127:				
-		LDX	#3
-
-loc_A129:				
-		SEC
-		LDA	byte_23,X
-		SBC	byte_22
-		CLC
-		ADC	#1
-		PHA
-		LDX	byte_22
-		LDY	#0
-		JSR	get_line_dimensions ; work out dimensions of line.
-					;
-					; Entry:
-					; X=line length
-					; Y=starting Y
-					;
-					; Exit:
-					; X=line length	MOD screen width
-					; Y=ending Y
-		CLC
-		TXA			; get X	coordinate
-		ADC	#6		; offset by line numbers width
-		TAX			; back in X
-		CLC
-		TYA			; get Y	coordinate
-		ADC	byte_3B		; add base Y
-		TAY			; back in Y
-		JSR	gotoxy		; positino cursor
-		LDA	byte_3B		; get screen Y
-		ASL
-		TAX
-		LDA	$6C0,X
-		PHA
-		LDA	$6C1,X
-		PHA
-		TYA
-		ASL
-		TAX
-		PLA
-		STA	$6C1,X
-		PLA
-		STA	$6C0,X
-		PLA
-		LDX	byte_20
-		LDY	byte_21
-		JSR	print_n_chars
-		LDA	byte_24
-		BNE	locret_A16C
-		JMP	loc_A0D0
-
-locret_A16C:				
-		RTS
-; End of function sub_A0B1
-
-
-                .if acornsoft_version
+                .include "pres_bedit.A0B1.s65"
                 .include "pres_bedit.redraw_line_number.s65"
                 .include "pres_bedit.token_table.s65"
                 .include "pres_bedit.commands.toggle_insert_overtype.s65"
@@ -1938,7 +1827,5 @@ locret_A16C:
 
                 .if acornsoft_version
                 .fill $c000-*,0
-                .else
-                .include "pres_bedit.validate_mode.s65"
                 .endif
                 
