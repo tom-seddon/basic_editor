@@ -1,0 +1,19 @@
+clear_5B1_to_600:			
+					
+		LDA	#0
+		STA	byte_15
+		LDA	#<unk_5B1
+		STA	byte_C
+		LDA	#>unk_5B1
+		STA	byte_D
+		LDX	#0
+		LDY	#$4F
+		LDA	#$20
+		JSR	memset		; Set memory to	value.
+					;
+					; ($C) points to memory	to clear.
+					; X holds number of pages to clear.
+					; Y holds number of bytes to clear in Xth page.
+					; A holds value	to write.
+		RTS
+; End of function clear_5B1_to_600

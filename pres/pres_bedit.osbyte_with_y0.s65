@@ -1,0 +1,10 @@
+osbyte_with_y0:.proc
+					
+		LDY	#0
+		JSR	OSBYTE
+                RTS
+.pend
+; End of function osbyte_with_y0
+
+
+

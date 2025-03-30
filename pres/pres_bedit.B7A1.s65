@@ -1,0 +1,285 @@
+sub_B7A1:				
+					
+		JSR	is_line_empty	; determines whether current line is empty.
+					;
+					; Entry:
+					; detokenized line at $400...
+					;
+					; Exit:
+					; C set	if line	empty.
+		BCC	loc_B7AB
+		LDA	scroll_status	; 1=scroll, 0=noscroll
+		BNE	loc_B7B7
+		RTS
+
+loc_B7AB:				
+		LDA	scroll_status	; 1=scroll, 0=noscroll
+		BNE	loc_B7B2
+		JMP	loc_B89A
+
+loc_B7B2:				
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_B7BA
+
+loc_B7B7:				
+		JMP	edit_mode_loop
+
+loc_B7BA:				
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		LDA	#0
+		STA	byte_2B
+		STA	byte_2C
+		STA	byte_36
+		JSR	sub_BA69
+		TXA
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		TAX
+		LDA	$6BF,X
+		CMP	byte_2C
+		BNE	loc_B7DD
+		LDA	$6BE,X
+		CMP	byte_2B
+		BNE	loc_B7DD
+		INC	byte_36
+
+loc_B7DD:				
+		LDY	#3
+		CLC
+		LDA	byte_2B
+		ADC	($2B),Y
+		STA	byte_C
+		LDA	byte_2C
+		ADC	#0
+		STA	byte_D
+		LDY	#1
+		LDA	($C),Y
+		BMI	loc_B7B7
+		LDA	byte_2D
+		STA	unk_34
+		JSR	sub_A8C0
+		JSR	get_line_height	; get height of	current	line
+					;
+					; Entry:
+					; ?byte_400 = line length
+					;
+					; Exit:
+					; X = line height
+		STX	unk_37
+		STX	byte_35
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	advance_2b_to_next_line
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+		JSR	sub_A01E
+		CLC
+		LDA	byte_2D
+		ADC	unk_37
+		ADC	byte_3B
+		SEC
+		SBC	#1
+		SEC
+		SBC	screen_height
+		STA	unk_37
+		BEQ	loc_B826
+		BPL	loc_B829
+
+loc_B826:				
+		JMP	loc_B82C
+
+loc_B829:				
+		JSR	sub_B8BD
+
+loc_B82C:				
+		LDA	unk_37
+		BEQ	loc_B832
+		BPL	loc_B85D
+
+loc_B832:				
+		LDA	byte_36
+		BNE	loc_B85D
+		LDA	byte_6B3
+		BEQ	loc_B852
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+		LDX	unk_34
+		JSR	loc_A021
+		JSR	sub_AA17
+		JMP	loc_B89D
+
+loc_B852:				
+		LDA	byte_35
+		CMP	unk_34
+		BNE	loc_B880
+
+loc_B858:				
+		PLA
+		PLA
+		JMP	loc_B89D
+
+loc_B85D:				
+		LDA	byte_6B3
+		BEQ	loc_B880
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		LDA	byte_3B
+		PHA
+		SEC
+		JSR	sub_9DEA
+		PLA
+		STA	byte_3B
+		JMP	loc_B89D
+
+loc_B880:				
+		CLC
+		LDA	byte_3B
+		PHA
+		ADC	byte_35
+		STA	byte_3B
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		SEC
+		JSR	sub_9DEA
+		PLA
+		STA	byte_3B
+		JMP	loc_B858
+
+loc_B89A:				
+		JSR	sub_AA06
+
+loc_B89D:				
+		LDA	byte_3B
+		ASL
+		TAX
+		INX
+		LDY	$6C0,X
+		BNE	loc_B8AE
+		DEY
+		STY	current_line_no_lsb
+		STY	current_line_no_msb
+		BNE	loc_B8BA
+
+loc_B8AE:				
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		INC	current_line_no_msb
+		BNE	loc_B8BA
+		INC	current_line_no_lsb
+
+loc_B8BA:				
+					
+		JMP	sub_A069
+; End of function sub_B7A1
+
+sub_B8BD:				
+		SEC
+		LDA	unk_37
+		SBC	#1
+		ASL
+		TAX
+		TAY
+
+loc_B8C5:				
+		INY
+		INY
+		LDA	$6C0,X
+		CMP	$6C0,Y
+		BNE	loc_B8DB
+		LDA	$6C1,X
+		CMP	$6C1,Y
+		BNE	loc_B8DB
+		INC	unk_37
+		BNE	loc_B8C5
+
+loc_B8DB:				
+		CLC
+		TYA
+		ADC	#-$40
+		STA	byte_C
+		LDA	#6
+		STA	byte_F
+		ADC	#0
+		STA	byte_D
+		LDA	#-$40
+		STA	byte_E
+		CLC
+		LDA	screen_height
+		ADC	#1
+		SEC
+		SBC	unk_37
+		ASL
+		TAY
+		LDX	#0
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		JSR	make_cursor_invisible
+		LDX	#0
+		LDY	screen_height
+		STY	byte_6AB
+		JSR	gotoxy
+		LDA	#$13
+		JSR	OSBYTE
+		LDY	unk_37
+		LDA	#$A
+
+loc_B914:				
+		JSR	OSWRCH
+		DEY
+		BNE	loc_B914
+		SEC
+		LDA	byte_3B
+		SBC	unk_37
+		STA	byte_3B
+		RTS
+; End of function sub_B8BD

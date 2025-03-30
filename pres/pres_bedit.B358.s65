@@ -1,0 +1,78 @@
+sub_B358:				
+					
+		LDA	#$FF
+		STA	unk_4D
+		RTS
+; End of function sub_B358
+
+
+
+
+mark_edit_mode_command:			
+					
+		LDA	current_line_no_lsb
+		STA	unk_4D
+		LDA	current_line_no_msb
+		STA	unk_4E
+		JMP	loc_AC08
+; End of function mark_edit_mode_command
+
+goto_edit_mode_command:			
+					
+		JSR	sub_B37B
+		BEQ	loc_B370
+		JMP	beep
+
+loc_B370:				
+					
+		LDA	unk_4D
+		STA	current_line_no_lsb
+		LDA	unk_4E
+		STA	current_line_no_msb
+		JMP	loc_9DA8
+; End of function goto_edit_mode_command
+
+
+
+
+sub_B37B:				
+					
+		LDA	unk_4D
+		CMP	#-1
+		BNE	loc_B384
+		LDA	#1
+		RTS
+
+loc_B384:				
+		STA	byte_2B
+		LDA	unk_4E
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		LDY	#1
+		LDA	($2B),Y
+		CMP	unk_4D
+		BNE	locret_B39A
+		INY
+		LDA	($2B),Y
+		CMP	unk_4E
+
+locret_B39A:				
+		RTS
+; End of function sub_B37B
+
+goto_command:				
+		JSR	sub_B37B
+		BNE	loc_B3A6
+		JSR	enter_edit_mode
+		JMP	loc_B370
+
+loc_B3A6:				
+		LDA	#$22 ; '"'
+		JMP	loc_859D
