@@ -890,6 +890,7 @@ L99E6:
                 jmp call_other_rom
 
                 .include "pres_bedit.find_line_by_number.s65"
+                .include "pres_bedit.execute_command.s65"
 
                 .endif
 
@@ -2180,138 +2181,8 @@ done:
                 .if acornsoft_version
                 .include "pres_bedit.get_line_dimensions.s65"
                 .include "pres_bedit.atoi_from_command_line.s65"
+                .include "pres_bedit.execute_command.s65"
                 .endif
-
-; unk_6BD = command to run
-
-execute_command:			
-					
-		LDA	#<command_jump_table
-		STA	byte_39
-		LDA	#>command_jump_table
-		STA	byte_3A
-
-loc_8FEF:				
-		LDY	#0
-		LDA	(byte_39),Y	; get control byte
-		STA	byte_49		; ?unk_49 = control byte
-		CMP	#$FF		; end of table?
-		BNE	loc_8FFA	; branch taken if not end of table
-
-execute_command_done:					
-		RTS
-
-loc_8FFA:				
-		INY
-		LDA	($39),Y		; get command ID
-		CMP	current_command_id ; is	it the desired command?
-		BEQ	loc_9005	; branch taken if desired command found
-		JMP	next_command
-; Create thunk at unk_6B0: JMP <command routine>
-
-loc_9005:				
-		LDA	#$4C		; JMP absolute
-		STA	unk_6B0
-		STA	byte_6A7
-		INY
-		LDA	($39),Y		; get command routine ptr LSB
-		STA	unk_6B1		; store	JMP target LSB
-		INY
-		LDA	($39),Y		; get command routine ptr MSB
-		STA	unk_6B2		; store	JMP target MSB
-		LDA	byte_49		; get control byte
-		AND	#1		; extract bit 0
-		STA	byte_6AB	; ?unk_6AB = unknown byte bit 1
-
-check_bit_1:				; get control byte
-		LDA	byte_49
-		AND	#2		; extract bit 1
-		BNE	check_bit_2	; branch taken if bit 1	reset
-; bit 1 set
-		LDA	unk_16
-		BNE	execute_command_done
-
-check_bit_2:				
-		LDA	byte_49		; get control byte
-		AND	#4		; extract bit 2
-		BEQ	check_bit_3	; branch taken if bit 2	reset
-; bit 2 set
-		LDA	editor_mode_id	; 1=command mode, 2=edit mode
-		CMP	#2		; edit mode?
-		BEQ	check_bit_3	; branch taken if edit mode
-; not in edit mode
-		JSR	enter_edit_mode
-		LDA	byte_49		; get control byte
-		AND	#$10		; extract bit 4
-		BEQ	check_bit_6	; branch taken if bit 4	reset
-; bit 4 set
-		JSR	is_program_empty ; sets	C if no	program
-		BCC	check_bit_6	; branch taken if program is present
-		JMP	loc_9DA8
-
-check_bit_3:				
-					
-		LDA	editor_mode_id	; 1=command mode, 2=edit mode
-		CMP	#2		; edit mode?
-		BNE	check_bit_6
-		LDA	byte_49
-		AND	#8
-		BEQ	check_bit_4
-		JSR	is_line_empty	; determines whether current line is empty.
-					;
-					; Entry:
-					; detokenized line at $400...
-					;
-					; Exit:
-					; C set	if line	empty.
-		BCS	check_bit_4
-		JSR	sub_A8C0
-
-check_bit_4:				
-					
-		LDA	byte_49
-		AND	#$10
-		BEQ	check_bit_5
-		JSR	is_line_empty	; determines whether current line is empty.
-					;
-					; Entry:
-					; detokenized line at $400...
-					;
-					; Exit:
-					; C set	if line	empty.
-		BCC	check_bit_5
-		JMP	loc_9DA8
-
-check_bit_5:				
-					
-		LDA	byte_49
-		AND	#$20 ; ' '
-		BEQ	check_bit_6
-		STA	byte_6B3
-		JSR	sub_A8C0
-
-check_bit_6:				
-					
-		LDA	byte_49
-		AND	#$40 ; '@'
-		EOR	#$40 ; '@'
-		STA	byte_6A7
-		JMP	unk_6B0
-
-next_command:				
-		CLC
-		LDA	byte_39		; ptr LSB
-		ADC	#4		; add 4	(size of each entry)
-		STA	byte_39
-		BCC	command_ptr_ok
-		INC	byte_3A
-
-command_ptr_ok:				
-		JMP	loc_8FEF
-; End of function execute_command
-
-
-
 
 clear_5B1_to_600:			
 					
