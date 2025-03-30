@@ -39,6 +39,7 @@ LB4EA=$b4ea
 LBFB2=$bfb2
 LBE85=$be85
 LB249=$b249
+error_messages_table=$ffff
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -1138,6 +1139,10 @@ sub_8314:
                 .include "pres_bedit.clear_5B1_to_600.s65"
                 .include "pres_bedit.osbyte_with_y0.s65"
                 .include "pres_bedit.BE98.s65"
+                .include "pres_bedit.print_number.s65"
+                .include "pres_bedit.8492.s65"
+                .include "pres_bedit.BDD3.s65"
+
                 .endif
 
 find_program:                           
@@ -1355,293 +1360,7 @@ loc_8437:
 
                 .if acornsoft_version
                 .include "pres_bedit.brk_handler.s65"
-                .endif
-
-sub_8492:				
-		JSR	find_program
-; End of function sub_8492
-
-
-
-
-sub_8495:				
-		LDA	editor_mode_id	; 1=command mode, 2=edit mode
-		CMP	#2
-		BNE	loc_849F
-		JSR	make_cursor_invisible
-
-loc_849F:				
-		LDX	#10
-		LDA	byte_C
-		BPL	loc_84A7
-		LDX	#3
-
-loc_84A7:				
-		STX	byte_3A
-		LDA	oshwm
-		STA	unk_33
-		STA	byte_27
-		LDA	oshwm+1
-		STA	byte_28
-
-loc_84B3:				
-		LDY	#1
-		LDA	(byte_27),Y
-		BPL	loc_84BC
-		JMP	loc_854F
-
-loc_84BC:				
-		LDY	#3
-		LDA	(byte_27),Y
-		STA	unk_37
-		LDA	#0
-		STA	byte_38
-		INY
-		STY	unk_34
-
-loc_84C9:				
-		LDY	unk_34
-		CLC
-		TYA
-		ADC	#3
-		BCS	loc_84D5
-		CMP	unk_37
-		BCC	loc_84D8
-
-loc_84D5:				
-		JMP	loc_853F
-
-loc_84D8:				
-		LDA	byte_38
-		BEQ	loc_84DF
-
-loc_84DC:				
-		JMP	loc_852E
-
-loc_84DF:				
-		LDA	(byte_27),Y
-		CMP	#$8D
-		BNE	loc_84DC
-		JSR	decode_line_number ; decode line number	from program.
-					;
-					; Entry:
-					; (unk_27),Y points to 8D token
-					;
-					; Exit:
-					; unk_21.w is line number.
-		JSR	sub_85AC
-
-loc_84EB:				
-		LDY	#1
-		LDA	(byte_25),Y
-		BPL	loc_8505
-		LDX	#4
-		STX	unk_33
-		LDY	unk_34
-		LDA	#$40 ; '@'
-
-loc_84F9:				
-		STA	($27),Y
-		INY
-		DEX
-		BNE	loc_84F9
-		DEY
-
-loc_8500:				
-		STY	unk_34
-		JMP	loc_852E
-
-loc_8505:				
-		CMP	byte_21
-		BNE	loc_8529
-		INY
-		LDA	($25),Y
-		CMP	byte_22
-		BNE	loc_8529
-		LDX	byte_35
-		LDY	byte_36
-		JSR	sub_85D8
-		STX	byte_36
-		STY	byte_35
-		LDY	unk_34
-		LDX	#2
-
-loc_851F:				
-		INY
-		STA	($27),Y
-		LDA	$34,X
-		DEX
-		BPL	loc_851F
-		BMI	loc_8500
-
-loc_8529:				
-		JSR	sub_85BF
-		BNE	loc_84EB
-
-loc_852E:				
-		LDA	($27),Y
-		CMP	#$22 ; '"'
-		BNE	loc_853A
-		LDA	byte_38
-		EOR	#1
-		STA	byte_38
-
-loc_853A:				
-		INC	unk_34
-		JMP	loc_84C9
-
-loc_853F:				
-		LDY	#3
-		CLC
-		LDA	($27),Y
-		ADC	byte_27
-		STA	byte_27
-		BCC	loc_854C
-		INC	byte_28
-
-loc_854C:				
-		JMP	loc_84B3
-
-loc_854F:				
-		JSR	sub_85AC
-
-loc_8552:				
-		LDY	#1
-		LDA	($25),Y
-		BMI	loc_858A
-		LDX	#$11
-
-loc_855A:				
-		LDY	#2
-		LDA	$40,X
-		CMP	($25),Y
-		BNE	loc_8575
-		DEX
-		DEY
-		LDA	$40,X
-		CMP	($25),Y
-		BNE	loc_8576
-		LDA	byte_35
-		ORA	#$80 ; '€'
-		STA	$40,X
-		INX
-		LDA	byte_36
-		STA	$40,X
-
-loc_8575:				
-		DEX
-
-loc_8576:				
-		DEX
-		DEX
-		BPL	loc_855A
-		LDY	#1
-		LDA	byte_35
-		STA	($25),Y
-		INY
-		LDA	byte_36
-		STA	($25),Y
-		JSR	sub_85BF
-		BNE	loc_8552
-
-loc_858A:				
-		LDX	#$10
-
-loc_858C:				
-		LDA	$40,X
-		AND	#$7F ; ''
-		STA	$40,X
-		DEX
-		DEX
-		DEX
-		BPL	loc_858C
-		LDA	unk_33
-		BEQ	locret_85BE
-		LDA	#7
-
-loc_859D:				
-					
-		LDX	unk_6AD
-		BEQ	loc_85A6
-		STA	unk_6AD
-		RTS
-
-loc_85A6:				
-		JSR	get_error	; A = error code
-		JMP	language_entry.loc_814D
-; End of function sub_8495
-
-
-
-
-sub_85AC:				
-		LDA	oshwm
-		STA	byte_25
-		LDA	oshwm+1
-		STA	byte_26
-		LDA	unk_6B8
-		STA	byte_35
-		LDA	unk_6B9
-		STA	byte_36
-
-locret_85BE:				
-		RTS
-; End of function sub_85AC
-
-
-
-
-sub_85BF:				
-		LDY	#3
-		CLC
-		LDA	($25),Y
-		ADC	byte_25
-		STA	byte_25
-		BCC	loc_85CC
-		INC	byte_26
-
-loc_85CC:				
-		CLC
-		LDA	byte_3A
-		ADC	byte_36
-		STA	byte_36
-		BCC	locret_85D7
-		INC	byte_35
-
-locret_85D7:				
-		RTS
-; End of function sub_85BF
-
-
-
-
-sub_85D8:				
-		STX	byte_C
-		STY	byte_D
-		LDX	#1
-		STX	byte_E
-
-loc_85E0:				
-		LDA	$C,X
-		ASL
-		ROL	byte_E
-		ASL
-		ROL	byte_E
-		SEC
-		ROR
-		LSR
-		STA	$C,X
-		DEX
-		BPL	loc_85E0
-		LDA	byte_E
-		ASL
-		ASL
-		EOR	#$14
-		LDX	byte_D
-		LDY	byte_C
-		RTS
-                ; End of function sub_85D8
-                ; 0
+                .include "pres_bedit.8492.s65"
 
 error_message: .macro text
                 .text \text|$80
@@ -1688,7 +1407,6 @@ error_messages_table:
                 .error_message "Increment must be in range 1-255" ;38
                 .byte  $FF ;
 
-                .if acornsoft_version
                 .include "pres_bedit.strings.s65"
                 .include "pres_bedit.do_command_line.s65"
                 .include "pres_bedit.command_table.s65"
@@ -1944,26 +1662,8 @@ got_command:
                 .include "pres_bedit.find_first_non_alpha_char.s65"
                 .include "pres_bedit.memset.s65"
                 .include "pres_bedit.osbyte_with_y0.s65"
+                .include "pres_bedit.print_number.s65"
                 .endif
-
-; print	number.
-;
-; Suitable for use with	the result of itoa.
-;
-; Entry:
-; unk_0	= digit	count
-; unk_1... = digits
-
-print_number:				
-					
-		LDX	#1
-		LDY	#0
-		LDA	byte_0
-		JSR	print_n_chars
-		RTS
-; End of function print_number
-
-
 
 ; move (maybe overlapping) memory regions.
 ;
@@ -2135,7 +1835,6 @@ done:
 
 
 
-
 ; A = error code
 
 get_error:				
@@ -2184,8 +1883,6 @@ copy_error_loop:
 		BPL	copy_error_loop	; taken	if haven't ended up in the next error
 		RTS
 ; End of function get_error
-
-
 
 
 find_command:				
@@ -3887,129 +3584,8 @@ loc_BA83:
                 .include "pres_bedit.commands.help.s65"
                 .include "pres_bedit.commands.goto.s65"
                 .include "pres_bedit.commands.info.s65"
+                .include "pres_bedit.BDD3.s65"
                 .endif
-
-sub_BDD3:				
-					
-		LDA	byte_3E
-		PHA
-		LDA	byte_3F
-		PHA
-		LDA	unk_6BA
-		STA	byte_3E
-		LDA	unk_6BB
-		STA	byte_3F
-		CLC
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		ADC	byte_6BE
-		BCS	loc_BDF5
-		SEC
-		SBC	#1
-		CMP	byte_400
-		BEQ	loc_BE09
-		BCC	loc_BE09
-
-loc_BDF5:				
-		CLC
-		LDA	cursor_offset	; offset of cursor in detokenized buffer
-		ADC	unk_6BC
-		BCS	loc_BE23
-		SEC
-		SBC	#1
-		CMP	#-4 ; 'ü'
-		BCS	loc_BE23
-		STA	byte_400
-		BCC	loc_BE57
-
-loc_BE09:				
-		SEC
-		LDA	unk_6BC
-		SBC	byte_6BE
-		STA	unk_6AE
-		CLC
-		ADC	byte_400
-		PHA
-		LDY	unk_6AE
-		BMI	loc_BE2B
-		BCS	loc_BE23
-		CMP	#-4 ; 'ü'
-		BCC	loc_BE2B
-
-loc_BE23:				
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	#$25 ; '%'
-		JMP	loc_859D
-
-loc_BE2B:				
-		CLC
-		LDA	#0
-		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		ADC	byte_6BE
-		STA	byte_C
-		ADC	unk_6AE
-		STA	byte_E
-		LDA	#4
-		STA	byte_D
-		STA	byte_F
-		LDX	#0
-		CLC
-		LDA	byte_400
-		ADC	#1
-		SEC
-		SBC	cursor_offset	; offset of cursor in detokenized buffer
-		SEC
-		SBC	byte_6BE
-		TAY
-		JSR	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-		PLA
-		STA	byte_400
-
-loc_BE57:				
-		LDA	byte_3E
-		STA	byte_C
-		LDA	byte_3F
-		STA	byte_D
-		CLC
-		LDA	#0
-		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		STA	byte_E
-		LDA	#4
-		STA	byte_F
-		LDX	#0
-		LDY	unk_6BC
-		CLC
-		TYA
-		ADC	cursor_offset	; offset of cursor in detokenized buffer
-		STA	cursor_offset	; offset of cursor in detokenized buffer
-		STA	byte_6B3
-		JSR	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-		PLA
-		STA	byte_3F
-		PLA
-		STA	byte_3E
-                RTS
-; End of function sub_BDD3
-
-
-
 
 find_mode_getch:				
 					
@@ -4028,25 +3604,6 @@ find_mode_getch:
                 .if acornsoft_version
                 .include "pres_bedit.BE98.s65"
                 .endif
-
-
-
-
-; finds	current	line by	number.
-;
-; Entry:
-; current_line_no_lsb,
-; current_line_no_msb =	line number to search for
-;
-; Exit:
-; (byte_2B) points to line found
-
-find_current_line_by_number:		
-		LDA	current_line_no_lsb
-		STA	byte_2B
-		LDA	current_line_no_msb
-		STA	byte_2C
-		JMP	find_line_by_number ; finds a line, given a line number
 
                 .if acornsoft_version
                 .fill $c000-*,0

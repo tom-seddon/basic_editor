@@ -246,3 +246,19 @@ loc_BFCB:
 					; current_line_no_lsb, current_line_no_msb = the line number
 		JMP	sub_A069
 ; End of function sub_BE98
+
+; finds	current	line by	number.
+;
+; Entry:
+; current_line_no_lsb,
+; current_line_no_msb =	line number to search for
+;
+; Exit:
+; (byte_2B) points to line found
+
+find_current_line_by_number:		
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		JMP	find_line_by_number ; finds a line, given a line number

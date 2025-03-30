@@ -1,0 +1,16 @@
+; print	number.
+;
+; Suitable for use with	the result of itoa.
+;
+; Entry:
+; unk_0	= digit	count
+; unk_1... = digits
+
+print_number:				
+					
+		LDX	#1
+		LDY	#0
+		LDA	byte_0
+		JSR	print_n_chars
+		RTS
+; End of function print_number

@@ -1,0 +1,118 @@
+sub_BDD3:				
+					
+		LDA	byte_3E
+		PHA
+		LDA	byte_3F
+		PHA
+		LDA	unk_6BA
+		STA	byte_3E
+		LDA	unk_6BB
+		STA	byte_3F
+		CLC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		ADC	byte_6BE
+		BCS	loc_BDF5
+		SEC
+		SBC	#1
+		CMP	byte_400
+		BEQ	loc_BE09
+		BCC	loc_BE09
+
+loc_BDF5:				
+		CLC
+		LDA	cursor_offset	; offset of cursor in detokenized buffer
+		ADC	unk_6BC
+		BCS	loc_BE23
+		SEC
+		SBC	#1
+		CMP	#-4
+		BCS	loc_BE23
+		STA	byte_400
+		BCC	loc_BE57
+
+loc_BE09:				
+		SEC
+		LDA	unk_6BC
+		SBC	byte_6BE
+		STA	unk_6AE
+		CLC
+		ADC	byte_400
+		PHA
+		LDY	unk_6AE
+		BMI	loc_BE2B
+		BCS	loc_BE23
+		CMP	#-4
+		BCC	loc_BE2B
+
+loc_BE23:				
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		LDA	#$25 ; '%'
+		JMP	loc_859D
+
+loc_BE2B:				
+		CLC
+		LDA	#0
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		ADC	byte_6BE
+		STA	byte_C
+		ADC	unk_6AE
+		STA	byte_E
+		LDA	#4
+		STA	byte_D
+		STA	byte_F
+		LDX	#0
+		CLC
+		LDA	byte_400
+		ADC	#1
+		SEC
+		SBC	cursor_offset	; offset of cursor in detokenized buffer
+		SEC
+		SBC	byte_6BE
+		TAY
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		PLA
+		STA	byte_400
+
+loc_BE57:				
+		LDA	byte_3E
+		STA	byte_C
+		LDA	byte_3F
+		STA	byte_D
+		CLC
+		LDA	#0
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		STA	byte_E
+		LDA	#4
+		STA	byte_F
+		LDX	#0
+		LDY	unk_6BC
+		CLC
+		TYA
+		ADC	cursor_offset	; offset of cursor in detokenized buffer
+		STA	cursor_offset	; offset of cursor in detokenized buffer
+		STA	byte_6B3
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		PLA
+		STA	byte_3F
+		PLA
+		STA	byte_3E
+                RTS
+; End of function sub_BDD3

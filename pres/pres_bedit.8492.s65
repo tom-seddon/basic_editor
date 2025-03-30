@@ -1,0 +1,276 @@
+sub_8492:				
+		JSR	find_program
+; End of function sub_8492
+
+
+
+
+sub_8495:				
+		LDA	editor_mode_id	; 1=command mode, 2=edit mode
+		CMP	#2
+		BNE	loc_849F
+		JSR	make_cursor_invisible
+
+loc_849F:				
+		LDX	#10
+		LDA	byte_C
+		BPL	loc_84A7
+		LDX	#3
+
+loc_84A7:				
+		STX	byte_3A
+		LDA	oshwm
+		STA	unk_33
+		STA	byte_27
+		LDA	oshwm+1
+		STA	byte_28
+
+loc_84B3:				
+		LDY	#1
+		LDA	(byte_27),Y
+		BPL	loc_84BC
+		JMP	loc_854F
+
+loc_84BC:				
+		LDY	#3
+		LDA	(byte_27),Y
+		STA	unk_37
+		LDA	#0
+		STA	byte_38
+		INY
+		STY	unk_34
+
+loc_84C9:				
+		LDY	unk_34
+		CLC
+		TYA
+		ADC	#3
+		BCS	loc_84D5
+		CMP	unk_37
+		BCC	loc_84D8
+
+loc_84D5:				
+		JMP	loc_853F
+
+loc_84D8:				
+		LDA	byte_38
+		BEQ	loc_84DF
+
+loc_84DC:				
+		JMP	loc_852E
+
+loc_84DF:				
+		LDA	(byte_27),Y
+		CMP	#$8D
+		BNE	loc_84DC
+		JSR	decode_line_number ; decode line number	from program.
+					;
+					; Entry:
+					; (unk_27),Y points to 8D token
+					;
+					; Exit:
+					; unk_21.w is line number.
+		JSR	sub_85AC
+
+loc_84EB:				
+		LDY	#1
+		LDA	(byte_25),Y
+		BPL	loc_8505
+		LDX	#4
+		STX	unk_33
+		LDY	unk_34
+		LDA	#$40 ; '@'
+
+loc_84F9:				
+		STA	($27),Y
+		INY
+		DEX
+		BNE	loc_84F9
+		DEY
+
+loc_8500:				
+		STY	unk_34
+		JMP	loc_852E
+
+loc_8505:				
+		CMP	byte_21
+		BNE	loc_8529
+		INY
+		LDA	($25),Y
+		CMP	byte_22
+		BNE	loc_8529
+		LDX	byte_35
+		LDY	byte_36
+		JSR	sub_85D8
+		STX	byte_36
+		STY	byte_35
+		LDY	unk_34
+		LDX	#2
+
+loc_851F:				
+		INY
+		STA	($27),Y
+		LDA	$34,X
+		DEX
+		BPL	loc_851F
+		BMI	loc_8500
+
+loc_8529:				
+		JSR	sub_85BF
+		BNE	loc_84EB
+
+loc_852E:				
+		LDA	($27),Y
+		CMP	#$22 ; '"'
+		BNE	loc_853A
+		LDA	byte_38
+		EOR	#1
+		STA	byte_38
+
+loc_853A:				
+		INC	unk_34
+		JMP	loc_84C9
+
+loc_853F:				
+		LDY	#3
+		CLC
+		LDA	($27),Y
+		ADC	byte_27
+		STA	byte_27
+		BCC	loc_854C
+		INC	byte_28
+
+loc_854C:				
+		JMP	loc_84B3
+
+loc_854F:				
+		JSR	sub_85AC
+
+loc_8552:				
+		LDY	#1
+		LDA	($25),Y
+		BMI	loc_858A
+		LDX	#$11
+
+loc_855A:				
+		LDY	#2
+		LDA	$40,X
+		CMP	($25),Y
+		BNE	loc_8575
+		DEX
+		DEY
+		LDA	$40,X
+		CMP	($25),Y
+		BNE	loc_8576
+		LDA	byte_35
+		ORA	#$80
+		STA	$40,X
+		INX
+		LDA	byte_36
+		STA	$40,X
+
+loc_8575:				
+		DEX
+
+loc_8576:				
+		DEX
+		DEX
+		BPL	loc_855A
+		LDY	#1
+		LDA	byte_35
+		STA	($25),Y
+		INY
+		LDA	byte_36
+		STA	($25),Y
+		JSR	sub_85BF
+		BNE	loc_8552
+
+loc_858A:				
+		LDX	#$10
+
+loc_858C:				
+		LDA	$40,X
+		AND	#$7F ; ''
+		STA	$40,X
+		DEX
+		DEX
+		DEX
+		BPL	loc_858C
+		LDA	unk_33
+		BEQ	locret_85BE
+		LDA	#7
+
+loc_859D:				
+					
+		LDX	unk_6AD
+		BEQ	loc_85A6
+		STA	unk_6AD
+		RTS
+
+loc_85A6:				
+		JSR	get_error	; A = error code
+		JMP	language_entry.loc_814D
+; End of function sub_8495
+
+sub_85AC:				
+		LDA	oshwm
+		STA	byte_25
+		LDA	oshwm+1
+		STA	byte_26
+		LDA	unk_6B8
+		STA	byte_35
+		LDA	unk_6B9
+		STA	byte_36
+
+locret_85BE:				
+		RTS
+; End of function sub_85AC
+
+sub_85BF:				
+		LDY	#3
+		CLC
+		LDA	($25),Y
+		ADC	byte_25
+		STA	byte_25
+		BCC	loc_85CC
+		INC	byte_26
+
+loc_85CC:				
+		CLC
+		LDA	byte_3A
+		ADC	byte_36
+		STA	byte_36
+		BCC	locret_85D7
+		INC	byte_35
+
+locret_85D7:				
+		RTS
+; End of function sub_85BF
+
+sub_85D8:				
+		STX	byte_C
+		STY	byte_D
+		LDX	#1
+		STX	byte_E
+
+loc_85E0:				
+		LDA	$C,X
+		ASL
+		ROL	byte_E
+		ASL
+		ROL	byte_E
+		SEC
+		ROR
+		LSR
+		STA	$C,X
+		DEX
+		BPL	loc_85E0
+		LDA	byte_E
+		ASL
+		ASL
+		EOR	#$14
+		LDX	byte_D
+		LDY	byte_C
+		RTS
+                ; End of function sub_85D8
+                ; 0
