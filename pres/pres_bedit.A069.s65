@@ -1,0 +1,90 @@
+sub_A069:				
+					
+		LDX	#0		; first	line on	screen
+
+loc_A06B:				
+		TXA
+		LSR			; A = true screen line index
+		CMP	screen_height	; check	against	height of screen
+		BEQ	loc_A074
+		BCS	loc_A093
+
+loc_A074:				
+		JSR	get_line_ptr2	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					;
+		LDY	$6C0,X
+		BEQ	loc_A093
+		INY
+		BEQ	loc_A09B
+		LDY	#1
+		LDA	(byte_2B),Y
+		CMP	current_line_no_lsb
+		BCC	loc_A090
+		BNE	loc_A095
+		INY
+		LDA	(byte_2B),Y
+		CMP	current_line_no_msb
+		BCS	loc_A095
+
+loc_A090:				
+		INX
+		BNE	loc_A06B
+
+loc_A093:				
+		LDX	#1
+
+loc_A095:				
+		JSR	get_line_ptr_retainingX
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+
+loc_A09B:				
+		TXA
+		LSR
+		STA	byte_3B
+		JSR	detokenize_one_line
+		LDX	#0
+		STX	byte_6B3
+		JSR	sub_A01E
+		RTS
+; End of function sub_A069
+
+; gets pointer to line visible on screen.
+;
+; Entry:
+; X = screen line number * 2
+;
+; Exit:
+; (byte_2B) points to BASIC line
+;
+
+get_line_ptr2:				
+		INX			; bump X because get_line_ptr is wierd
+; End of function get_line_ptr2
+
+
+
+
+get_line_ptr_retainingX:		
+		JSR	get_line_ptr	; gets pointer to line visible on screen.
+					;
+					; Entry:
+					; X = screen line number * 2 + 1
+					;
+					; Exit:
+					; (byte_2B) points to BASIC line
+					; X decremented
+		INX			; restore original X
+		RTS
+; End of function get_line_ptr_retainingX

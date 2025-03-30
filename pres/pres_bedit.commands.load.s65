@@ -1,0 +1,110 @@
+load_command: .proc				
+		LDA	#$FF
+		JSR	do_osfile_from_oshwm
+		JSR	clear_line_commands
+                JSR	sub_B358
+                jsr reset_program_name
+                ldy #0
+L93EF:
+                lda (byte_3E),y
+                cmp #13
+                beq L93FD
+                sta program_name,y
+                iny
+                cpy #15
+                bne L93EF
+L93FD:
+                jmp sub_8314
+.pend
+
+append_command .proc
+		JSR	is_program_empty ; sets	C if no	program
+		BCS	load_command
+		JSR	loc_946F
+		LDA	#$FF
+		JSR	do_osfile
+		JSR	find_program
+		BCC	locret_9424
+		JSR	loc_946F
+		STX	byte_C
+		STY	byte_D
+		LDY	#0
+		LDA	#$D
+		STA	($C),Y
+		INY
+		LDA	#$FF
+		STA	($C),Y
+
+locret_9424:				
+                RTS
+.pend
+
+save_command
+		LDA	TOP
+		STA	byte_27		; save end address LSB
+		LDA	TOP+1
+		STA	byte_28		; save end address MSB
+		LDA	#0		; OSFILE save memory block
+
+do_osfile_from_oshwm:				
+		LDX	oshwm
+		LDY	oshwm+1
+                jmp	do_osfile
+
+do_osfile .proc
+		PHA			; save OSFILE code
+		LDA	byte_3E
+		STA	readline_ptr_lsb ; filename ptr	LSB
+		LDA	byte_3F
+		STA	readline_ptr_msb ; filename ptr	MSB
+		STX	unk_1B		; load address LSB
+                .if acornsoft_version
+		STX	unk_1F		; exec address LSB
+                .else
+                lda #$23
+                sta unk_1F
+                .endif
+		STX	byte_23		; save start address LSB
+		STY	unk_1C		; load address MSB
+                .if acornsoft_version
+		STY	byte_20		; exec address MSB
+                .else
+                lda #$80
+                sta byte_20
+                .endif
+		STY	byte_24		; save start address MSB
+		LDA	higher_order_address
+		STA	unk_1D		; load address bits 16...23
+		STA	byte_21		; exec address bits 16...23
+		STA	byte_25		; save start address bits 16...23
+		STA	unk_29		; save end address bits	16...23
+		LDA	higher_order_address+1
+		STA	unk_1E		; load address bits 24...31
+		STA	byte_22		; exec address bits 24...31
+		STA	byte_26		; save start address bits 24...31
+		STA	unk_2A		; save end address bits	24...31
+		PLA			; get OSFILE code
+		TAX			; OSFILE code in X
+		INX			; 1 if load, 0 if save
+		BNE call_osfile	; branch if not	save
+		STX	unk_1F		; when loading - use load address provided, not	file's default
+
+call_osfile				
+		LDX	#$19
+		LDY	#0
+                JMP	OSFILE		; OSFILE
+.pend
+; End of function save_command
+
+loc_946F .proc
+		LDY	TOP+1
+		SEC
+		LDA	TOP
+		SBC	#2
+		TAX
+		BCS	locret_947A
+		DEY
+
+locret_947A:				
+                RTS
+.pend

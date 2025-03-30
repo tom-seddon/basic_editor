@@ -39,7 +39,8 @@ is_Electron=$bc7a
 LB4EA=$b4ea
 LBFB2=$bfb2
 LBE85=$be85
-update_command=$acea
+;update_command=$acea
+LB249=$b249
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -1015,6 +1016,7 @@ LA960:
                 .include "pres_bedit.strings.s65"
 
 LABD2:
+                ;  ???? - are these command codes?
                 .byte $C1 
                 .byte $B8 
                 .byte $A8 
@@ -1062,7 +1064,39 @@ LABD2:
                 .byte $BA 
                 .byte $B3 
                 .byte $BF 
-                .byte $BE 
+                .byte $BE
+
+                .include "pres_bedit.A069.s65"
+                .include "pres_bedit.commands.load.s65"
+
+update_command:
+                lda program_name+0
+                cmp #$20
+                bne LACF5
+                lda #$28
+LACF2:
+                jmp LB249
+
+LACF5:
+                lda #$27
+                ldx unk_60
+                cpx #$20
+                bne LACF2
+                sta byte_C
+                lda #0
+                sta byte_D
+                lda #0
+                sta byte_E
+                sta byte_3E
+                lda #7
+                sta byte_F
+                sta byte_3F
+                ldx #0
+                ldy #$f
+                jsr memmove
+                lda #$d
+                sta unk_700+$e
+                jmp save_command
                 
                 .endif
 
@@ -2948,111 +2982,8 @@ sub_93CF:
 ; End of function sub_93CF
 
 
-
-
-load_command .proc				
-		LDA	#$FF
-		JSR	do_osfile_from_oshwm
-		JSR	clear_line_commands
-                JSR	sub_B358
-                jsr reset_program_name
-                ldy #0
-L93EF:
-                lda (byte_3E),y
-                cmp #13
-                beq L93FD
-                sta program_name,y
-                iny
-                cpy #15
-                bne L93EF
-L93FD:
-                jmp sub_8314
-.pend
-                
-append_command .proc
-		JSR	is_program_empty ; sets	C if no	program
-		BCS	load_command
-		JSR	loc_946F
-		LDA	#$FF
-		JSR	do_osfile
-		JSR	find_program
-		BCC	locret_9424
-		JSR	loc_946F
-		STX	byte_C
-		STY	byte_D
-		LDY	#0
-		LDA	#$D
-		STA	($C),Y
-		INY
-		LDA	#$FF
-		STA	($C),Y
-
-locret_9424:				
-                RTS
-.pend
-
-save_command
-		LDA	TOP
-		STA	byte_27		; save end address LSB
-		LDA	TOP+1
-		STA	byte_28		; save end address MSB
-		LDA	#0		; OSFILE save memory block
-
-do_osfile_from_oshwm:				
-		LDX	oshwm
-		LDY	oshwm+1
-                jmp	do_osfile
-
-do_osfile .proc
-		PHA			; save OSFILE code
-		LDA	byte_3E
-		STA	readline_ptr_lsb ; filename ptr	LSB
-		LDA	byte_3F
-		STA	readline_ptr_msb ; filename ptr	MSB
-		STX	unk_1B		; load address LSB
-		STX	unk_1F		; exec address LSB
-		STX	byte_23		; save start address LSB
-		STY	unk_1C		; load address MSB
-		STY	byte_20		; exec address MSB
-		STY	byte_24		; save start address MSB
-		LDA	higher_order_address
-		STA	unk_1D		; load address bits 16...23
-		STA	byte_21		; exec address bits 16...23
-		STA	byte_25		; save start address bits 16...23
-		STA	unk_29		; save end address bits	16...23
-		LDA	higher_order_address+1
-		STA	unk_1E		; load address bits 24...31
-		STA	byte_22		; exec address bits 24...31
-		STA	byte_26		; save start address bits 24...31
-		STA	unk_2A		; save end address bits	24...31
-		PLA			; get OSFILE code
-		TAX			; OSFILE code in X
-		INX			; 1 if load, 0 if save
-		BNE call_osfile	; branch if not	save
-		STX	unk_1F		; when loading - use load address provided, not	file's default
-
-call_osfile				
-		LDX	#$19
-		LDY	#0
-                JMP	OSFILE		; OSFILE
-.pend
-; End of function save_command
-
-
-loc_946F .proc
-		LDY	TOP+1
-		SEC
-		LDA	TOP
-		SBC	#2
-		TAX
-		BCS	locret_947A
-		DEY
-
-locret_947A:				
-                RTS
-.pend
-
                 .if acornsoft_version
+                .include "pres_bedit.commands.load.s65"
                 .include "pres_bedit.read_line.s65"
                 .endif
 
@@ -3191,104 +3122,16 @@ loc_9F26:
                 .if acornsoft_version
                 .include "pres_bedit.execute_key_command.s65"
                 .include "pres_bedit.9FD8.s65"
+                .include "pres_bedit.A069.s65"
                 .endif
 
 
 
 
 
-sub_A069:				
-					
-		LDX	#0		; first	line on	screen
-
-loc_A06B:				
-		TXA
-		LSR			; A = true screen line index
-		CMP	screen_height	; check	against	height of screen
-		BEQ	loc_A074
-		BCS	loc_A093
-
-loc_A074:				
-		JSR	get_line_ptr2	; gets pointer to line visible on screen.
-					;
-					; Entry:
-					; X = screen line number * 2
-					;
-					; Exit:
-					; (byte_2B) points to BASIC line
-					;
-		LDY	$6C0,X
-		BEQ	loc_A093
-		INY
-		BEQ	loc_A09B
-		LDY	#1
-		LDA	(byte_2B),Y
-		CMP	current_line_no_lsb
-		BCC	loc_A090
-		BNE	loc_A095
-		INY
-		LDA	(byte_2B),Y
-		CMP	current_line_no_msb
-		BCS	loc_A095
-
-loc_A090:				
-		INX
-		BNE	loc_A06B
-
-loc_A093:				
-		LDX	#1
-
-loc_A095:				
-		JSR	get_line_ptr_retainingX
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-
-loc_A09B:				
-		TXA
-		LSR
-		STA	byte_3B
-		JSR	detokenize_one_line
-		LDX	#0
-		STX	byte_6B3
-		JSR	sub_A01E
-		RTS
-; End of function sub_A069
 
 
 
-; gets pointer to line visible on screen.
-;
-; Entry:
-; X = screen line number * 2
-;
-; Exit:
-; (byte_2B) points to BASIC line
-;
-
-get_line_ptr2:				
-		INX			; bump X because get_line_ptr is wierd
-; End of function get_line_ptr2
-
-
-
-
-get_line_ptr_retainingX:		
-		JSR	get_line_ptr	; gets pointer to line visible on screen.
-					;
-					; Entry:
-					; X = screen line number * 2 + 1
-					;
-					; Exit:
-					; (byte_2B) points to BASIC line
-					; X decremented
-		INX			; restore original X
-		RTS
-; End of function get_line_ptr_retainingX
 
 
 
