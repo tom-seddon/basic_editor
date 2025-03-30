@@ -2,7 +2,7 @@
 ;  CONTROL FILE FOR  ALTRA ELECTRON BASED, VERSION 1.602
 ;  ( founded on PROBE VERSION 6.02 )
 
-                .include "../submodules/beeb/include/beeb.s65"
+                .include "../../submodules/beeb/include/beeb.s65"
 
 ;-------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ ENABLE_DEBUG=false
 ;                 .dsection basic_unused_zp
 
 
-                .include "pres_constants.s65"
+                .include "../pres_constants.s65"
 
                 .endif
 

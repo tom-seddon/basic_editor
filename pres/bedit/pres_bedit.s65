@@ -38,7 +38,7 @@ bet2_version=false
 
 ;-------------------------------------------------------------------------
 
-                .include "../cmds.s65"
+                .include "../../cmds.s65"
 
                 .if bet2_version
 CMD_unknown_BA=$ba              ; shift+tab??
@@ -47,7 +47,7 @@ CMD_UTILS=$EC
 CMD_UPDATE=$ED
                 .endif
                 
-                .include "pres_constants.s65"
+                .include "../pres_constants.s65"
 
                 .if acornsoft_version
 brkv_routine=brk_handler
