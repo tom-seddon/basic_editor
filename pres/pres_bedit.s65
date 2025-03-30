@@ -44,6 +44,8 @@ LBFB2=$bfb2
 LBE85=$be85
 L93C4=$93c4
 litub_string=$abba
+utils_command=$9cdb
+update_command=$acea
                 .endif
                 
 ;-------------------------------------------------------------------------
@@ -896,7 +898,87 @@ L99E6:
                 .include "pres_bedit.commands.toggle_insert_overtype.s65"
                 .include "pres_bedit.command_jump_table.s65"
                 .include "pres_bedit.commands.continue_edit_mode.s65"
+                .include "pres_bedit.commands.execute_edit_mode.s65"
+                .include "pres_bedit.commands.join_statements.s65"
+                .include "pres_bedit.commands.tab_key.s65"
+                .include "pres_bedit.read_line.s65"
 
+LA301:
+                tay
+                pla
+                tax
+LA304:
+                pla
+                sta $a00,x
+                dex
+                bpl LA304
+                tya
+                cmp #1
+                bne LA311
+                rts
+
+LA311:
+                cmp #2
+                bne LA318
+                jmp restore_a8_a9
+
+LA318:
+                cmp #3
+                bne LA31F
+                jmp LA95A
+
+LA31F:
+                cmp #5
+                bne LA35C
+                tsx
+                lda $105,x
+                cmp #9
+                bne LA345
+                jsr L807C
+                cmp #2
+                bne LA337
+LA332:
+                lda #$87
+LA334:
+                jmp call_other_rom
+
+LA337:
+                cmp #1
+                beq LA341
+                jsr L80A4
+                jmp LA332
+
+LA341:
+                lda #$82
+                bne LA334
+
+LA345:
+                cmp #4
+                bne LA350
+                jsr L80D4
+                lda #$83
+                bne LA334
+
+LA350:
+                cmp #8
+                bne LA332
+                jsr LBC8B
+                pha
+                lda #$84
+                bne LA334
+LA35C:
+                cmp #$a
+                bne LA363
+                jmp language_entry.loc_814D
+
+LA363:
+                cmp #$b
+                bne LA36A
+                jmp loc_9D2D
+
+LA36A:
+                jmp brk_handler
+                
                 .endif
 
 clear_program:                          
@@ -2981,108 +3063,9 @@ locret_947A:
                 RTS
 .pend
 
-; entry: ($19) points to buffer
-;
-; exit:	C=0 if Return, C=1 if Escape
-; A is line length+1
-
-read_line .proc
-					
-		STA	unk_1B		; maximum line length
-		LDA	#$20
-		STA	unk_1C		; min acceptable char
-		LDA	#$FF
-		STA	unk_1D		; max acceptable char
-		LDA	#0		; read input line
-		LDX	#$19
-		LDY	#0
-		JSR	OSWORD
-		PHP
-		INY
-		TYA
-		PHA
-		BCC	loc_9497
-		JSR	OSNEWL
-
-loc_9497:				
-		JSR	clear_escape_condition
-		PLA
-		PLP
-                RTS
-.pend
-; End of function read_line
-
-
-
-; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
-
-read_line_700:				
-		LDA	#0
-		STA	readline_ptr_lsb
-		STA	byte_3E
-		LDA	#7
-		STA	readline_ptr_msb
-		STA	byte_3F
-		LDA	#$64 ; 'd'
-		JSR	read_line
-		STA	byte_6BE
-		RTS
-; End of function read_line_700
-
-
-
-
-read_line_780:				
-		LDA	#$80
-		STA	readline_ptr_lsb
-		STA	unk_6BA
-		LDA	#7
-		STA	readline_ptr_msb
-		STA	unk_6BB
-		LDA	#$64
-		JSR	read_line
-		STA	unk_6BC
-		RTS
-; End of function read_line_780
-
-
-
-; gets search string.
-;
-; Exit:
-; (byte_3E) points to result
-; byte_6BE is length of	input excluding	final CR.
-; C set	if nothing entered.
-
-get_search_string:			
-					
-		LDX	#<aSearchString
-		LDY	#>aSearchString
-		LDA	#$13
-		JSR	print_n_chars
-		JSR	read_line_700	; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
-		BCS	locret_94DD
-		DEC	byte_6BE	; ignore 13
-		BNE	locret_94DD
-		SEC			; set carry if empty
-
-locret_94DD:				
-					
-		RTS
-; End of function get_search_string
-
-
-
-
-get_replace_string:			
-		LDX	#<aReplaceString
-		LDY	#>aReplaceString
-		LDA	#$13
-		JSR	print_n_chars
-		JSR	read_line_780
-		DEC	unk_6BC		; ignore 13
-		RTS
-; End of function get_replace_string
+                .if acornsoft_version
+                .include "pres_bedit.read_line.s65"
+                .endif
 
 
 
@@ -3143,96 +3126,7 @@ clear_escape_condition:
                 .if acornsoft_version
                 .include "pres_bedit.command_jump_table.s65"
                 .include "pres_bedit.967A.s65"
-                .endif
-
-
-
-tab_key_command:			
-		LDA	unk_61
-		STA	unk_6AA
-
-loc_9720:				
-		JSR	make_cursor_invisible
-		LDA	byte_39
-		PHA
-		LDX	unk_6AA
-		BEQ	loc_976D
-		INX
-		STX	byte_39
-		LDX	cursor_offset	; offset of cursor in detokenized buffer
-		LDY	unk_11
-		JSR	get_line_dimensions ; work out dimensions of line.
-					;
-					; Entry:
-					; X=line length
-					; Y=starting Y
-					;
-					; Exit:
-					; X=line length	MOD screen width
-					; Y=ending Y
-		TXA
-		BNE	loc_973C
-		LDA	code_area_width
-		TAX
-
-loc_973C:				
-		CMP	byte_39
-		BCC	loc_9745
-		SBC	unk_6AA
-		BNE	loc_973C
-
-loc_9745:				
-		STA	byte_3A
-		SEC
-		LDA	byte_39
-		SBC	byte_3A
-		TAY
-		STX	byte_3A
-		CLC
-		ADC	byte_3A
-		CMP	code_area_width
-		BEQ	loc_9762
-		BCC	loc_9762
-		LDA	code_area_width
-		SBC	byte_3A
-		CLC
-		ADC	#1
-		TAY
-
-loc_9762:				
-		STY	unk_6AA
-
-loc_9765:				
-		JSR	cursor_right_edit_mode_command
-		DEC	unk_6AA
-		BNE	loc_9765
-
-loc_976D:				
-		PLA
-		STA	byte_39
-		RTS
-
-tab_command:				
-		LDA	byte_3F
-		BEQ	loc_977A
-
-loc_9775:				
-		LDA	#$21 ; '!'
-		JMP	loc_859D
-
-loc_977A:				
-		LDA	byte_3E
-		CMP	#$51 ; 'Q'
-		BCS	loc_9775
-		STA	unk_61
-		RTS
-
-loc_9783:				
-		LDA	#$50 ; 'P'
-		STA	unk_6AA
-		JMP	loc_9720
-
-                .if acornsoft_version
+                .include "pres_bedit.commands.tab_key.s65"
                 .include "pres_bedit.commands.continue_edit_mode.s65"
                 .include "pres_bedit.commands.split_statement.s65"
                 .include "pres_bedit.commands.renumber.s65"
@@ -4151,163 +4045,14 @@ loc_AC5D:
 		JMP	position_edit_mode_cursor
 
 
-
-execute_edit_mode_command:		
-		LDA	#$20 ; ' '
-		CMP	byte_40		; slot ID 0 empty?
-		BNE	loc_AC7E	; taken	if slot	not empty
-		CMP	byte_46		; slot id 6 empty?
-		BEQ	locret_AC7D	; taken	if slot	empty
-		LDA	#6		; "Missing line	command"
-		BNE	execute_edit_mode_command_error
-
-locret_AC7D:				
-		RTS
-
-loc_AC7E:				
-		STA	byte_6B3	; ?byte_6B3=$20
-		JSR	sub_A8C0
-		LDA	byte_40
-		CMP	#$60 ; '`'
-		BCS	loc_ACA7
-		LDA	byte_43
-		CMP	#$20 ; ' '
-		BEQ	loc_AC94
-		LDA	#$1A
-		BNE	execute_edit_mode_command_error
-
-loc_AC94:				
-		LDA	byte_41
-		STA	byte_44
-		LDA	byte_42
-		STA	byte_45
-		LDA	#$20 ; ' '
-
-loc_AC9E:				
-		CLC
-		ADC	byte_40
-		STA	current_command_id
-		JMP	execute_command	; unk_6BD = command to run
-
-loc_ACA7:				
-		CMP	byte_43
-		BEQ	loc_ACD7
-		LDY	byte_43
-		CPY	#$20 ; ' '
-		BNE	loc_ACC7
-		CMP	#$64 ; 'd'
-		BEQ	loc_ACB9
-		LDA	#$1F		; "Incomplete line command"
-		BNE	execute_edit_mode_command_error
-
-loc_ACB9:				
-		LDA	byte_46
-		CMP	#$54 ; 'T'
-		BEQ	loc_ACCC
-		CMP	#$45 ; 'E'
-		BEQ	loc_ACCC
-		LDA	#$1C		; "Invalid delete command"
-		BNE	execute_edit_mode_command_error
-
-loc_ACC7:				
-		LDA	#$1B		; "Incompatible	line commands"
-
-execute_edit_mode_command_error:					
-					
-		JMP	loc_859D
-
-loc_ACCC:				
-					
-		JSR	sub_A2A1
-		STX	byte_44
-		STY	byte_45
-		LDA	#$20 ; ' '
-		STA	byte_46
-
-loc_ACD7:				
-		JSR	sub_AD1A
-		LDA	byte_46
-		CMP	#$20 ; ' '
-		BEQ	loc_AD09
-		CMP	#$54 ; 'T'
-		BEQ	loc_AD09
-		CMP	#$45 ; 'E'
-		BEQ	loc_AD09
-		LDY	byte_48
-		LDX	byte_47
-		CMP	#$42 ; 'B'
-		BEQ	loc_ACF4
-		INY
-		BNE	loc_ACF4
-		INX
-
-loc_ACF4:				
-					
-		TXA
-		PHA
-		LDX	#0
-		JSR	sub_AD0E
-		PLA
-		BCC	loc_AD09
-		LDX	#3
-		JSR	sub_AD0E
-		BCS	loc_AD09
-		LDA	#$1D
-		BNE	execute_edit_mode_command_error
-
-loc_AD09:				
-					
-		LDA	#0
-		JMP	loc_AC9E
-; End of function execute_edit_mode_command
+                .if acornsoft_version
+                .include "pres_bedit.commands.execute_edit_mode.s65"
+                .endif
 
 
 
 
-sub_AD0E:				
-					
-		CMP	$41,X
-		BEQ	loc_AD13
-		RTS
 
-loc_AD13:				
-		TYA
-		CMP	$42,X
-		BNE	locret_AD19
-		CLC
-
-locret_AD19:				
-		RTS
-; End of function sub_AD0E
-
-
-
-
-sub_AD1A:				
-					
-		LDX	byte_41
-		CPX	byte_44
-		BCC	locret_AD38
-		BEQ	loc_AD24
-		BCS	loc_AD2A
-
-loc_AD24:				
-		LDY	byte_42
-		CPY	byte_45
-		BCC	locret_AD38
-
-loc_AD2A:				
-		LDY	byte_44
-		STX	byte_44
-		STY	byte_41
-		LDX	byte_42
-		LDY	byte_45
-		STX	byte_45
-		STY	byte_42
-
-locret_AD38:				
-		RTS
-; End of function sub_AD1A
 
 
 loc_AD39:				
@@ -6147,235 +5892,10 @@ loc_B914:
 		RTS
 ; End of function sub_B8BD
 
+                .if acornsoft_version
+                .include "pres_bedit.commands.join_statements.s65"
+                .endif
 
-join_statements_edit_mode_command:	
-		JSR	is_program_empty ; sets	C if no	program
-		BCC	loc_B92A
-
-loc_B927:				
-		JMP	beep
-
-loc_B92A:				
-		LDY	#3
-; set (byte_C) to point at next line
-		CLC
-		LDA	(byte_2B),Y
-		ADC	byte_2B
-		STA	byte_C
-		LDA	byte_2C
-		ADC	#0
-		STA	byte_D
-		LDY	#1
-		LDA	(byte_C),Y
-		BMI	loc_B927	; branch taken if next line is end of program
-		JSR	sub_A8C0
-		LDA	byte_2B
-		PHA
-		LDA	byte_2C
-		PHA
-		JSR	advance_2b_to_next_line
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JSR	detokenize_one_line
-		JSR	rstrip_detokenized_line
-		LDA	byte_400
-		STA	unk_700
-		BEQ	loc_B987
-		LDA	#1
-		STA	byte_C
-		LDA	#4
-		STA	byte_D
-		LDY	#0
-
-loc_B966:				
-		LDA	($C),Y
-		CMP	#$20 ; ' '
-		BNE	loc_B977
-		DEC	unk_700
-		INC	byte_C
-		BNE	loc_B975
-		INC	byte_D
-
-loc_B975:				
-		BNE	loc_B966
-
-loc_B977:				
-		LDA	#1
-		STA	byte_E
-		LDA	#7
-		STA	byte_F
-		LDX	#0
-		LDY	unk_700
-		JSR	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-
-loc_B987:				
-		PLA
-		STA	byte_2C
-		PLA
-		STA	byte_2B
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JSR	detokenize_one_line
-		JSR	rstrip_detokenized_line
-		LDA	unk_700
-		BEQ	loc_B9E5
-		CLC
-		ADC	byte_400
-		BCS	loc_B9AD
-		STA	unk_37
-		LDX	byte_400
-		BEQ	loc_B9C4
-		CLC
-		ADC	#1
-		BCC	loc_B9B2
-
-loc_B9AD:				
-		LDA	#$14
-		JMP	loc_859D
-
-loc_B9B2:				
-		CMP	#$FC ; -4 ; 'ü'
-		BCS	loc_B9AD
-		STA	unk_37
-		LDA	#$3A ; ':'
-		LDY	byte_400
-		STA	$401,Y
-		INY
-		STY	byte_400
-
-loc_B9C4:				
-		CLC
-		LDA	byte_400
-		ADC	#1
-		STA	byte_E
-		LDA	#4
-		STA	byte_F
-		LDA	#1
-		STA	byte_C
-		LDA	#7
-		STA	byte_D
-		LDX	#0
-		LDY	unk_700
-		JSR	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-		LDA	unk_37
-		STA	byte_400
-
-loc_B9E5:				
-		LDA	#0
-		STA	byte_6A7
-		LDA	#1
-		STA	byte_6B3
-		JSR	sub_A8C0
-		LDA	#1
-		STA	byte_6A7
-		JSR	find_program
-		JSR	advance_2b_to_next_line
-		LDA	byte_2B
-		STA	byte_E
-		LDA	byte_2C
-		STA	byte_F
-		JSR	advance_2b_to_next_line
-		LDA	byte_2B
-		STA	byte_C
-		LDA	byte_2C
-		STA	byte_D
-		SEC
-		LDA	TOP
-		SBC	byte_C
-		TAY
-		LDA	TOP+1
-		SBC	byte_D
-		TAX
-		JSR	memmove		; move (maybe overlapping) memory regions.
-					;
-					; Entry:
-					; (byte_C) points to src
-					; (byte_E) points to dest
-					; X is MSB of size
-					; Y is LSB of size
-		JSR	sub_A01E
-		CLC
-		LDA	byte_3B
-		ADC	byte_2D
-		SEC
-		SBC	#1
-		CMP	screen_height
-		BEQ	loc_BA47
-		BCC	loc_BA47
-		LDA	current_line_no_lsb
-		STA	byte_2B
-		LDA	current_line_no_msb
-		STA	byte_2C
-		JSR	find_line_by_number ; finds a line, given a line number
-					;
-					; Entry:
-					; byte_2B: line	number MSB
-					; byte_2C: line	number LSB
-					;
-					; Exit:
-					; (byte_2B) points to most suitable line
-		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
-		JSR	save_line_number ; saves line number from program.
-					;
-					; Entry:
-					; (byte_2b) points to current line
-					;
-					; Exit:
-					; current_line_no_lsb, current_line_no_msb = the line number
-		JSR	sub_A069
-		JMP	loc_B00D
-
-loc_BA47:				
-		LDA	current_line_no_lsb
-		PHA
-		LDA	current_line_no_msb
-		PHA
-		LDA	current_line_no_lsb
-		PHA
-		LDA	current_line_no_msb
-		PHA
-		JMP	loc_B025
-
-
-
-rstrip_detokenized_line:		
-		LDY	byte_400
-		BEQ	loc_BA65
-
-loc_BA5B:				
-		LDA	$400,Y
-		CMP	#$20 ; ' '
-		BNE	loc_BA65
-		DEY
-		BNE	loc_BA5B
-
-loc_BA65:				
-					
-		STY	byte_400
-		RTS
-; End of function rstrip_detokenized_line
 
 
 

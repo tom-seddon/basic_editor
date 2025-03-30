@@ -244,6 +244,15 @@ command_jump_table:.byte $20		   ; unknown
 		.byte 0			; unknown
 		.byte CMD_shift_tab_key	; command_id
                 .word loc_9783		; address
+                .if bet2_version
+                .byte 2
+                .byte CMD_UTILS
+                .word utils_command
+                .byte 0
+                .byte CMD_UPDATE
+                .word update_command
+                .endif
+                
                 ;.byte 0                  ; unknown
                 ; .byte CMD_ZAUTOSAVE      ; command_id
                 ; .word zstuff          ; address

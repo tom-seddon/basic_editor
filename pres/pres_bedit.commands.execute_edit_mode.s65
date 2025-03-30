@@ -1,0 +1,153 @@
+execute_edit_mode_command:		
+		LDA	#$20 ; ' '
+		CMP	byte_40		; slot ID 0 empty?
+		BNE	loc_AC7E	; taken	if slot	not empty
+		CMP	byte_46		; slot id 6 empty?
+		BEQ	locret_AC7D	; taken	if slot	empty
+		LDA	#6		; "Missing line	command"
+		BNE	execute_edit_mode_command_error
+
+locret_AC7D:				
+		RTS
+
+loc_AC7E:				
+		STA	byte_6B3	; ?byte_6B3=$20
+		JSR	sub_A8C0
+		LDA	byte_40
+		CMP	#$60 ; '`'
+		BCS	loc_ACA7
+		LDA	byte_43
+		CMP	#$20 ; ' '
+		BEQ	loc_AC94
+		LDA	#$1A
+		BNE	execute_edit_mode_command_error
+
+loc_AC94:				
+		LDA	byte_41
+		STA	byte_44
+		LDA	byte_42
+		STA	byte_45
+		LDA	#$20 ; ' '
+
+loc_AC9E:				
+		CLC
+		ADC	byte_40
+		STA	current_command_id
+		JMP	execute_command	; unk_6BD = command to run
+
+loc_ACA7:				
+		CMP	byte_43
+		BEQ	loc_ACD7
+		LDY	byte_43
+		CPY	#$20 ; ' '
+		BNE	loc_ACC7
+		CMP	#$64 ; 'd'
+		BEQ	loc_ACB9
+		LDA	#$1F		; "Incomplete line command"
+		BNE	execute_edit_mode_command_error
+
+loc_ACB9:				
+		LDA	byte_46
+		CMP	#$54 ; 'T'
+		BEQ	loc_ACCC
+		CMP	#$45 ; 'E'
+		BEQ	loc_ACCC
+		LDA	#$1C		; "Invalid delete command"
+		BNE	execute_edit_mode_command_error
+
+loc_ACC7:				
+		LDA	#$1B		; "Incompatible	line commands"
+
+execute_edit_mode_command_error:					
+					
+		JMP	loc_859D
+
+loc_ACCC:				
+					
+		JSR	sub_A2A1
+		STX	byte_44
+		STY	byte_45
+		LDA	#$20 ; ' '
+		STA	byte_46
+
+loc_ACD7:				
+		JSR	sub_AD1A
+		LDA	byte_46
+		CMP	#$20 ; ' '
+		BEQ	loc_AD09
+		CMP	#$54 ; 'T'
+		BEQ	loc_AD09
+		CMP	#$45 ; 'E'
+		BEQ	loc_AD09
+		LDY	byte_48
+		LDX	byte_47
+		CMP	#$42 ; 'B'
+		BEQ	loc_ACF4
+		INY
+		BNE	loc_ACF4
+		INX
+
+loc_ACF4:				
+					
+		TXA
+		PHA
+		LDX	#0
+		JSR	sub_AD0E
+		PLA
+		BCC	loc_AD09
+		LDX	#3
+		JSR	sub_AD0E
+		BCS	loc_AD09
+		LDA	#$1D
+		BNE	execute_edit_mode_command_error
+
+loc_AD09:				
+					
+		LDA	#0
+		JMP	loc_AC9E
+; End of function execute_edit_mode_command
+
+
+
+
+sub_AD0E:				
+					
+		CMP	$41,X
+		BEQ	loc_AD13
+		RTS
+
+loc_AD13:				
+		TYA
+		CMP	$42,X
+		BNE	locret_AD19
+		CLC
+
+locret_AD19:				
+		RTS
+; End of function sub_AD0E
+
+sub_AD1A:				
+					
+		LDX	byte_41
+		CPX	byte_44
+		BCC	locret_AD38
+		BEQ	loc_AD24
+		BCS	loc_AD2A
+
+loc_AD24:				
+		LDY	byte_42
+		CPY	byte_45
+		BCC	locret_AD38
+
+loc_AD2A:				
+		LDY	byte_44
+		STX	byte_44
+		STY	byte_41
+		LDX	byte_42
+		LDY	byte_45
+		STX	byte_45
+		STY	byte_42
+
+locret_AD38:				
+		RTS
+; End of function sub_AD1A

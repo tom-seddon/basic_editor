@@ -1,0 +1,227 @@
+join_statements_edit_mode_command:	
+		JSR	is_program_empty ; sets	C if no	program
+		BCC	loc_B92A
+
+loc_B927:				
+		JMP	beep
+
+loc_B92A:				
+		LDY	#3
+; set (byte_C) to point at next line
+		CLC
+		LDA	(byte_2B),Y
+		ADC	byte_2B
+		STA	byte_C
+		LDA	byte_2C
+		ADC	#0
+		STA	byte_D
+		LDY	#1
+		LDA	(byte_C),Y
+		BMI	loc_B927	; branch taken if next line is end of program
+		JSR	sub_A8C0
+		LDA	byte_2B
+		PHA
+		LDA	byte_2C
+		PHA
+		JSR	advance_2b_to_next_line
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+		JSR	rstrip_detokenized_line
+		LDA	byte_400
+		STA	unk_700
+		BEQ	loc_B987
+		LDA	#1
+		STA	byte_C
+		LDA	#4
+		STA	byte_D
+		LDY	#0
+
+loc_B966:				
+		LDA	($C),Y
+		CMP	#$20 ; ' '
+		BNE	loc_B977
+		DEC	unk_700
+		INC	byte_C
+		BNE	loc_B975
+		INC	byte_D
+
+loc_B975:				
+		BNE	loc_B966
+
+loc_B977:				
+		LDA	#1
+		STA	byte_E
+		LDA	#7
+		STA	byte_F
+		LDX	#0
+		LDY	unk_700
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+
+loc_B987:				
+		PLA
+		STA	byte_2C
+		PLA
+		STA	byte_2B
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	detokenize_one_line
+		JSR	rstrip_detokenized_line
+		LDA	unk_700
+		BEQ	loc_B9E5
+		CLC
+		ADC	byte_400
+		BCS	loc_B9AD
+		STA	unk_37
+		LDX	byte_400
+		BEQ	loc_B9C4
+		CLC
+		ADC	#1
+		BCC	loc_B9B2
+
+loc_B9AD:				
+		LDA	#$14
+		JMP	loc_859D
+
+loc_B9B2:				
+		CMP	#$FC ; -4 
+		BCS	loc_B9AD
+		STA	unk_37
+		LDA	#$3A ; ':'
+		LDY	byte_400
+		STA	$401,Y
+		INY
+		STY	byte_400
+
+loc_B9C4:				
+		CLC
+		LDA	byte_400
+		ADC	#1
+		STA	byte_E
+		LDA	#4
+		STA	byte_F
+		LDA	#1
+		STA	byte_C
+		LDA	#7
+		STA	byte_D
+		LDX	#0
+		LDY	unk_700
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		LDA	unk_37
+		STA	byte_400
+
+loc_B9E5:				
+		LDA	#0
+		STA	byte_6A7
+		LDA	#1
+		STA	byte_6B3
+		JSR	sub_A8C0
+		LDA	#1
+		STA	byte_6A7
+		JSR	find_program
+		JSR	advance_2b_to_next_line
+		LDA	byte_2B
+		STA	byte_E
+		LDA	byte_2C
+		STA	byte_F
+		JSR	advance_2b_to_next_line
+		LDA	byte_2B
+		STA	byte_C
+		LDA	byte_2C
+		STA	byte_D
+		SEC
+		LDA	TOP
+		SBC	byte_C
+		TAY
+		LDA	TOP+1
+		SBC	byte_D
+		TAX
+		JSR	memmove		; move (maybe overlapping) memory regions.
+					;
+					; Entry:
+					; (byte_C) points to src
+					; (byte_E) points to dest
+					; X is MSB of size
+					; Y is LSB of size
+		JSR	sub_A01E
+		CLC
+		LDA	byte_3B
+		ADC	byte_2D
+		SEC
+		SBC	#1
+		CMP	screen_height
+		BEQ	loc_BA47
+		BCC	loc_BA47
+		LDA	current_line_no_lsb
+		STA	byte_2B
+		LDA	current_line_no_msb
+		STA	byte_2C
+		JSR	find_line_by_number ; finds a line, given a line number
+					;
+					; Entry:
+					; byte_2B: line	number MSB
+					; byte_2C: line	number LSB
+					;
+					; Exit:
+					; (byte_2B) points to most suitable line
+		JSR	sub_AA77	; swap byte_2B with unk_2F, swap byte_2C with unk_30
+		JSR	save_line_number ; saves line number from program.
+					;
+					; Entry:
+					; (byte_2b) points to current line
+					;
+					; Exit:
+					; current_line_no_lsb, current_line_no_msb = the line number
+		JSR	sub_A069
+		JMP	loc_B00D
+
+loc_BA47:				
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		LDA	current_line_no_lsb
+		PHA
+		LDA	current_line_no_msb
+		PHA
+		JMP	loc_B025
+
+                
+rstrip_detokenized_line:		
+		LDY	byte_400
+		BEQ	loc_BA65
+
+loc_BA5B:				
+		LDA	$400,Y
+		CMP	#$20 ; ' '
+		BNE	loc_BA65
+		DEY
+		BNE	loc_BA5B
+
+loc_BA65:				
+					
+		STY	byte_400
+		RTS
+; End of function rstrip_detokenized_line

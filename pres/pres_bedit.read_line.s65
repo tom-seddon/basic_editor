@@ -1,0 +1,103 @@
+; entry: ($19) points to buffer
+;
+; exit:	C=0 if Return, C=1 if Escape
+; A is line length+1
+
+read_line: .proc
+					
+		STA	unk_1B		; maximum line length
+		LDA	#$20
+		STA	unk_1C		; min acceptable char
+		LDA	#$FF
+		STA	unk_1D		; max acceptable char
+		LDA	#0		; read input line
+		LDX	#$19
+		LDY	#0
+		JSR	OSWORD
+		PHP
+		INY
+		TYA
+		PHA
+		BCC	loc_9497
+		JSR	OSNEWL
+
+loc_9497:				
+		JSR	clear_escape_condition
+		PLA
+		PLP
+                RTS
+.pend
+; End of function read_line
+
+
+
+; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
+
+read_line_700:				
+		LDA	#0
+		STA	readline_ptr_lsb
+		STA	byte_3E
+		LDA	#7
+		STA	readline_ptr_msb
+		STA	byte_3F
+		LDA	#$64 ; 'd'
+		JSR	read_line
+		STA	byte_6BE
+		RTS
+; End of function read_line_700
+
+
+
+
+read_line_780:				
+		LDA	#$80
+		STA	readline_ptr_lsb
+		STA	unk_6BA
+		LDA	#7
+		STA	readline_ptr_msb
+		STA	unk_6BB
+		LDA	#$64
+		JSR	read_line
+		STA	unk_6BC
+		RTS
+; End of function read_line_780
+
+; gets search string.
+;
+; Exit:
+; (byte_3E) points to result
+; byte_6BE is length of	input excluding	final CR.
+; C set	if nothing entered.
+
+get_search_string:			
+					
+		LDX	#<aSearchString
+		LDY	#>aSearchString
+		LDA	#$13
+		JSR	print_n_chars
+		JSR	read_line_700	; read <100 chars to $700; points (byte_3E) at result, sets byte_6BE to	length.
+		BCS	locret_94DD
+		DEC	byte_6BE	; ignore 13
+		BNE	locret_94DD
+		SEC			; set carry if empty
+
+locret_94DD:				
+					
+		RTS
+; End of function get_search_string
+
+
+
+
+get_replace_string:			
+		LDX	#<aReplaceString
+		LDY	#>aReplaceString
+		LDA	#$13
+		JSR	print_n_chars
+		JSR	read_line_780
+		DEC	unk_6BC		; ignore 13
+		RTS
+; End of function get_replace_string
+
+
+

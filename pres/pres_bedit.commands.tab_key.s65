@@ -1,0 +1,84 @@
+tab_key_command:			
+		LDA	unk_61
+		STA	unk_6AA
+
+loc_9720:				
+		JSR	make_cursor_invisible
+		LDA	byte_39
+		PHA
+		LDX	unk_6AA
+		BEQ	loc_976D
+		INX
+		STX	byte_39
+		LDX	cursor_offset	; offset of cursor in detokenized buffer
+		LDY	unk_11
+		JSR	get_line_dimensions ; work out dimensions of line.
+					;
+					; Entry:
+					; X=line length
+					; Y=starting Y
+					;
+					; Exit:
+					; X=line length	MOD screen width
+					; Y=ending Y
+		TXA
+		BNE	loc_973C
+		LDA	code_area_width
+		TAX
+
+loc_973C:				
+		CMP	byte_39
+		BCC	loc_9745
+		SBC	unk_6AA
+		BNE	loc_973C
+
+loc_9745:				
+		STA	byte_3A
+		SEC
+		LDA	byte_39
+		SBC	byte_3A
+		TAY
+		STX	byte_3A
+		CLC
+		ADC	byte_3A
+		CMP	code_area_width
+		BEQ	loc_9762
+		BCC	loc_9762
+		LDA	code_area_width
+		SBC	byte_3A
+		CLC
+		ADC	#1
+		TAY
+
+loc_9762:				
+		STY	unk_6AA
+
+loc_9765:				
+		JSR	cursor_right_edit_mode_command
+		DEC	unk_6AA
+		BNE	loc_9765
+
+loc_976D:				
+		PLA
+		STA	byte_39
+		RTS
+
+tab_command:				
+		LDA	byte_3F
+		BEQ	loc_977A
+
+loc_9775:				
+		LDA	#$21 ; '!'
+		JMP	loc_859D
+
+loc_977A:				
+		LDA	byte_3E
+		CMP	#$51 ; 'Q'
+		BCS	loc_9775
+		STA	unk_61
+		RTS
+
+loc_9783:				
+		LDA	#$50 ; 'P'
+		STA	unk_6AA
+		JMP	loc_9720
