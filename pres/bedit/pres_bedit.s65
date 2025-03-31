@@ -83,7 +83,7 @@ rom_start:
                 .byte 1
                 .endif
                 .if bet2_version
-                .text "BASIC Editor & Toolkit"
+rom_name: .text "BASIC Editor & Toolkit"
                 .else
                 .text "The BASIC Editor",0
                 .endif
@@ -1211,17 +1211,17 @@ LBC8B:
                 pha
                 lda $a9
                 pha
-                lda $f0
+                lda $f0         ; osword X
                 sta $a8
-                lda $f1
+                lda $f1         ; osword Y
                 sta $a9
-                lda $ef
+                lda $ef         ; osword A
                 cmp #$b5        ; osword code
-                bne LBCA7
+                bne LBCA7       ; taken if not $B5
                 ldy #2
                 lda ($a8),y
                 cmp #3
-                bcc LBCB0
+                bcc LBCB0       ; taken if +2<3
 LBCA7:
                 pla
                 sta $a9
@@ -1231,13 +1231,13 @@ LBCA7:
                 rts
 
 LBCB0:
-                iny
+                iny             ; Y=3
                 ldx #0
 LBCB3:
-                cpx #$15
+                cpx #size(rom_name)-1 ; is the -1 a bug???
                 beq LBCC2
                 lda ($a8),y
-                cmp $8009,x
+                cmp rom_name,x
                 bne LBCA7
                 inx
                 iny
@@ -1246,7 +1246,9 @@ LBCB3:
 LBCC2:
                 ldy #2
                 lda ($a8),y
-                bne LBCDC
+                bne LBCDC       ; taken if code!=0
+
+                ; code==0
                 ldx #$c
 LBCCA:
                 lda new_osword_stuff-2,y
@@ -1263,16 +1265,18 @@ LBCCA:
 
 LBCDC:
                 cmp #2
-                beq LBCE4
-                lda #$4c
-                bne LBCE6
+                beq LBCE4       ; taken if code=2
+
+                ; code==1
+                lda #'L'        ; L for LOAD
+                bne LBCE6       ; jmp, in effect
 
 LBCE4:
-                lda #$41
+                lda #'A'        ; A for APPEND
 LBCE6:
-                jsr LBD0C
-                lda #$20
-                jsr LBD0C
+                jsr insert_into_keyboard_buffer
+                lda #' '
+                jsr insert_into_keyboard_buffer
                 ldy #$18
                 lda ($a8),y
                 beq LBCF5
@@ -1282,26 +1286,26 @@ LBCF5:
 LBCF6:
                 lda ($a8),y
                 beq LBD00
-                jsr LBD0C
+                jsr insert_into_keyboard_buffer
                 iny
                 bne LBCF6
 
 LBD00:
                 lda #$d
-                jsr LBD0C
+                jsr insert_into_keyboard_buffer
                 ldx #<LBFE8
                 ldy #>LBFE8
                 jmp oscli
 
-LBD0C:
+insert_into_keyboard_buffer:
                 tax
                 tya
-                pha
-                txa
-                tay
+                pha             ; save Y
+                txa             ; restore input A
+                tay             ; Y=input A
                 ldx #0
                 lda #$8a
-                jsr osbyte
+                jsr osbyte      ; insert char in keyboard buffer
                 pla
                 tay
                 rts

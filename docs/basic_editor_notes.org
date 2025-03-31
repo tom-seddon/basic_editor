@@ -163,5 +163,63 @@ Vague goals:
 
 TODO: 32 KB PRES ABE and ABE+ ROMs (from memory actually very similar)
 
+** OSWORD $b5
+
+Input parameter block:
+
+| Offset | What        | Must be | Notes |
+|--------+-------------+---------+-------|
+| $00    |             |         |       |
+| $01    |             |         |       |
+| $02    | code        | 0,1,2   |       |
+| $03    | check value | B       | X=$00 |
+| $04    |             | A       | X=$01 |
+| $05    |             | S       | X=$02 |
+| $06    |             | I       | X=$03 |
+| $07    |             | C       | X=$04 |
+| $08    |             |         | X=$05 |
+| $09    |             | E       | X=$06 |
+| $0a    |             | d       | X=$07 |
+| $0b    |             | i       | X=$08 |
+| $0c    |             | t       | X=$09 |
+| $0d    |             | o       | X=$0a |
+| $0e    |             | r       | X=$0b |
+| $0f    |             |         | X=$0c |
+| $10    |             | &       | X=$0d |
+| $11    |             |         | X=$0e |
+| $12    |             | T       | X=$0f |
+| $13    |             | o       | X=$10 |
+| $14    |             | o       | X=$11 |
+| $15    |             | l       | X=$12 |
+| $16    |             | k       | X=$13 |
+| $17    |             | i       | X=$14 |
+| $18    |             |         |       |
+
+*** Code=0
+
+See =LBCCA=.
+
+Copy 13 bytes from new_osword_stuff into parameter block starting from
+offset 2. Data is: 2,"Load",0,"Append",0
+
+*** Code=1
+
+Enter =BCE6= with A=$4c 76 'L'
+
+*** Code=2
+
+Enter =BCE6= with A=$41 65 'A'
+
+*** What is =BCE6=?
+
+Insert chars in keyboard buffer.
+
+First `L` or `A`.
+
+Then ` `.
+
+Then chars from the OSWORD parameter block, assuming 0-terminated.
+
+(So this runs `LOAD` with A=1 or `APPEND` with A=2.)
 
 * eof.
