@@ -7614,20 +7614,22 @@ LB8AA:
                 cli
                 rts
 
-LB8B7:
-                tay
-                pla
-                tax
+handle_bedit_to_butils_call:
+                tay             ; Y=input A
+                pla             ; restore counter for restore loop
+                tax             ; X=restore counter
 LB8BA:
                 pla
                 sta rom_switch_thunk,x
                 dex
                 bpl LB8BA
-                tya
-                pha
-                and #$7f
+                tya             ; A=input A
+                pha             ; store input A
+                and #$7f        ; bit 7 means something??
                 cmp #1
                 bne LB8CF
+
+                ; bedit->butils code 1
                 jsr LB04E
                 jmp LB926
 
@@ -7638,20 +7640,32 @@ LB8CF:
                 bne LB8FA
 
 LB8D7:
+                ; bedit->butils code 2: handle *HELP
+                
+                ; bedit->butils code 3: handle * command
+
                 pha
+                ; 101=bedit->Butils code
+                ; 102=call_input_rom input A
+                ; 103=X on entry to service routine
+                ; 104=old $a9
+                ; 105=old $a8
+                ; 106=Y on entry to service routine
+                ; 107=A on entry to service routine
+                ; 108=P on entry to service routine
                 tsx
                 lda $106,x
-                tay
+                tay             ; Y=service routine Y
                 lda $107,x
                 sta $a8
                 lda $103,x
-                tax
-                lda $a8
-                jsr Reason
-                tay
-                pla
+                tax             ; X=service routine X
+                lda $a8         ; A=service routine A
+                jsr Reason      ; call this ROM's service routine
+                tay             ; save exit code
+                pla             ; restore bedit->butils code
                 cmp #3
-                bne LB926
+                bne LB926       ; taken if it was 2
                 pla
                 tax
                 tya
@@ -7663,12 +7677,14 @@ LB8D7:
 LB8FA:
                 cmp #4
                 bne LB902
+                ; bedit->butils code 4
                 pla
                 jmp LB954
 
 LB902:
                 cmp #$a
                 bne LB90C
+                ; bedit->butils code 10
                 pla
                 lda #$B
                 jmp LB993
@@ -7678,6 +7694,7 @@ LB90C:
                 beq LB926
                 cmp #8
                 bne LB91D
+                ; bedit->butils code 8
                 pla
                 pla
                 tay
@@ -7687,6 +7704,7 @@ LB90C:
                 jmp LBFE2
 
 LB91D:
+                ; bedit->butils unknown code
                 pla
                 pla
                 tay
@@ -7696,6 +7714,7 @@ LB91D:
                 jmp LBFE5
 
 LB926:
+                ; bedit->butils code 7
                 pla
                 bmi LB92C
                 jmp LB993
@@ -7816,7 +7835,7 @@ LBFEB:
                 jmp LB079
 
 LBFEE:
-                .word LB8B7
+                .word handle_bedit_to_butils_call
 
                 .cerror *>$bff0,"code overflow"
 

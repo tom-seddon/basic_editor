@@ -222,4 +222,65 @@ Then chars from the OSWORD parameter block, assuming 0-terminated.
 
 (So this runs `LOAD` with A=1 or `APPEND` with A=2.)
 
+** Inter-ROM communication
+
+Both copy a little routine to $A00 that switches to the other ROM then
+does a =jmp ($bfee)=.
+
+*** bedit->butils
+
+Entry to each routine:
+
+- A :: reason code, bit 7 clear
+- top of stack :: original reason code, all 8 bits
+
+Valid codes are: (bit 7 may additionally be set - purpose unknwon)
+
+**** A=$01 - retrieve error message text
+
+There's a bunch of free space in the BUTILS half so room for some
+significantly expanded descriptions.
+
+Entry:
+
+- ?last_error_number :: error to retrieve
+
+Exit:
+
+- error_message_buffer :: filled in with text
+
+**** $02 - handle *HELP
+
+**** $03 - handle * command
+
+**** $04
+
+**** $07
+
+**** $08
+
+**** $0a
+
+*** butils->bedit
+
+**** $02
+
+Call =restore_a8_a9=.
+
+**** $03
+
+Call =restore_a8_a9= or the (somewhat similar, but less well-named...)
+=LA960=.
+
+**** $05
+
+
+**** $0a
+
+Enter command mode assuming language workspace is all set up??
+
+**** $0b
+
+Perform BASIC Editor language initialisation stuff??
+
 * eof.

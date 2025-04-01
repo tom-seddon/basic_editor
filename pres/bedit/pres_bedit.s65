@@ -54,6 +54,10 @@ brkv_routine=brk_handler
                 .else
 brkv_routine=LBFEB
                 .endif
+
+                .if bet2_version
+rom_switch_thunk=$a00
+                .endif
                 
 
 ;-------------------------------------------------------------------------
@@ -909,7 +913,7 @@ LA301:
                 tax
 LA304:
                 pla
-                sta $a00,x
+                sta rom_switch_thunk,x
                 dex
                 bpl LA304
                 tya
@@ -920,16 +924,19 @@ LA304:
 LA311:
                 cmp #2
                 bne LA318
+                ; butils->bedit code 2
                 jmp restore_a8_a9
 
 LA318:
                 cmp #3
                 bne LA31F
+                ; butils->bedit code 3
                 jmp LA95A
 
 LA31F:
                 cmp #5
                 bne LA35C
+                ; butils->bedit code 5
                 tsx
                 lda $105,x
                 cmp #9
@@ -969,11 +976,13 @@ LA350:
 LA35C:
                 cmp #$a
                 bne LA363
+                ; butils->bedit code $a
                 jmp language_entry.loc_814D
 
 LA363:
                 cmp #$b
                 bne LA36A
+                ; butils->bentry code $b
                 jmp loc_9D2D
 
 LA36A:
@@ -1174,20 +1183,20 @@ LBA74:
                 .include "pres_bedit.memmove.s65"
 
 call_other_rom:
-                tay
+                tay             ; Y=input A
                 ldx #0
 LBB38:
-                lda $a00,x
+                lda rom_switch_thunk,x
                 pha
                 lda L8134,x
-                sta $a00,x
+                sta rom_switch_thunk,x
                 inx
                 cpx #size(L8134)
                 bne LBB38
-                lda #$d
-                pha
-                tya
-                jmp $a00
+                lda #size(L8134)-1
+                pha            ; save indication of # bytes to restore
+                tya            ; A = input A
+                jmp rom_switch_thunk
 
                 .include "pres_bedit.parse_command_line.s65"
                 .include "pres_bedit.gotoxy.s65"
