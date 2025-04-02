@@ -26,7 +26,7 @@ SHELLCMD:=$(PYTHON) submodules/shellcmd.py/shellcmd.py
 ##########################################################################
 ##########################################################################
 
-TASS:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
+TASSCMD:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
 
 .PHONY:build
 build: VER:=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')
@@ -72,7 +72,7 @@ _copy:
 
 .PHONY:_assemble
 _assemble:
-	$(_V)$(TASS) -D BUILD_TYPE=$(BUILD_TYPE) -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/$(STEM).lst -o$(DEST)/$(STEM).rom -l$(DEST)/$(STEM).sym
+	$(_V)$(TASSCMD) -D BUILD_TYPE=$(BUILD_TYPE) -D "VER=\"$(VER)\"" basiced.s65 -L$(DEST)/$(STEM).lst -o$(DEST)/$(STEM).rom -l$(DEST)/$(STEM).sym
 
 ##########################################################################
 ##########################################################################
@@ -121,14 +121,14 @@ _pres_stuff: _make_output_folders
 .PHONY:_pres_beditor_assemble
 _pres_bedit_assemble: STEM=$(error must specify STEM)
 _pres_bedit_assemble: FLAG=$(error must specify FLAG)
-_pres_bedit_assemble: _TASS:=64tass -Wall --nostart -q -Wno-implied-reg
+_pres_bedit_assemble: _TASS:=$(TASS) -Wall --nostart -q -Wno-implied-reg
 _pres_bedit_assemble:
 	$(_V)$(_TASS) "./pres/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
-_pres_butils_assemble: _TASS:=64tass --case-sensitive -Wall --nostart -q
+_pres_butils_assemble: _TASS:=$(TASS) --case-sensitive -Wall --nostart -q
 _pres_butils_assemble:
 	$(_V)$(_TASS) "./pres/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
 
@@ -146,5 +146,6 @@ _pres_stuff_2: _make_output_folders
 
 .PHONY:_tom_emacs
 _tom_emacs:
-	$(_V)$(MAKE) _pres_stuff
+	$(_V)$(MAKE) build
+
 
