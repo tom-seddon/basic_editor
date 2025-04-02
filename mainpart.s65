@@ -3680,31 +3680,51 @@ get_replace_string:
 
 
 reset_keys_settings:			
-					
+
+                ; Reset cursor keys.
 		ldx	#0		; Enable cursor	editing	(default)
 		lda	#4		; Enable/disable cursor	editing	(AUG P120)
 		jsr	osbyte
+
+                ; Reset tab key. (Not relevant on Electron, and OSBYTE
+                ; 219 has another purpose.)
+                .if !ELECTRON
 		ldx	#9
 		lda	#219		; set TAB key to 9
 		jsr	osbyte_with_y0
+                .endif
+                
 		jsr	kbflush
-		ldx	#1
-		lda	#225		; reset	F key status?
+
+                ; Reset default F key behaviour.
+		ldx	#1      ; soft key - same on BBC/Electron
+		lda	#225
 		jsr	osbyte_with_y0
-.if !ELECTRON
-		ldx	#128
-		lda	#226		; reset	Shift+F	key status?
-		jsr	osbyte_with_y0
-		lda	#227
-		jmp	osbyte_with_x0_y0
-.else
-		ldx #1
-		lda #226		; reset FUNC+A-P
-		jsr osbyte_with_y0
-		ldx #1
-		lda #227		; reset FUNC+Q-Z+punctuation
-		jmp osbyte_with_y0
-.endif
+
+                ; Reset Shift+F key (BBC)/Func+(A-P) (Electron)
+                ; behaviour.
+                .if ELECTRON
+                ldx #1          ; firm key
+                .else
+                ldx #$80        ; key code
+                .endif
+                lda #226
+                jsr osbyte_with_y0
+
+                ; Reset CTRL+F key (BBC)/Func+(Q-Z) (Electron)
+                ; behaviour.
+                .if ELECTRON
+                ldx #1          ; firm key
+                .else
+                ldx #$90        ; key code
+                .endif
+                lda #227
+                jsr osbyte_with_y0
+
+                ; Reset SHIFT+CTRL+F key behaviour
+                ldx #0          ; nop - same on BBC/Electron
+                lda #228
+                jmp osbyte_with_y0
 ; End of function reset_keys_settings
 
 
@@ -7018,8 +7038,6 @@ run_or_exit_command: .proc
                 .byte 12        ; CLS (run_or_exit_command)
                 .byte 255
 		jsr	reset_keys_settings
-		lda	#228
-		jsr	osbyte_with_x0_y0
 		lda	is_bad_program
                 bne	loc_A64D
 run_or_exit_without_shutdown:
