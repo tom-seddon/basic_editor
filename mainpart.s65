@@ -1086,8 +1086,10 @@ initialise:
                 ldx #0
                 ldy     #%11111110      ; normal ESCAPE action (bit 0 reset)
                 jsr     osbyte
+                .if !ELECTRON
                 lda     #219            ; read/write TAB key char (AUG p222)
                 jsr     osbyte_with_x0_y0 ; TAB key produces CHR$0
+                .endif
                 ldx     #27             ; ESCAPE key produces CHR$27
                 lda     #220            ; read/write Escape char (AUG p223)
                 jsr     osbyte_with_y0
@@ -5395,9 +5397,11 @@ loc_9D3F:
 		sec
 		sbc	#6		; subtract 6 to	account	for line number	display
 		sta	code_area_width	; store	usable screen width
+                .if !ELECTRON
 		ldx	#9		; set TAB key to produce CHR$9
 		lda	#219		; Read/write character value returned by pressing TAB key (AUG p222)
 		jsr	osbyte_with_y0
+                .endif
 		jmp	loc_8437
                 .pend
 
