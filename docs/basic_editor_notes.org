@@ -287,4 +287,384 @@ Perform BASIC Editor language initialisation stuff??
 
 expected SHA1: da8feaec70579ecedd9b229872d734ecee065a38
 
+* PRES/Acornsoft differences
+
+Search for =_version= in the pres/bedit folder.
+
+** 0 .\pres_bedit.BDD3.s65:131: .if bet2_version
+
+find_mode_getch calls LBFB2.
+
+** Ignore: 1 .\pres_bedit.commands.help.s65:47: .if acornsoft_version
+
+Help stuff.
+
+** Ignore: 2 .\pres_bedit.commands.help.s65:58: .if acornsoft_version
+
+More of #1.
+
+** Ignore: 3 .\pres_bedit.commands.load.s65:61: .if acornsoft_version
+
+Set BASIC file exec address to $ffff8023.
+
+** Ignore: 4 .\pres_bedit.commands.load.s65:69: .if acornsoft_version
+
+Set BASIC file exec address to $ffff8023.
+
+** 5 .\pres_bedit.commands.mode.s65:58: .if acornsoft_version
+
+edit mode command calls some other subroutine???
+
+** 6 .\pres_bedit.commands.toggle_insert_overtype.s65:82: .if acornsoft_version
+
+uninline *FX138 call.
+
+** 7 .\pres_bedit.commands.toggle_insert_overtype.s65:95: .if bet2_version
+
+extra case for run_or_exit: maybe do =*BUTILS=
+
+** 8 .\pres_bedit.commands.toggle_insert_overtype.s65:118: .if bet2_version
+
+the uninlined *FX138 call called by #6 and #7
+
+** Ignore: 9 .\pres_bedit.command_table.s65:33: .if acornsoft_version
+
+More of #1.
+
+** Ignore: 10 .\pres_bedit.command_table.s65:39: .if bet2_version
+
+More of #1.
+
+** Ignore: 11 .\pres_bedit.command_table.s65:70: .if acornsoft_version
+
+More of #1.
+
+** Ignore: 12 .\pres_bedit.command_table.s65:76: .if bet2_version
+
+More of #1.
+
+** 13 .\pres_bedit.command_table.s65:103: .if bet2_version
+
+Command table entries for new UTILS and UPDATE commands.
+
+** Ignore: 14 .\pres_bedit.command_table.s65:122: .if acornsoft_version
+
+Constant for help or something.
+
+** Ignore: 15 .\pres_bedit.command_table.s65:129: .if acornsoft_version
+
+Constant for help or something.
+
+** 16 .\pres_bedit.command_jump_table.s65:161: .if acornsoft_version
+
+CMD_tab_key is now $ca
+
+** 17 .\pres_bedit.command_jump_table.s65:249: .if acornsoft_version
+
+CMD_shift_tab_key is now $ba
+
+** 18 .\pres_bedit.command_jump_table.s65:255: .if bet2_version
+
+New entries for UPDATE and UTILS
+
+** 19 .\pres_bedit.enter_edit_mode.s65:6: .if bet2_version
+
+call_other_rom with $a on entry to edit mode.
+
+** Done: 20 .\pres_bedit.enter_edit_mode.s65:35: .if bet2_version
+
+Don't do OSBYTE 219 on Electron.
+
+** 21 .\pres_bedit.enter_edit_mode.s65:42: .if bet2_version
+
+More of #20.
+
+** 22 .\pres_bedit.edit_mode_loop.s65:14: .if acornsoft_version
+
+Chaneg ZP address from 3A to 38
+
+** 23 .\pres_bedit.edit_mode_loop.s65:20: .if acornsoft_version
+
+Some change to do with soft key expansions in progress??
+
+** 24 .\pres_bedit.edit_mode_loop.s65:55: .if bet2_version
+
+???
+
+** 25 .\pres_bedit.edit_mode_loop.s65:66: .if acornsoft_version
+
+Same as #16
+
+** 26 .\pres_bedit.edit_mode_loop.s65:86: .if acornsoft_version
+
+Same as #22
+
+** 27 .\pres_bedit.edit_mode_loop.s65:131: .if acornsoft_version
+
+Same as #16
+
+** 28 .\pres_bedit.edit_mode_loop.s65:162: .if bet2_version
+
+Change shift+delete check for Electron - covered by Mince's changes?
+
+** 29 .\pres_bedit.edit_mode_loop.s65:170: .if bet2_version
+
+More of #28 I think
+
+** 30 .\pres_bedit.edit_mode_loop.s65:177: .if bet2_version
+
+Not sure. Related to #22??
+
+** 31 .\pres_bedit.edit_mode_loop.s65:189: .if acornsoft_version
+
+Same as #16
+
+** 32 .\pres_bedit.edit_mode_loop.s65:195: .if bet2_version
+
+See #30
+
+** 33 .\pres_bedit.edit_mode_loop.s65:202: .if acornsoft_version
+
+Same as #16
+
+** 34 .\pres_bedit.edit_mode_loop.s65:244: .if bet2_version
+
+Handle cursor differently on Electron.
+
+** 35 .\pres_bedit.edit_mode_loop.s65:252: .if bet2_version
+
+See #34
+
+** 36 .\pres_bedit.edit_mode_loop.s65:277: .if bet2_version
+
+See #34
+
+** 37 .\pres_bedit.edit_mode_loop.s65:283: .if bet2_version
+
+See #34
+
+** 38 .\pres_bedit.edit_mode_loop.s65:291: .if bet2_version
+
+See #34
+
+** 39 .\pres_bedit.edit_mode_loop.s65:329: .if bet2_version
+
+See #34
+
+** 40 .\pres_bedit.edit_mode_loop.s65:335: .if acornsoft_version
+
+See #34, but this is inside a =.if bet2_version= so I think I got
+confused...
+
+** 41 .\pres_bedit.reset_keys_settings.s65:6: .if bet2_version
+
+Don't do OSBYTE 219 on Electron
+
+** 42 .\pres_bedit.reset_keys_settings.s65:13: .if acornsoft_version
+
+See #41.
+
+Flush keyboard buffer on BBC.
+
+** Done: 43 .\pres_bedit.reset_keys_settings.s65:21: .if acornsoft_version
+
+Reset soft key stuff.
+
+** Done: 44 .\pres_bedit.reset_keys_settings.s65:28: .if acornsoft_version
+
+Reset soft key stuff.
+
+** 45 .\pres_bedit.strings.s65:7: .if acornsoft_version
+
+Product name.
+
+** 46 .\pres_bedit.strings.s65:17: .if acornsoft_version
+
+HUD change.
+
+** 47 .\pres_bedit.strings.s65:22: .if acornsoft_version
+
+See #46.
+
+** 48 .\pres_bedit.strings.s65:27: .if acornsoft_version
+
+See #46.
+
+** 49 .\pres_bedit.strings.s65:31: .if bet2_version
+
+See #46.
+
+** 50 .\pres_bedit.strings.s65:80: .if acornsoft_version
+
+Help text change.
+
+** 51 .\pres_bedit.strings.s65:115: .if acornsoft_version
+
+Secret credits text change.
+
+** 52 .\pres_bedit.strings.s65:121: .if bet2_version
+
+Add *BUTILS text, new help subject, new =Load= and =Append= strings.
+
+** 53 .\pres_bedit.s65:24:acornsoft_version=false
+
+Irrelevant
+
+** 54 .\pres_bedit.s65:25:bet2_version=false
+
+Irrelevant
+
+** 55 .\pres_bedit.s65:43: .if bet2_version
+
+Irrelevant - set contsants
+
+** 56 .\pres_bedit.s65:52: .if acornsoft_version
+
+See #55
+
+** 57 .\pres_bedit.s65:58: .if bet2_version
+
+See #55
+
+** 58 .\pres_bedit.s65:84: .if acornsoft_version
+
+Version number change
+
+** 59 .\pres_bedit.s65:89: .if bet2_version
+
+ROM name change
+
+** 60 .\pres_bedit.s65:95: .if bet2_version
+
+ROM version string change
+
+** 61 .\pres_bedit.s65:105: .if bet2_version
+
+ROM copyright string change
+
+** 62 .\pres_bedit.s65:125: .if bet2_version
+
+stx $a8, sty $a9...???
+
+** 63 .\pres_bedit.s65:136: .if bet2_version
+
+new check for custom OSWORD handling
+
+** 64 .\pres_bedit.s65:141: .if bet2_version
+
+restore_a8_a9 as appropriate
+
+** 65 .\pres_bedit.s65:158: .if bet2_version
+
+call_other_rom with A=3 when doing a * command
+
+** 66 .\pres_bedit.s65:325: .if acornsoft_version
+
+Looks like a bug fix! Code does ldx #$11 (???) rather than lda #$11
+(print char 17)
+
+** 67 .\pres_bedit.s65:373: beq print_version_number
+
+Irrelevant
+
+** 68 .\pres_bedit.s65:378:print_version_number:
+
+Irrelevant
+
+** 69 .\pres_bedit.s65:380:print_version_number_loop:
+
+Irrelevant
+
+** 70 .\pres_bedit.s65:385: bcc print_version_number_loop
+
+Irrelevant
+
+** 71 .\pres_bedit.s65:611: .if bet2_version
+
+Includestuff
+
+** 72 .\pres_bedit.s65:744: .if bet2_version
+
+Electron-related mode stuff??
+
+** 73 .\pres_bedit.s65:749: .if bet2_version
+
+See #72
+
+** 74 .\pres_bedit.s65:795: .if acornsoft_version
+
+???
+
+** 75 .\pres_bedit.s65:803: .if acornsoft_version
+
+??? - see #74
+
+** 76 .\pres_bedit.s65:811: .if bet2_version
+
+??? - see #74
+
+** 77 .\pres_bedit.s65:815: .if acornsoft_version
+
+??? - see #74
+
+** 78 .\pres_bedit.s65:820: .if acornsoft_version
+
+??? - see #74
+
+** 79 .\pres_bedit.s65:874: .if bet2_version
+
+Includestuff
+
+** 80 .\pres_bedit.s65:1152: .if bet2_version
+
+Includestuff
+
+** 81 .\pres_bedit.s65:1457: .if bet2_version
+
+Includestuff
+
+** 82 .\pres_bedit.s65:1487: .if bet2_version
+
+Don't do OSBYTE 219 on Electron
+
+** 83 .\pres_bedit.s65:1494: .if bet2_version
+
+See #82
+
+** 84 .\pres_bedit.s65:1500: .if acornsoft_version
+
+Let F keys be F keys. But... won't this break stuff??
+
+** 85 .\pres_bedit.s65:1507: .if acornsoft_version
+
+See #84, but for shift+F keys.
+
+** 86 .\pres_bedit.s65:1514: .if acornsoft_version
+
+See #84, but for Ctrl+F keys.
+
+** 87 .\pres_bedit.s65:1557: .if acornsoft_version
+
+Includestuff
+
+** 88 .\pres_bedit.s65:1674: .if acornsoft_version
+
+Includestuff
+
+** 89 .\pres_bedit.s65:1749: .if bet2_version
+
+Includestuff
+
+** 90 .\pres_bedit.s65:1785: .if bet2_version
+
+End of ROM bits for ABE
+
+** 91 .\pres_bedit.s65:1823: .if acornsoft_version
+
+Includestuff
+
+** 92 .\pres_bedit.s65:1860: .if acornsoft_version
+
+End of ROM filler for Acornsoft
+
 * eof.
