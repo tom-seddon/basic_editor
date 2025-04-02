@@ -283,4 +283,8 @@ Enter command mode assuming language workspace is all set up??
 
 Perform BASIC Editor language initialisation stuff??
 
+* --case-sensitive
+
+expected SHA1: da8feaec70579ecedd9b229872d734ecee065a38
+
 * eof.

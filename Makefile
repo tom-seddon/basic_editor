@@ -26,7 +26,7 @@ SHELLCMD:=$(PYTHON) submodules/shellcmd.py/shellcmd.py
 ##########################################################################
 ##########################################################################
 
-TASSCMD:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch
+TASSCMD:=64tass --m65xx --nostart -Wall -Wno-implied-reg -q --long-branch --case-sensitive
 
 .PHONY:build
 build: VER:=$(shell $(SHELLCMD) strftime -d _ '_Y-_m-_d _H:_M:_S')

@@ -1,13 +1,4 @@
-osnewl = $ffe7
-osrdch = $ffe0
-oscli = $fff7
-oswrch = $ffee
-osbyte = $fff4
-osword = $fff1
-osfile = $ffdd
-osrdsc=$ffb9
-wordv=$20c
-brkv=$202
+                .include "submodules/beeb/include/beeb.s65"
                 
 ;-------------------------------------------------------------------------
 

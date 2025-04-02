@@ -139,13 +139,13 @@ addrs:=(basic_ptr_0+0,basic_ptr_0+1,basic_ptr_1+0,basic_ptr_1+1)
 test_loc_9e1d_memset: .proc
 addrs:=(ptr0+0,ptr0+1,byte_3A)
                 push_addrs addrs
-                lda language.sub_9DEA.loc_9e2e
+                lda language.sub_9DEA.loc_9E2E
                 pha
                 lda #$60
-                sta language.sub_9DEA.loc_9e2e
+                sta language.sub_9DEA.loc_9E2E
                 jsr language.sub_9DEA.loc_9e1d
                 pla
-                sta language.sub_9DEA.loc_9e2e
+                sta language.sub_9DEA.loc_9E2E
                 pop_addrs addrs
                 rts
                 
@@ -753,10 +753,10 @@ init_brkv_and_oshwm: .proc
                 sta     oshwm
                 sta     unk_6AD
                 lda     #$83
-                jsr     OSBYTE          ; Read OSHWM
+                jsr     osbyte          ; Read OSHWM
                 sty     oshwm+1         ; $18 = MSB
                 lda     #$82
-                jsr     OSBYTE          ; Read machine higher order address
+                jsr     osbyte          ; Read machine higher order address
                 stx     higher_order_address
                 sty     higher_order_address+1
                 lda     #0
@@ -787,7 +787,7 @@ is_not_tube:
                 beq get_HIMEM
                 lda     #133    ;read HIMEM for given MODE
 get_HIMEM:
-                jsr     OSBYTE
+                jsr     osbyte
                 stx     HIMEM
                 sty     HIMEM+1
                 rts
@@ -842,7 +842,7 @@ loc_82CB:
 
 display_error_message: .proc
 
-                jsr     OSNEWL
+                jsr     osnewl
 
                 ldx     #79
                 ldy     #40
@@ -861,8 +861,8 @@ loc_82BA:
                 ldy     #>error_message_buffer
                 jsr     print_n_chars
                 
-                jsr     OSNEWL
-                jsr     OSNEWL
+                jsr     osnewl
+                jsr     osnewl
                 jmp     beep
 .pend
 
@@ -870,7 +870,7 @@ get_text_window_left_bottom:
                                         
                 ldx     #8
                 lda     #$A0
-                jmp     OSBYTE
+                jmp     osbyte
 ; End of function get_text_window_left_bottom
 
 
@@ -1085,7 +1085,7 @@ initialise:
                 lda     #200            ; set ESCAPE, BREAK effect (AUG p205)
                 ldx #0
                 ldy     #%11111110      ; normal ESCAPE action (bit 0 reset)
-                jsr     OSBYTE
+                jsr     osbyte
                 lda     #219            ; read/write TAB key char (AUG p222)
                 jsr     osbyte_with_x0_y0 ; TAB key produces CHR$0
                 ldx     #27             ; ESCAPE key produces CHR$27
@@ -1119,7 +1119,7 @@ loc_8437:
 ; Set cursor keys and COPY to produce ASCII                 
                 ldx     #2
                 lda     #4
-                jsr     OSBYTE
+                jsr     osbyte
 ; Set function keys to produce ASCII $A0...$A9
                 ldx     #$A0
                 lda     #225
@@ -2162,7 +2162,7 @@ osbyte_with_x0_y0:.proc
 osbyte_with_y0:.proc
 					
 		ldy	#0
-		jsr	OSBYTE
+		jsr	osbyte
                 rts
 .pend
 ; End of function osbyte_with_y0
@@ -2306,11 +2306,11 @@ memmove_done:
 gotoxy .proc					
 					
 		lda	#31		; set cursor location
-		jsr	OSWRCH
+		jsr	oswrch
 		txa
-		jsr	OSWRCH
+		jsr	oswrch
 		tya
-		jmp	OSWRCH
+		jmp	oswrch
 ; End of function gotoxy
 
 
@@ -3386,7 +3386,7 @@ loc_9359:
 		cmp	#CMD_QCHANGE
 		beq	loc_937E ;taken if command was QCHANGE
                 cmp #CMD_QICHANGE
-                beq loc_937e    ;taken if command was QICHANGE
+                beq loc_937E    ;taken if command was QICHANGE
 		jsr	sub_BDD3
 		jmp	loc_934B
 
@@ -3559,7 +3559,7 @@ do_osfile .proc
 call_osfile				
 		ldx	#<readline_ptr_lsb
 		ldy	#>readline_ptr_lsb
-                jmp	OSFILE		; OSFILE
+                jmp	osfile		; OSFILE
 .pend
 ; End of function save_command
 
@@ -3592,13 +3592,13 @@ read_line .proc
 		lda	#0		; read input line
 		ldx	#$19
 		ldy	#0
-		jsr	OSWORD
+		jsr	osword
 		php
 		iny
 		tya
 		pha
 		bcc	loc_9497
-		jsr	OSNEWL
+		jsr	osnewl
 
 loc_9497:				
 		jsr	clear_escape_condition
@@ -3683,7 +3683,7 @@ reset_keys_settings:
 					
 		ldx	#0		; Enable cursor	editing	(default)
 		lda	#4		; Enable/disable cursor	editing	(AUG P120)
-		jsr	OSBYTE
+		jsr	osbyte
 		ldx	#9
 		lda	#219		; set TAB key to 9
 		jsr	osbyte_with_y0
@@ -3716,7 +3716,7 @@ run_star_command:
 		jsr	reset_keys_settings
 		ldx	#<unk_700
 		ldy	#>unk_700
-		jsr	OSCLI
+		jsr	oscli
 		jmp	clear_error_message_buffer
 ; End of function run_star_command
 
@@ -3725,7 +3725,7 @@ run_star_command:
 
 getch:					
 					
-		jsr	OSRDCH
+		jsr	osrdch
 ; End of function getch
 
 
@@ -3734,7 +3734,7 @@ getch:
 clear_escape_condition:			
 		pha
 		lda	#$7E ; '~'
-		jsr	OSBYTE
+		jsr	osbyte
 		pla
 ; End of function clear_escape_condition
 
@@ -4706,7 +4706,7 @@ loc_9AE6:
 		ldx	#0
 		ldy	#$FF
 		lda	#216		; read length of soft key string
-		jsr	OSBYTE		; flush	pending	soft key expansion
+		jsr	osbyte		; flush	pending	soft key expansion
 		stx	byte_3A		; save old value (??)
 		jsr	reset_cursor_shape
 		jsr	getch
@@ -4739,7 +4739,7 @@ run_command:
 		ldx	#0
 		ldy	#$FF
 		lda	#216
-		jsr	OSBYTE
+		jsr	osbyte
 		txa
 		ora	byte_3A		; check	if both	soft key expansion states were 0
 		beq	loc_9B2C	; branch taken if both were
@@ -4759,7 +4759,7 @@ loc_9B2C:
 		ldx	#$FF		; query	keyboard buffer
 		ldy	#$FF
 		lda	#128
-		jsr	OSBYTE		; get ADVAL/buffer status (AUG p151)
+		jsr	osbyte		; get ADVAL/buffer status (AUG p151)
 		txa
 		bne	loc_9B25	; branch taken if any keys in keyboard buffer
 		lda	current_command_id
@@ -4801,7 +4801,7 @@ loc_9B5D:
 		ldx	#0		; Don't change anything
 		ldy	#$FF		; Read old value
 		lda	#202
-		jsr	OSBYTE		; Read keyboard	status byte (AUG p207)
+		jsr	osbyte		; Read keyboard	status byte (AUG p207)
 		stx	byte_38		; bit 3	- 1 if SHIFT pressed
 					; bit 4	- 0 if CAPS LOCK engaged
 					; bit 5	- 0 if SHIFT LOCK engaged
@@ -4871,7 +4871,7 @@ poll_shift:
 poll_key:                       ;must be position-independent
 		ldy	#$FF    ;must be position-independent
 		lda	#129    ;must be position-independent
-		jsr	OSBYTE  ;must be position-independent
+		jsr	osbyte  ;must be position-independent
 		inx             ;must be position-independent
 		rts             ;must be position-independent
 
@@ -4939,15 +4939,15 @@ set_cursor_state:
 		tya
 		pha			; save Y
 		lda #23
-		jsr OSWRCH
+		jsr oswrch
 		lda #1
-		jsr OSWRCH
+		jsr oswrch
 		tya
-		jsr OSWRCH
+		jsr oswrch
 		ldy #8
 		lda #0
 set_cursor_shape_8zeros:
-		jsr OSWRCH
+		jsr oswrch
 		dey
 		bne set_cursor_shape_8zeros
 		pla
@@ -5032,7 +5032,7 @@ kbflush:
 		ldx	#0		; Flush	keyboard buffer
 		stx	byte_6AB
 		lda	#21		; Flush	specific buffer	(AUG p138)
-		jsr	OSBYTE
+		jsr	osbyte
 		lda	#216		; Read/write length of soft key	string
 		jsr	osbyte_with_y0	; Cancel any current soft key expansion
 		jmp	clear_escape_condition
@@ -5367,7 +5367,7 @@ loc_9D3F:
                 lda #$80
                 sta should_cls_before_command_prompt
 		lda	#13
-		jsr	OSWRCH
+		jsr	oswrch
 		ldx	#9		; VDU variable 9 - text	window coordinates, bottom (X) + right (Y) (AUG	p275)
                 jsr read_vdu_variable
 		stx	text_window_bottom_y	; store	screen height
@@ -5738,7 +5738,7 @@ set_palette:
 
 set_palette_entry:			
 		lda	#19		; X=logical colour, Y=physical colour
-		jsr	OSWRCH
+		jsr	oswrch
 
                 ; the extra chars are no problem
                 jmp print_xy000000
@@ -5823,7 +5823,7 @@ loc_9F65:
 beep: .block
 					
 		lda	#7
-		jmp	OSWRCH
+		jmp	oswrch
                 .endblock
 ; End of function beep
 
@@ -5998,7 +5998,7 @@ locret_A00D:
 cls_and_reset_6c0_to_6ff:		
 					
 		lda	#12     ;cls_and_reset_6c0_to_6ff
-		jsr	OSWRCH
+		jsr	oswrch
 		lda	#0
 		ldy	#$3F
 
@@ -6476,7 +6476,7 @@ print_space_or_marker:
 		lda	#$2E ; '.'
 
 redraw_line_number_print_char:				
-		jmp	OSWRCH
+		jmp	oswrch
 ; End of function redraw_line_number
 
 
@@ -6522,11 +6522,11 @@ print_line_command_chars:
 		bcc	loc_A1D3
 		sec
 		sbc	#$20 ; ' '
-		jsr	OSWRCH
+		jsr	oswrch
 		inc	readline_ptr_msb
 
 loc_A1D3:				
-		jsr	OSWRCH
+		jsr	oswrch
 		inc	readline_ptr_msb
 
 locret_A1D8:				
@@ -7044,7 +7044,7 @@ type_commands_loop:
 		tay			; put char into	Y for OSBYTE
 		ldx	#0		; 0 = keyboard buffer
 		lda	#138		; insert into keyboard buffer
-		jsr	OSBYTE
+		jsr	osbyte
 		dec	byte_3A		; next char in string
 		lda	byte_3A
 		cmp	byte_39		; reached the end?
@@ -7054,9 +7054,9 @@ loc_A64D:
 		ldx	#0
 		ldy	#255
 		lda	#187		; get ROM containing BASIC
-		jsr	OSBYTE
+		jsr	osbyte
 		lda	#142		; enter	language ROM
-                jsr	OSBYTE
+                jsr	osbyte
 
 .pend
 
@@ -7350,7 +7350,7 @@ extend_line_if_necessary: .proc
                 bcc done
                 beq done
 
-                jsr loc_ab3c
+                jsr loc_AB3C
                 
 done:
                 rts
@@ -9466,7 +9466,7 @@ sub_B0D6: .proc
 
 loc_B0DC:				
 		iny                 ;next byte
-		lda	(basic_ptr_1),Y ;get next byte from input
+		lda	(basic_ptr_1),y ;get next byte from input
 		cmp	#'9'+1      ;is it a digit?
 		bcs	loc_B119    ;taken if not a digit
 		cmp	#'0'        ;is it a digit?
@@ -10304,7 +10304,7 @@ sub_B4A7: .block
 		pha
 		lda	byte_2C
 		pha
-		jsr	sub_a8c0.loc_A8FF
+		jsr	sub_A8C0.loc_A8FF
 		pla
 		sta	byte_2C
 		pla
@@ -11124,13 +11124,13 @@ found_next_line:
                 ; copy from $6c0+Y to $6c0 - ok to copy up
 		clc
 		tya
-		adc	#<byte_6c0
+		adc	#<byte_6C0
 		sta	ptr0+0  ;src LSB
-		lda	#>byte_6c0
+		lda	#>byte_6C0
 		sta	ptr1+1  ;dest MSB
 		adc	#0      ;??do we want this??
 		sta	ptr0+1  ;src MSB
-		lda	#<byte_6c0
+		lda	#<byte_6C0
 		sta	ptr1+0  ;dest LSB
 
                 ; copy (text_window_bottom_y+1-?unk_37)*2
@@ -11158,13 +11158,13 @@ copy_rows_table_done:
 		sty	byte_6AB
 		jsr	gotoxy
 		; LDA	#19
-		; JSR	OSBYTE
+		; JSR	osbyte
                 
 		ldy	unk_37  ;number of rows to scroll
 		lda	#$A
 
 loc_B914:				
-		jsr	OSWRCH
+		jsr	oswrch
 		dey
 		bne	loc_B914
 		sec
@@ -11655,11 +11655,11 @@ print_bytes_free: .proc
                 lda is_bad_program
                 bne bad
 
-                lda himem
-                sbc top
+                lda HIMEM
+                sbc TOP
                 tax
-                lda himem+1
-                sbc top+1
+                lda HIMEM+1
+                sbc TOP+1
                 tay
                 jmp print_number
 
@@ -11679,9 +11679,9 @@ info_command:
                 lda is_bad_program
                 bne print_status
 
-                ldx top
+                ldx TOP
                 sec
-                lda top+1
+                lda TOP+1
                 sbc oshwm+1
                 tay
                 jsr print_number
@@ -11731,15 +11731,15 @@ print_status:
                 jsr osnewl
 
 		lda	#$87		; get MODE in Y
-		jsr	OSBYTE		; get MODE in Y
+		jsr	osbyte		; get MODE in Y
 		cpy	#7		; MODE 7?
                 beq loc_BC0B
 					
 		jsr	print_colour_scheme
-		jsr	OSNEWL
+		jsr	osnewl
 
 loc_BC0B:				
-		jsr	OSNEWL
+		jsr	osnewl
 		; LDX	#<aProgramName
 		; LDY	#>aProgramName
 		; LDA	#$E
@@ -11749,7 +11749,7 @@ loc_BC0B:
 		lda	#2
 		sta	editor_mode_id	; 1=command mode, 2=edit mode
                 jsr print_program_name
-                jsr	OSNEWL
+                jsr	osnewl
 		ldx	#<aLastSearch
 		ldy	#>aLastSearch
 		lda	search_string_length
@@ -11768,8 +11768,8 @@ loc_BC42:
 		jsr	print_n_chars
 		lda	#1
 		sta	editor_mode_id	; 1=command mode, 2=edit mode
-		jsr	OSNEWL
-                jsr	OSNEWL
+		jsr	osnewl
+                jsr	osnewl
                 jsr print_next_string
                 .text "Tab value   : ",255
 		ldx	tab_value
@@ -11805,7 +11805,7 @@ loc_BC8D:
 		jsr	print_number
 
 loc_BC94:				
-		jsr	OSNEWL
+		jsr	osnewl
 		lda	is_bad_program
 		beq	loc_BC9C
 		rts
@@ -11840,7 +11840,7 @@ loc_BCA4:
 		lda	(unk_2F),y
 		tay
 		jsr	print_number
-                jsr	OSNEWL
+                jsr	osnewl
                 jsr print_next_string
                 .text "Current line: ",255
 		ldx	current_line_no_lsb
@@ -11865,8 +11865,8 @@ loc_BCFF:
 		jsr	print_n_chars
 
 loc_BD04:				
-		jsr	OSNEWL
-		jsr	OSNEWL
+		jsr	osnewl
+		jsr	osnewl
 		ldx	#<aPendingCommands
 		ldy	#>aPendingCommands
 		lda	byte_40
@@ -11879,16 +11879,16 @@ loc_BD04:
 		jsr	print_n_chars
 
 loc_BD1F:				
-		jsr	OSNEWL
+		jsr	osnewl
 
 loc_BD22:				
-		jmp	OSNEWL
+		jmp	osnewl
 
 loc_BD25:				
 					
 		lda	#aPendingCommandsEnd-aPendingCommands
 		jsr	print_n_chars
-		jsr	OSNEWL
+		jsr	osnewl
 		lda	byte_40
 		cmp	#$20 ; ' '
 		beq	loc_BD46
@@ -11918,12 +11918,12 @@ loc_BD4A:
 		bcc	loc_BD60
 		sec
 		sbc	#$20 ; ' '
-		jsr	OSWRCH
+		jsr	oswrch
 
 loc_BD60:				
-		jsr	OSWRCH
+		jsr	oswrch
 		lda	#$20 ; ' '
-		jsr	OSWRCH
+		jsr	oswrch
 		lda	byte_41,x
 		tay
 		lda	byte_42,x
@@ -11933,7 +11933,7 @@ loc_BD60:
 		lda	#$20 ; ' '
 
 loc_BD75:				
-		jsr	OSWRCH
+		jsr	oswrch
 		dex
 		bne	loc_BD75
 
@@ -11949,7 +11949,7 @@ loc_BD7B:
 
 move_to_column_21:
 		lda	#$86    ;read POS/VPOS (AUG p158)
-		jsr	OSBYTE
+		jsr	osbyte
 		ldx	#21
 		jmp	gotoxy
 
@@ -12247,7 +12247,7 @@ loc_BEB5:
 		jsr	gotoxy
 		lda	#19
 		sta	byte_6AB
-		jsr	OSBYTE  ;this is actually worth doing in Mode
+		jsr	osbyte  ;this is actually worth doing in Mode
                                 ;7...
 
                 ; scroll screen up enough to fit new line
@@ -12255,7 +12255,7 @@ loc_BEB5:
 		lda	#11
 
 loc_BEF7:				
-		jsr	OSWRCH
+		jsr	oswrch
 		dey
 		bne	loc_BEF7
 
@@ -12313,7 +12313,7 @@ loc_BF0E:
 		lda	#$20 ; ' '
 
 loc_BF47:				
-		jsr	OSWRCH
+		jsr	oswrch
 		dey
 		bne	loc_BF47
 		beq	loc_BF0E ;JMP, in effect
@@ -12332,10 +12332,10 @@ loc_BF5B:
 		sta	ptr1+0
 
                 ; copy from $6c0 to $6c0+y - must copy down
-		lda	#>byte_6c0
+		lda	#>byte_6C0
 		sta	ptr0+1  ;src MSB
 		sta	ptr1+1  ;dest MSB
-		lda	#<byte_6c0
+		lda	#<byte_6C0
 		sta	ptr0+0  ;src LSB
 		clc
 		adc	ptr1+0  ;dest LSB
