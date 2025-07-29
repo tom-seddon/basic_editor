@@ -77,25 +77,39 @@ _assemble:
 ##########################################################################
 ##########################################################################
 
-# .PHONY:release
-# release: VER=$(error must set VER)
-# release:
-# 	$(_V)$(SHELLCMD) rm-tree $(RELEASES)/$(VER)
-# 	$(_V)$(SHELLCMD) mkdir $(RELEASES)/$(VER)
-# 	$(_V)$(MAKE) build
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/basiced.rom $(RELEASES)/$(VER)/
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/hibasiced.rom $(RELEASES)/$(VER)/
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkbasiced.rom $(RELEASES)/$(VER)/
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/elkhibasiced.rom $(RELEASES)/$(VER)/
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.rom $(RELEASES)/$(VER)/
-# 	$(_V)$(SHELLCMD) copy-file $(DEST)/rbasiced.relocation.dat $(RELEASES)/$(VER)/
+# This only needs to run on my PC, so it just blithely uses zip, even
+# though it isn't included.
+
+.PHONY:release
+release: VER=$(error must set VER)
+release: _DEST="$(DEST)/$(VER)"
+release: _ZIP_Q:=$(if $(VERBOSE),,-q)
+release: _ZIP_NAME=basic_editor-$(VER).zip
+release: _DIRTY_CHECK_PREFIX:=$(if $(DIRTY_OK),-,)
+release:
+	$(_V)echo Checking for unmodified working copy
+	$(_DIRTY_CHECK_PREFIX)$(_V)git diff-index --quiet --cached HEAD --
+	$(_DIRTY_CHECK_PREFIX)$(_V)git diff-files --quiet
+	$(_V)$(MAKE) clean
+	$(_V)$(MAKE) build
+	$(_V)$(SHELLCMD) mkdir "$(_DEST)"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/basiced.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/hibasiced.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/elkbasiced.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/elkhibasiced.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/rbasiced.rom" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "$(DEST)/rbasiced.relocation.dat" "$(_DEST)/"
+	$(_V)$(SHELLCMD) copy-file "docs/release_README.md" "$(_DEST)/README.txt"
+	$(_V)cd "$(_DEST)" && zip -9j $(_ZIP_Q) "../$(_ZIP_NAME)" *
+	$(_V)echo Release name: $(VER)
+	$(_V)echo ZIP file: $(shell $(SHELLCMD) realpath "$(_DEST)/../$(_ZIP_NAME)")
 
 ##########################################################################
 ##########################################################################
 
 .PHONY:clean
 clean:
-	$(_V)$(SHELLCMD) rm-tree $(DEST)
+	$(_V)$(SHELLCMD) rm-tree "$(DEST)"
 
 ##########################################################################
 ##########################################################################

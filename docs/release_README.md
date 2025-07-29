@@ -11,9 +11,11 @@ The zip contains the following files, suitable for programming into a
 * `elkbasiced.rom` - standard ROM for Electron
 * `elkhibasiced.rom` - HI ROM for Electron + 6502 second processor
 * `rbasiced.rom`, `rbasiced.relocation.dat` - relocatable ROM for
-  Master 128 with MOS 3.50. Not terribly easy to get working, and
-  easiest to use a prebuilt updated version of the OS:
+  Master 128 with MOS 3.50. Might be easiest to use a prebuilt updated
+  version of the OS:
   https://github.com/tom-seddon/acorn_mos_disassembly/blob/master/docs/refresh.md
+  (though note that the prebuilt OS images won't necessarily always
+  have the absolute latest version)
 
 # Version history
 

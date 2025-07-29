@@ -1,5 +1,12 @@
 #+STARTUP: overview
 
+#+begin_src markdown
+  ## New in 1.47
+
+  - * commands are matched case-insensitively, so (e.g.) `*be` now works
+  - Reset CTRL+F key behaviour to default when exiting to BASIC
+#+end_src
+
 * .dir-locals.el
 
 #+begin_src elisp
@@ -690,5 +697,35 @@ See #84, but for shift+F keys.
 *** 86 .\pres_bedit.s65:1514: .if acornsoft_version
 
 See #84, but for Ctrl+F keys.
+
+* Release process
+
+0. Make all changes necessary, update [[./release_README.md]] with an
+   entry for the version, commit
+
+1. =git push= so that GitHub has latest
+
+2. =make release VER\=<<ver>>= - this will generate a zip file called
+   =build/basic_editor-<<ver>>.zip=.
+
+   The =release= target will fail if the working copy is dirty. Supply
+   =DIRTY_OK\=1= to disable this
+
+3. Visit https://github.com/tom-seddon/basic_editor/releases and click
+   =Draft a new release=
+
+4. Paste release name from =make release= output into the tag field,
+   and use that as the release title too
+
+5. Attach zip file to release (=make release= output includes the
+   path)
+
+6. Release description should be as follows:
+
+   #+begin_src markdown
+     Version history can be found here: https://github.com/tom-seddon/basic_editor/blob/b1c007288611fb8d28a479ba75db9192996f3347/docs/release_README.md
+   #+end_src
+
+7. Publish
 
 * eof.
