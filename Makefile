@@ -161,5 +161,5 @@ _pres_stuff_2: _make_output_folders
 .PHONY:_tom_emacs
 _tom_emacs:
 	$(_V)$(MAKE) build
-
-
+	$(_V)$(SHELLCMD) blank-line
+	curl --connect-timeout 0.25 --silent -G 'http://localhost:48075/reset/b2' --data-urlencode "config=BASIC Editor Test"
