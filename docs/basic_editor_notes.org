@@ -763,4 +763,74 @@ the parsing.
 
 (The =help_command= code might provide further clues?)
 
+* BASIC Editor+Toolkit build
+
+Should try to add 2nd processor compatibility.
+
+HI versions should be feasible.
+
+Relocating versions should be possible, but even more fiddly and
+annoying to set up than normal.
+
+** Service routine
+
+Will need an identical service routine in both regions. The service
+code is currently 256 bytes, but it'll become a bit larger.
+
+** Language entry
+
+Need to be able to enter it 4 ways:
+
+1. BE - BASIC Editor
+2. BR - ZRUN
+3. BZ - ZSAVE
+4. BU - UTILS
+
+The MOS knows nothing of the ROM mapper, so the process has to be:
+
+1. select correct region
+2. set user byte
+3. enter ROM with OSBYTE $8e
+
+Can extend the OSBYTE 26 mechanism to do these 3 steps. Then the *
+commands can call that, rather than doing it by hand.
+
+It's possible, if using OSBYTE $8e directly, that you could end up in
+the wrong region for the current mode. So should really have it check,
+and redo OSBYTE 26 if necessary.
+
+Then have the UTILS half use this, instead of doing =*BE= (with the
+command line in the ROM!).
+
+** OSWORD $b5
+
+Where does this actually get used? The code to support it is there,
+but where's the code that uses it?
+
+** MOS 3.50 relocation
+
+A HI-only version of the ROM would operate on exactly the same
+principles as the normal one.
+
+A relocatable version should also be manageable: because each region
+can have its own relocation header, and can therefore refer to an
+independent table.
+
+Actually setting this up would by a DIY job.
+
+** Manual relocation?
+
+Assemble to run at its usual address, specify a Tube relocation
+address of $b800, and have the language entry point sort everything
+out on entry?
+
+There's room in the utils half for a relocation table and the code.
+
+The edit half... not so much. But would there be options? Could the
+code be rearranged a bit? Any parasite language ROM transfer overhead
+would have to be taken into account, particularly with MOS 3.50.
+
+Can probably figure <1 KB for the overhead of this. The relocation
+data is 601 bytes.
+
 * eof.
