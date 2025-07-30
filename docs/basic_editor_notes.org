@@ -728,4 +728,39 @@ See #84, but for Ctrl+F keys.
 
 7. Publish
 
+* Command flags
+
+** =command_jump_table=
+
+| Bit | Val | What                                                    |
+|-----+-----+---------------------------------------------------------|
+|   7 |  80 | unused??                                         |
+|   6 |  40 |                                                         |
+|   5 |  20 |                                                         |
+|   4 |  10 | program must be non-empty - do a NEW first if bit 2 set |
+|   3 |  08 | if in edit mode, tokenize line before executing command |
+|   2 |  04 | enter edit mode                                         |
+|   1 |  02 |                                                         |
+|   0 |  01 |                                                         |
+
+** =command_table=
+
+| Bit | Val | What                                |
+|-----+-----+-------------------------------------|
+|   7 |  80 | unused??                            |
+|   6 |  40 |                                     |
+|   5 |  20 |                                     |
+|   4 |  10 |                                     |
+|   3 |  08 |                                     |
+|   2 |  04 | set if cmd takes string arg         |
+|   1 |  02 | set if cmd takes single numeric arg |
+|   0 |  01 | set if cmd requires arguments       |
+
+For optional arguments, clear bit 0 then set one of bits 1/2.
+
+If bit 0 set and bit 1 set, the number will be interpreted as part of
+the parsing.
+
+(The =help_command= code might provide further clues?)
+
 * eof.
