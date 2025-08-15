@@ -32,62 +32,62 @@ HI_ADDRESS = $b800
 
                 .if BUILD_TYPE==0
                 
-RELOCATABLE: = false
-HI: = false
-ELECTRON: = false
-SVC_BASE: = $8000
-LANG_BASE: = $8000
+RELOCATABLE=false
+HI=false
+ELECTRON=false
+SVC_BASE=$8000
+LANG_BASE=$8000
 
                 .elsif BUILD_TYPE==1
                 
-RELOCATABLE: = false
-HI: = true
-ELECTRON: = false
-SVC_BASE: = $8000
-LANG_BASE: = HI_ADDRESS
+RELOCATABLE=false
+HI=true
+ELECTRON=false
+SVC_BASE=$8000
+LANG_BASE=HI_ADDRESS
                 
                 .elsif BUILD_TYPE==2
                 
-RELOCATABLE: = true
-HI: = false
-ELECTRON: = false
-SVC_BASE: = $8000
-LANG_BASE: = $8000
+RELOCATABLE=true
+HI=false
+ELECTRON=false
+SVC_BASE=$8000
+LANG_BASE=$8000
 
                 .elsif BUILD_TYPE==3
                 
-RELOCATABLE: = true
-HI: = false
-ELECTRON: = false
-SVC_BASE: = $8000
-LANG_BASE: = HI_ADDRESS
+RELOCATABLE=true
+HI=false
+ELECTRON=false
+SVC_BASE=$8000
+LANG_BASE=HI_ADDRESS
 
                 .elsif BUILD_TYPE==4
 
-RELOCATABLE: = false
-HI: = false
-ELECTRON:= false
+RELOCATABLE=false
+HI=false
+ELECTRON=false
 
 ; the ROM ought to fit (at least, in Mode 7...) starting from $3c00,
 ; but the TOC and/or extra debug junk might push the size past 16K.
-SVC_BASE: = $3800
+SVC_BASE=$3800
 LANG_BASE:= $3800   
 
                 .elsif BUILD_TYPE==8
 
-RELOCATABLE: = false
-HI: = false
-ELECTRON: = true
-SVC_BASE: = $8000
-LANG_BASE: = $8000
+RELOCATABLE=false
+HI=false
+ELECTRON=true
+SVC_BASE=$8000
+LANG_BASE=$8000
 
                 .elsif BUILD_TYPE==9
 
-RELOCATABLE: = false
-HI: = true
-ELECTRON: = true
-SVC_BASE: = $8000
-LANG_BASE: = HI_ADDRESS
+RELOCATABLE=false
+HI=true
+ELECTRON=true
+SVC_BASE=$8000
+LANG_BASE=HI_ADDRESS
 
                 .endif
 
