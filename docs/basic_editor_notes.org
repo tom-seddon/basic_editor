@@ -809,7 +809,7 @@ but where's the code that uses it?
 
 ** bedit_bet2->butils_bet2 communications
 
-Call =call_other_rom= from bedit_bet2
+Call =call_utils_rom= from bedit_bet2
 
 Ends up calling =handle_bedit_to_butils_call= in butils_bet2
 
@@ -841,17 +841,20 @@ Handled, but looks like it might not actually be used??
 
 *** enter_edit_mode (9719) (A=$a)
 
-
-
 *** L99DC (99e3) (A=$88)
 *** L99E6 (99ed) (A=$89)
 *** LA301 (a334) (A=$87; A=$82; A=$83; A=$84)
 
 ** butils_bet2->bedit_bet2 communications
 
-Call =LB993= from butils_bet2
+Call =call_edit_rom= from butils_bet2
 
-Ends up calling =LA301= in bedit_bet2
+Ends up calling =handle_butils_to_bedit_call= in bedit_bet2
+
+*** LB079 (b07b) (A=6)
+*** ??? (b909) (A=$B)
+*** ??? (b929) (A=??)
+*** ??? (b990) (A=5)
 
 ** MOS 3.50 relocation
 

@@ -6,7 +6,7 @@ enter_edit_mode:
                 .if bet2_version
 L9717:
                 lda #$a
-                jmp call_other_rom
+                jmp call_utils_rom
                 .endif
 
 loc_9D2D:

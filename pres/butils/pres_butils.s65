@@ -7549,7 +7549,7 @@ LB06D:
 
 LB079:
                 lda #6
-                jmp LB993
+                jmp call_edit_rom
 
 error_message: .macro parts
                 .text (\parts)[0]|$80
@@ -7701,7 +7701,7 @@ LB902:
                 ; bedit->butils code 10
                 pla
                 lda #$B
-                jmp LB993
+                jmp call_edit_rom
 
 LB90C:
                 cmp #7
@@ -7731,7 +7731,7 @@ LB926:
                 ; bedit->butils code 7
                 pla
                 bmi LB92C
-                jmp LB993
+                jmp call_edit_rom
 
 LB92C:
                 cmp #$83
@@ -7813,9 +7813,9 @@ LB97D:
                 sty $a9
                 cld
                 lda #5
-                jmp LB993
+                jmp call_edit_rom
 
-LB993:
+call_edit_rom:
                 tay
                 ldx #0
 LB996:
@@ -7826,7 +7826,7 @@ LB996:
                 inx
                 cpx #size(LB040)
                 bne LB996
-                lda #$d
+                lda #size(LB040)-1
                 pha
                 tya
                 jmp rom_switch_thunk

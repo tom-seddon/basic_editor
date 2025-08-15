@@ -159,7 +159,7 @@ exit:
 star_command:
                 jsr L80D4
                 lda #3
-                jmp call_other_rom
+                jmp call_utils_rom
 
 new_osword:
                 jsr LBC8B
@@ -177,7 +177,7 @@ help:
 
 L8077:
                 lda #2
-                jmp call_other_rom
+                jmp call_utils_rom
 
 L807C:
                 ldy $a9
@@ -885,7 +885,7 @@ L99DC:
                 tya
                 pha
                 lda #$88
-                jmp call_other_rom
+                jmp call_utils_rom
 
 L99E6:
                 pha
@@ -894,7 +894,7 @@ L99E6:
                 tya
                 pha
                 lda #$89
-                jmp call_other_rom
+                jmp call_utils_rom
 
                 .include "pres_bedit.find_line_by_number.s65"
                 .include "pres_bedit.execute_command.s65"
@@ -907,7 +907,7 @@ L99E6:
                 .include "pres_bedit.commands.tab_key.s65"
                 .include "pres_bedit.read_line.s65"
 
-LA301:
+handle_butils_to_bedit_call:
                 tay
                 pla
                 tax
@@ -947,7 +947,7 @@ LA31F:
 LA332:
                 lda #$87
 LA334:
-                jmp call_other_rom
+                jmp call_utils_rom
 
 LA337:
                 cmp #1
@@ -1174,7 +1174,7 @@ get_error:
                 pla
                 sta byte_15
                 lda #1
-                jmp call_other_rom
+                jmp call_utils_rom
 
 LBA74:
                 rts
@@ -1182,7 +1182,7 @@ LBA74:
                 .include "pres_bedit.commands.mode.s65"
                 .include "pres_bedit.memmove.s65"
 
-call_other_rom:
+call_utils_rom:
                 tay             ; Y=input A
                 ldx #0
 LBB38:
@@ -1812,7 +1812,7 @@ LBFE8:
 LBFEB:
                 jmp brk_handler
 LBFEE:
-                .word LA301
+                .word handle_butils_to_bedit_call
 
                 ; PLD paging region follows...
                 .cerror *!=$bff0
