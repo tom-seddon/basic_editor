@@ -1,0 +1,8 @@
+;-------------------------------------------------------------------------
+
+; Language entry point modes. Must have bit 7 set, and may not be 255.
+;
+LANGUAGE_MODE_NORMAL=$81
+LANGUAGE_MODE_SHIFT_ESCAPE=$82
+LANGUAGE_MODE_ZSAVE=$83
+LANGUAGE_MODE_ZRUN=$84

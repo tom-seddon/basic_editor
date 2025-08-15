@@ -23,22 +23,24 @@ LINE_LENGTH_LIMIT=$fc
 ; if false, CTRL+up/down = move cursor between program lines
 ORIGINAL_CTRL_UP_DOWN=true
 
+
 ; if X bit 7 clear: set options byte to X, return old value
-; if X bit 7 set: leave options alone, return old value
+; if X bit 7 set: special actions
+;    X = 255: leave options alone and return old value
+;    X = one of the LANGUAGE_MODE_ constants: enter as language as appropriate
+
+; Notes:
+
+; Using OSBYTE 26 for entering the ROM is intended to give the service
+; code a chance to select the appropriate bank first, for the
+; single-bank 32 KB Editor+Toolkit case (should I ever get round to
+; actually doing that)
+
+; If bit 7 ever proves necessary, it'll have to be set manually
 OPTIONS_OSBYTE=26
 
 OPTION_SHIFT_ESCAPE=1
 OPTION_EDIT_MODE=2
-                
-;-------------------------------------------------------------------------
-
-; Language entry point modes.
-;
-LANGUAGE_MODE_NORMAL=1
-LANGUAGE_MODE_SHIFT_ESCAPE=2
-                
-LANGUAGE_MODE_ZSAVE=$80
-LANGUAGE_MODE_ZRUN=$81
 
 ;-------------------------------------------------------------------------
 
@@ -325,12 +327,7 @@ ply_and_svc_done: .block
 ;-------------------------------------------------------------------------
 
 enter_language: .proc
-                ; set the user flag for the language entry point.
-                lda #1
-                jsr osbyte
-
-                ldx $f4
-                lda #$8e        ;enter language ROM
+                lda #OPTIONS_OSBYTE
                 jmp osbyte
                 .pend
 
@@ -414,14 +411,29 @@ svc_osbyte: .proc
 
                 ; update value, if X bit 7 clear
                 lda $f0
-                bmi +
+                bmi enter
                 sta $df0,x
-+
 
+return_old_value:
                 ; return old value in X
                 pla
                 sta $f0
                 jmp svc.claimed
+
+enter:
+                ; Special case 255...
+                cmp #255
+                beq return_old_value
+                
+                tax             ; X = language entry mode
+                lda #1          ; OSBYTE read/write user flag
+                jsr osbyte
+
+                lda #$8e        ; OSBYTE enter language ROM
+                ldx $f4         ; enter this ROM
+                jmp osbyte
+
+                ; (no return from OSBYTE $8e)
                 
                 .pend
 
