@@ -120,11 +120,13 @@ _pres_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils2 FLAG=baseds1_all_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_elk FLAG=baseds1_elk_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_abe FLAG=abe_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet2 FLAG=bet2_version
 
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
 # Don't compare butils_elk.rom. It won't match.
 	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "./pres/ABE.0.rom"
+	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "./pres/BET2.1.rom"
 
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
@@ -161,5 +163,7 @@ _pres_stuff_2: _make_output_folders
 .PHONY:_tom_emacs
 _tom_emacs:
 	$(_V)$(MAKE) build
+	$(_V)$(SHELLCMD) blank-line
+	$(_V)$(MAKE) _pres_stuff
 	$(_V)$(SHELLCMD) blank-line
 	curl --connect-timeout 0.25 --silent -G 'http://localhost:48075/reset/b2' --data-urlencode "config=BASIC Editor Test"

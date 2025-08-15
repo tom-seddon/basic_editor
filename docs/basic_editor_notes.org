@@ -802,10 +802,56 @@ and redo OSBYTE 26 if necessary.
 Then have the UTILS half use this, instead of doing =*BE= (with the
 command line in the ROM!).
 
-** OSWORD $b5
+** OSWORD $b5 (butils->bedit communications?)
 
 Where does this actually get used? The code to support it is there,
 but where's the code that uses it?
+
+** bedit_bet2->butils_bet2 communications
+
+Call =call_other_rom= from bedit_bet2
+
+Ends up calling =handle_bedit_to_butils_call= in butils_bet2
+
+*** get_error (ba71) (A=1)
+
+Copy error message into error message buffer.
+
+Got room for this in bedit as-is, just about.
+
+*** star_command (805c) (A=3)
+
+Handle butils * command.
+
+Will need to include this... it seems the utils part has a bunch of *
+commands. But it'll always run in the host, so the ROM switching is
+simplified.
+
+*** L8077 (8079) (A=2)
+
+Handle *HELP.
+
+Will need to include this... it seems the utils part has a bunch of *
+commands. But it'll always run in the host, so the ROM switching is
+simplified.
+
+*** ??? (A=4)
+
+Handled, but looks like it might not actually be used??
+
+*** enter_edit_mode (9719) (A=$a)
+
+
+
+*** L99DC (99e3) (A=$88)
+*** L99E6 (99ed) (A=$89)
+*** LA301 (a334) (A=$87; A=$82; A=$83; A=$84)
+
+** butils_bet2->bedit_bet2 communications
+
+Call =LB993= from butils_bet2
+
+Ends up calling =LA301= in bedit_bet2
 
 ** MOS 3.50 relocation
 
@@ -832,5 +878,19 @@ would have to be taken into account, particularly with MOS 3.50.
 
 Can probably figure <1 KB for the overhead of this. The relocation
 data is 601 bytes.
+
+** Before
+
+    16,171  .build/basiced.rom (213 left)
+    16,126  .build/hibasiced.rom (258 left)
+    16,139  .build/elkbasiced.rom (245 left)
+    16,094  .build/elkhibasiced.rom (290 left)
+    16,180  .build/rbasiced.rom (204 left)
+       603  .build/rbasiced.relocation.dat
+10a54e249c6a7111fc5aa610d740628e553c9515  .build/basiced.rom
+
+** Routines
+
+*** Select 
 
 * eof.

@@ -33,20 +33,27 @@ baseds1_all_version=false
 ; Presumably left over from a previous run.
 baseds1_elk_version=false
 
+; If true, build ROM matching part 1 of the BASIC Editor & Toolkit,
+; sideways ROM version.
+bet2_version=false
+                
 ; If true, build ROM matching part 0 of the Advanced BASIC Editor.
 ; (The corresponding parts of The BASIC Editor Plus and BASIC Editor &
 ; Toolkit are very similar.)
 abe_version=false
-                
+
                 .endweak
 
 ;-------------------------------------------------------------------------
 
+; Building any of the BASIC Editor versions?
+basic_editor_version=abe_version||bet2_version
+                
 ;-------------------------------------------------------------------------
 
-enable_CLR=abe_version
-enable_ROMID=abe_version
-enable_TXCOPY=abe_version
+enable_CLR=basic_editor_version
+enable_ROMID=basic_editor_version
+enable_TXCOPY=basic_editor_version
                 
 include_ROMID=enable_ROMID||!baseds1_version&&!baseds1_elk_version
 include_MEMEDIT=!baseds1_version&&!baseds1_elk_version
@@ -54,17 +61,10 @@ include_TXCOPY=enable_TXCOPY||!baseds1_version&&!baseds1_elk_version
 
 ;-------------------------------------------------------------------------
 
-                .if abe_version
-; Labels for unknown stuff. These will get resolved in
-; due course.
-                .endif
-
-;-------------------------------------------------------------------------
-
                 
 ;-------------------------------------------------------------------------
 
-                .if abe_version
+                .if basic_editor_version
 ; the additional code fills in parts of the BE workspace, so include a
 ; few bits of the BE code to get the symbols - also some fluff to make
 ; it work.
@@ -81,7 +81,7 @@ ENABLE_DEBUG=false
 
                 .endif
 
-                .if abe_version
+                .if basic_editor_version
 rom_switch_thunk=$a00
                 .endif
                 
@@ -118,9 +118,17 @@ DDB:            .macro X
 ;  * based on Probe 6.02
 ;  * * * * * * * * * * * * * * * * * * * * * * *
 
-                .if abe_version
+                .if basic_editor_version
                 jmp LB936
+                .if abe_version
                 jmp LB97D
+                .elif bet2_version
+                ; clearly a binary edit
+                rts
+                .word LB97D
+                .else
+                .error
+                .endif
                 .else
                 brk             ; No Language entry
                 brk
@@ -129,13 +137,13 @@ DDB:            .macro X
                 jmp Reason      ; Service entry
                 .endif
 
-                .if abe_version
+                .if basic_editor_version
                 .byte $c2            ;Service+Language
                 .else
                 .byte $82       ; Service Rom
                 .endif
                 .byte Offset_0-$8000; Offset to 0(C)
-                .if abe_version
+                .if basic_editor_version
                 .byte 1
                 .else
                 .byte 6         ; Version#
@@ -146,11 +154,14 @@ Romname:
                 .text "Altra Electron BasicEd DEMO 2"
                 .elif abe_version
                 .text "Advanced BASIC Editor "
+                .byte 0
+                .elif bet2_version
+                .text "BASIC Editor & Toolkit "
                 .else
                 .text "Altra BasicEd (Electron) "
-                .endif
                 .byte 0
-                .if abe_version
+                .endif
+                .if basic_editor_version
                 .text "1.00"
                 .else
                 .text "1.60"    ; Version$
@@ -160,6 +171,8 @@ Offset_0:       .byte 0
                 .text "(C)"
                 .if abe_version
                 .text "1988 PRES"
+                .elif bet2_version
+                .text "1990 B.E."
                 .else
                 .text "1988 IJW"
                 .endif
@@ -203,7 +216,7 @@ Help:
                 jsr osnewl
                 jsr Printmsg
                 .text " "
-                .if abe_version
+                .if basic_editor_version
                 .text "BUTIL"
                 .else
                 .text "BASED"
@@ -223,7 +236,7 @@ Search_0:
                 tay             ; Original offset
                 pla
                 tax
-                .if abe_version
+                .if basic_editor_version
                 jsr LB969
                 nop
                 nop
@@ -608,7 +621,7 @@ Table_0:                        ; Table of Rom contents with xeqn addresses
                 DDB BASED-1
 
 Table2:                         ; Start for Help file, entries above Table2 do not appear in *HELP
-                .if abe_version
+                .if basic_editor_version
                 .text "BUTIL"
                 .else
                 .text "BASED"
@@ -650,12 +663,12 @@ Table2:                         ; Start for Help file, entries above Table2 do n
 
                 .byte 0         ; End of Command table
 
-                .if abe_version
+                .if basic_editor_version
                 .fill 7,0
                 .endif
 
 Helptabl:
-                .if abe_version
+                .if basic_editor_version
                 .text "BE"
                 .else
                 .text "BASED"
@@ -666,7 +679,7 @@ Helptabl:
 
 ;  ***************************
 
-                .if abe_version
+                .if basic_editor_version
                 .fill 3,0
                 .endif
 
@@ -692,7 +705,7 @@ Helpfile:
                 .byte 13
 
                 .if enable_ROMID
-                .if abe_version
+                .if basic_editor_version
                 .text " "
                 .else
                 .text " [rom address]"  ;ROMID
@@ -709,7 +722,7 @@ Helpfile:
                 .text "[HR$%PF]"; VLIST
                 .byte 13
 
-                .if abe_version
+                .if basic_editor_version
                 .fill 12,0
                 .endif
 
@@ -1807,7 +1820,7 @@ WARMSTART:                      ; Return to BASIC or EDITOR
                 pla
                 cmp #5          ; ^E 
                 bne gobasic
-                .if abe_version
+                .if basic_editor_version
                 ldx #<LBFE8
                 ldy #>LBFE8
                 .else
@@ -2089,7 +2102,7 @@ Choice:         ldx#$FF
                 jsr osbyte      ; Flush KB
 
 Wait_0:
-                .if abe_version
+                .if basic_editor_version
                 jsr LB973
                 nop
                 nop
@@ -2246,7 +2259,7 @@ Menu:           jsr Printmsg
                 .byte 26        ; No windows
                 .byte 12        ; CLS
                 .text " ",131,"  "
-                .if abe_version
+                .if basic_editor_version
                 .text "UTILITIES   "
                 .else
                 .text "BASIC EDITOR"
@@ -5801,7 +5814,7 @@ SPACE:
 
                 ldx #$FF
 L0:
-                .if abe_version
+                .if basic_editor_version
                 jsr LB9AC
                 .else
                 jsr osnewl
@@ -5953,14 +5966,14 @@ normal:
                 stx T0
                 sty T1_1
                 ldy #21         ; Offset to OSWRCH
-                .if abe_version
+                .if basic_editor_version
                 lda #<LBFE5
                 .else
                 lda #HERE % 256
                 .endif
                 sta (T0),y      ; Set extended OSWRCH vector
                 iny
-                .if abe_version
+                .if basic_editor_version
                 lda #>LBFE5
                 .else
                 lda #HERE /256
@@ -5975,14 +5988,14 @@ normal:
                 sta Oldvec+1    ; Save current OSWRCH vector
 
                 ldy #48         ; Offset for eventV
-                .if abe_version
+                .if basic_editor_version
                 lda #<LBFE2
                 .else
                 lda #Event % 256
                 .endif
                 sta (T0),y      ; Set extended EVENT vector
                 iny
-                .if abe_version
+                .if basic_editor_version
                 lda #>LBFE2
                 .else
                 lda #Event /256
@@ -5991,7 +6004,7 @@ normal:
                 iny
                 lda $F4
                 sta (T0),y
-                .if abe_version
+                .if basic_editor_version
                 jsr LB890
                 nop
                 nop
@@ -6368,7 +6381,7 @@ NT2:
                 sta Return+1    ; Save callers address
                 lda #0
                 sta Trap        ; Set +ve off
-                .if abe_version
+                .if basic_editor_version
                 jsr LB89D
                 nop
                 nop
@@ -6386,7 +6399,7 @@ NT2:
                 jmp Alldone     ; Return to BASIC, which will print Value?!
 
 Continue_1:                     ; Get back here after printing value
-                .if abe_version
+                .if basic_editor_version
                 jsr LB8AA
                 nop
                 nop
@@ -6451,7 +6464,7 @@ Event:
                 ldx #6
                 ldy #0
                 jsr osbyte      ; Disable event 6
-                .if abe_version
+                .if basic_editor_version
                 jsr LB8AA
                 nop
                 nop
@@ -7482,23 +7495,24 @@ Copied:
 
 ;-------------------------------------------------------------------------
 
-                .if abe_version
+                .if basic_editor_version
 
                 .align 16,0
 LB040: .block
-                ; pha
-                ; lda $f4
-                ; eor #$01
-                ; sta $f4
-                ; sta $fe30
-                ; pla
-
+                .if bet2_version
+                pha
+                lda $f4
+                eor #$01
+                sta $f4
+                sta $fe30
+                pla
+                .else
                 sei
                 ldy $bff0
                 ldy $bff8
                 ldy $8000
                 cli
-                
+                .endif
                 jmp (LBFEE)
                 .endblock
 
