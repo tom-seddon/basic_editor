@@ -892,8 +892,103 @@ data is 601 bytes.
        603  .build/rbasiced.relocation.dat
 10a54e249c6a7111fc5aa610d740628e553c9515  .build/basiced.rom
 
-** Routines
+** =*= commands
 
-*** Select 
+Some of these just get right in there and fiddle about. In the 2nd
+processor case, no good, because this is all running from the service
+entry in the host. And in the Master case, also potentially no good,
+because it's got no qualms about assuming the memory layout.
+
+ =*BZ= and =*BR=, going via the language entry point could be an
+option? But seamlessly returning to BASIC afterwards isn't possible,
+and the OS prints a bunch of stuff out en route.
+
+But if I've put up with it for those two commands, maybe others would
+put up with it for these as well?
+
+Another option (and maybe BZ and BR should be doing this already?)
+would be to detect the (very common) host processor case, handle the
+case like a normal * command via the service entry point, and get
+tidier output. Resort to the language entry point only if absolutely
+necessary.
+
+*** B, BUTIL
+
+Same routine.
+
+Would need to be turned into the language entry point.
+
+*** BLIST
+
+List BASIC file.
+
+OK - takes a file to list, does an osfind to open it and goes
+bytewise. So no problem.
+
+*** CLR
+
+Force hard reset.
+
+Think this might be ok.
+
+*** FKEYS
+
+Print soft key definitions.
+
+Comments say:
+
+: ;  *********************************
+: ;  * Function Keys Lister          *
+: ;  * Modded 7/86 for MASTER SERIES *
+: ;  *********************************
+
+But there's no obvious Master case - so presumably it got stripped out
+at some point? It just always goes right in and loads from $0b00,x...
+
+OK in OS 1.20/OS 2.00/Elk OS 1.00, even with 2nd processor. Key
+definitions are almays stored on the host .
+
+Master MOS includes *SHOW, so maybe not super important. Though *SHOW
+only shows one key in earlier versions, so not entirely irrelevant.
+Needs a version check of some kind in any case.
+
+*** MOVE
+
+Copy memory, with special case for BASIC programs.
+
+Can just refuse to do this if 2nd processor active? (Maybe allow the
+general memory copy, but reject the BASIC case? That's probably not
+going to be terribly useful generally, though.)
+
+*** ROMID
+
+Read sideways ROM into main memory?
+
+No need for this these days.
+
+*** SPACE
+
+Print some info: HIMEM, LOMEM, TOP, PAGE - and also VARTOP, otherwise
+inaccessible.
+
+Needs handling specially in the copro case. Can pull the bytes out of
+its memory, if it looks like BASIC is the active language?
+
+*** TXCOPY
+
+Copy text screen to printer.
+
+No need for this these days.
+
+*** VLIST
+
+List variables.
+
+Ugh... scrapes memory, inserts stuff in keyboard buffer to get BASIC
+to do the printing, then inserts a special *VLIST to get the thing to
+carry on.
+
+This can probably be reproduced. Still easiest just to say it's never
+going to work in the 2nd processor...
 
 * eof.
