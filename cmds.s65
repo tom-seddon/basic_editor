@@ -33,6 +33,7 @@ CMD_DELETE_EOL: = $A6
 CMD_TOP_SCREEN: = $A7
 CMD_IE: = $A8
 CMD_EXIT: = $A9
+; unused - $AA
 CMD_DELETE_FWDS = $AB
 CMD_LEFT = $AC
 CMD_RIGHT = $AD
@@ -50,6 +51,7 @@ CMD_LABEL_KEY: = $B6
 CMD_NUMBER_KEY: = $B7
 CMD_IT: = $B8
 CMD_ZSAVE: = $B9
+; unused - $BA
 ; unused - $BB
 CMD_LINE_START = $BC
 CMD_LINE_END = $BD
@@ -67,6 +69,8 @@ CMD_NOSCROLL: = $C6
 CMD_BACK_KEY := $C7
 CMD_FORE_KEY := $C8
 CMD_ZRUN: = $C9
+; unused - $CA
+; unused - $CB
 CMD_PREV_STMNT = $CC
 CMD_NEXT_STMNT = $CD
 .if ORIGINAL_CTRL_UP_DOWN

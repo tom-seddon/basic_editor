@@ -36,6 +36,10 @@ baseds1_elk_version=false
 ; If true, build ROM matching part 1 of the BASIC Editor & Toolkit,
 ; sideways ROM version.
 bet2_version=false
+
+; If true, build ROM matching part 1 of the BASIC Editor & Toolkit,
+; PLD version.
+bet_version=false
                 
 ; If true, build ROM matching part 0 of the Advanced BASIC Editor.
 ; (The corresponding parts of The BASIC Editor Plus and BASIC Editor &
@@ -47,7 +51,7 @@ abe_version=false
 ;-------------------------------------------------------------------------
 
 ; Building any of the BASIC Editor versions?
-basic_editor_version=abe_version||bet2_version
+basic_editor_version=abe_version||bet_version||bet2_version
                 
 ;-------------------------------------------------------------------------
 
@@ -120,7 +124,7 @@ DDB:            .macro X
 
                 .if basic_editor_version
                 jmp LB936
-                .if abe_version
+                .if abe_version||bet_version
                 jmp LB97D
                 .elif bet2_version
                 ; clearly a binary edit
@@ -155,13 +159,15 @@ Romname:
                 .elif abe_version
                 .text "Advanced BASIC Editor "
                 .byte 0
-                .elif bet2_version
+                .elif basic_editor_version
                 .text "BASIC Editor & Toolkit "
                 .else
                 .text "Altra BasicEd (Electron) "
                 .byte 0
                 .endif
-                .if basic_editor_version
+                .if bet_version
+                .text "V1.0"
+                .elif basic_editor_version
                 .text "1.00"
                 .else
                 .text "1.60"    ; Version$
@@ -171,7 +177,7 @@ Offset_0:       .byte 0
                 .text "(C)"
                 .if abe_version
                 .text "1988 PRES"
-                .elif bet2_version
+                .elif basic_editor_version
                 .text "1990 B.E."
                 .else
                 .text "1988 IJW"

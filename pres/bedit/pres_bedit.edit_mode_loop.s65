@@ -22,33 +22,33 @@ loc_9AE6:
                 .else
 L864D:
                 jsr is_Electron
-                bcc L8673
+                bcc L8673       ; taken if not Electron
                 lda is_insert_mode
                 beq L8673
-                ldx #0
-                ldy #$81
+                ldx #0          ; fg=0
+                ldy #$81        ; bg=129
                 lda screen_mode
                 cmp #1
-                bne L8670
-                ldy #$83
+                bne L8670       ; taken if mode!=1
+                ldy #$83        ; bg=131
 L8670:
-                jsr L87DC
+                jsr L87DC       ; set colours
 L8673:
                 jsr getch
                 jsr LBFB2
                 pha
                 jsr is_Electron
-                bcc check_return_key
+                bcc check_return_key ; taken if not Electron
                 lda is_insert_mode
                 beq check_return_key
-                ldy #$80
-                ldx #1
+                ldy #$80        ; bg=128
+                ldx #1          ; fg=1
                 lda screen_mode
                 cmp #1
                 bne L868F
-                ldx #3
+                ldx #3          ; fg=3
 L868F:
-                jsr L87DC
+                jsr L87DC       ; set colours
                 .endif
 
 check_return_key:			; return?
@@ -244,7 +244,7 @@ make_cursor_invisible:
                 .if bet2_version
                 pha
                 jsr is_Electron
-                bcs L8772
+                bcs L8772       ; taken if Electron
                 .endif
 					
 		LDX	#10
@@ -333,7 +333,7 @@ L87B1:
                 lda #23
                 jsr oswrch
                 .if acornsoft_version
-                lda #10
+                .error ; lda #10
                 .else
                 lda #1
                 .endif

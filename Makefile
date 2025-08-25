@@ -124,17 +124,20 @@ _pres_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_elk FLAG=baseds1_elk_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_abe FLAG=abe_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet2 FLAG=bet2_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet FLAG=bet_version
 
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
 # Don't compare butils_elk.rom. It won't match.
 	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "./pres/ABE.0.rom"
+	$(SHELLCMD) cmp "$(DEST)/butils_bet.rom" "./pres/BET.1.rom"
 	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "./pres/BET2.1.rom"
 
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
 
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_version
+#	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_pld_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "./pres/BET2.0.rom"
 
 .PHONY:_pres_beditor_assemble

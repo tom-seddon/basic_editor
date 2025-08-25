@@ -323,16 +323,16 @@ L8134: .block
 
 L87DC:
                 .if acornsoft_version
-                ldx #$11
+                .error; ldx #$11
                 .else
-                lda #$11
+                lda #$11        ; VDU17 - set colour
                 .endif
                 jsr oswrch
-                txa
+                txa             ; VDU17 argument - set colour X
                 jsr oswrch
-                lda #$11
+                lda #$11        ; VDU17 - set colour
                 jsr oswrch
-                tya
+                tya             ; VDU17 argument - set colour Y
                 jsr oswrch
                 clc
                 lda #0
@@ -789,7 +789,7 @@ L9670:
                 TAY
                 LDX     #0
                 JSR     gotoxy
-                LDA     byte_15
+                LDA     byte_15 ; last error number
                 BEQ     loc_82CB
                 JSR     OSNEWL
                 .if acornsoft_version
@@ -801,9 +801,9 @@ L9670:
 
 loc_82AE:
                 .if acornsoft_version
-                LDA     $5D7,Y
+                LDA     $5D7,Y  ; $5d7 = $5ff-$28
                 .else
-                lda unk_5B1,y
+                lda unk_5B1,y   ; $5b1 = $5ff-$4e
                 .endif
                 CMP     #$20 ; ' '
                 BNE     loc_82BA
@@ -1030,55 +1030,55 @@ LA960:
                 .include "pres_bedit.strings.s65"
 
 LABD2:
-                ;  ???? - are these command codes?
-                .byte $C1 
-                .byte $B8 
-                .byte $A8 
-                .byte $CF 
-                .byte $CE 
-                .byte $B6 
-                .byte $B7 
-                .byte $C5 
-                .byte $C6 
-                .byte $C0 
-                .byte   0
-                .byte $C4 
-                .byte $AC 
-                .byte $AD 
-                .byte $AE 
-                .byte $AF 
-                .byte $A2 
-                .byte $C7 
-                .byte $A5 
-                .byte $A6 
-                .byte $A0 
-                .byte $C8 
-                .byte   0
-                .byte $A7 
-                .byte $A1 
-                .byte $C3 
-                .byte $CC 
-                .byte $CD 
-                .byte $B5 
-                .byte $B0 
-                .byte $B1 
-                .byte   0
-                .byte $A9 
-                .byte $A4 
-                .byte $C2 
-                .byte $CA 
-                .byte $B2 
-                .byte   0
-                .byte   0
-                .byte $B4 
-                .byte   0
-                .byte $A3 
-                .byte $BD 
-                .byte $BC 
-                .byte $BA 
-                .byte $B3 
-                .byte $BF 
-                .byte $BE
+                ;  Some kind of translation table for command codes... I think? First entry corresponds to $a0? See LBFB2. 
+                .byte CMD_GOTO_KEY        ; $a0
+                .byte CMD_IT              ; $a1
+                .byte CMD_IE              ; $a2
+                .byte CMD_SCREEN_TOP      ; $a3
+                .byte CMD_SCREEN_BOTTOM   ; $a4
+                .byte CMD_LABEL_KEY       ; $a5
+                .byte CMD_NUMBER_KEY      ; $a6
+                .byte CMD_SCROLL          ; $a7
+                .byte CMD_NOSCROLL        ; $a8
+                .byte CMD_MARK            ; $a9
+                .byte   0                 ; $aa
+                .byte CMD_REPEAT          ; $ab
+                .byte CMD_LEFT            ; $ac
+                .byte CMD_RIGHT           ; $ad
+                .byte CMD_DOWN            ; $ae
+                .byte CMD_UP              ; $af
+                .byte CMD_TOP_KEY         ; $b0
+                .byte CMD_BACK_KEY        ; $b1
+                .byte CMD_CONTINUE        ; $b2
+                .byte CMD_DELETE_EOL      ; $b3
+                .byte CMD_EXECUTE         ; $b4
+                .byte CMD_FORE_KEY        ; $b5
+                .byte   0                 ; $b6
+                .byte CMD_TOP_SCREEN      ; $b7
+                .byte CMD_TOGGLE_INS_OVER ; $b8
+                .byte CMD_JOIN_STMNT      ; $b9
+                .byte CMD_PREV_STMNT      ; $ba
+                .byte CMD_NEXT_STMNT      ; $bb
+                .byte CMD_MODE_KEY        ; $bc
+                .byte CMD_NEW             ; $bd
+                .byte CMD_OLD             ; $be
+                .byte   0                 ; $bf
+                .byte CMD_EXIT            ; $c0
+                .byte CMD_RENUMBER_KEY    ; $c1
+                .byte CMD_SPLIT_STMNT     ; $c2
+                .byte CMD_unknown_CA      ; $c3
+                .byte CMD_UNDO            ; $c4
+                .byte   0                 ; $c5
+                .byte   0                 ; $c6
+                .byte CMD_EXTEND_STMNT    ; $c7
+                .byte   0                 ; $c8
+                .byte CMD_END_KEY         ; $c9
+                .byte CMD_LINE_END        ; $ca
+                .byte CMD_LINE_START      ; $cb
+                .byte CMD_unknown_BA      ; $cc
+                .byte CMD_SWAP_CASE       ; $cd
+                .byte CMD_SCREEN_UP       ; $ce
+                .byte CMD_SCREEN_DOWN     ; $cf
 
                 .include "pres_bedit.A069.s65"
                 .include "pres_bedit.commands.load.s65"
@@ -1786,7 +1786,7 @@ loc_9F26:
 LBFB2:
                 pha
                 jsr is_Electron
-                bcc LBFC9
+                bcc LBFC9       ; taken if not Electron
                 pla
                 pha
                 sec
