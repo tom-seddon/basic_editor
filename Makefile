@@ -136,8 +136,9 @@ _pres_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
 
+	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet FLAG=bet_version
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_version
-#	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_pld_version
+	$(SHELLCMD) cmp "$(DEST)/bedit_bet.rom" "./pres/BET.0.rom"
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "./pres/BET2.0.rom"
 
 .PHONY:_pres_beditor_assemble

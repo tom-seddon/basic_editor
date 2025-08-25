@@ -92,7 +92,7 @@ type_commands_loop:
 		BNE	type_commands_loop
 
 loc_A64D:				
-                .if bet2_version
+                .if pres_version
                 lda current_command_id
                 cmp #CMD_UTILS
                 bne L9D3E
@@ -115,7 +115,7 @@ L9D3E:
 		LDA	#142		; enter	language ROM
 		JSR	OSBYTE
 
-                .if bet2_version
+                .if pres_version
 L9D4C:
                 ldx #0
                 lda #138

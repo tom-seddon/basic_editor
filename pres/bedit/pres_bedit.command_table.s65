@@ -36,7 +36,7 @@ command_table_help_column_2:
                 .text "IE",0
                 .byte	 0 ;
                 .byte CMD_IE
-                .if bet2_version
+                .if pres_version
 command_table_help_column_2:
                 .endif
                 .text "INFO",0
@@ -73,7 +73,7 @@ command_table_help_column_3:
                 .text "OLD",0
                 .byte	 0 ;
                 .byte CMD_OLD
-                .if bet2_version
+                .if pres_version
 command_table_help_column_3:
                 .endif
                 .text "OVERTYPE",0
@@ -100,7 +100,7 @@ command_table_help_column_3:
                 .text "TAB",0
                 .byte	 3 ;
                 .byte CMD_TAB
-                .if bet2_version
+                .if pres_version
                 .text "UTILS",0
                 .byte 0
                 .byte CMD_UTILS

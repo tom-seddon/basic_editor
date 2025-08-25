@@ -52,7 +52,7 @@ L868F:
                 .endif
 
 check_return_key:			; return?
-                .if bet2_version
+                .if pres_version
                 pla
                 .endif
 		CMP	#13
@@ -159,7 +159,7 @@ loc_9B5D:
 					; bit 6	- 1 if CTRL pressed
 					; bit 7	- 1 if SHIFT is	to reverse CAPS	LOCK/SHIFT LOCK	status
 
-                .if bet2_version
+                .if pres_version
                 jsr is_Electron
                 lda #$40
                 bcs check_shift_delete_key
@@ -167,14 +167,14 @@ loc_9B5D:
                 .endif
 
 check_shift_delete_key:
-                .if bet2_version
+                .if pres_version
                 and byte_38
                 sta byte_3A
                 .endif
 		LDA	current_command_id
 		CMP	#CMD_delete_key
 		BNE	check_shift_tab_key
-                .if bet2_version
+                .if pres_version
                 lda byte_3A
                 .else
 		LDA	#8
@@ -192,7 +192,7 @@ check_shift_tab_key:
                 cmp #CMD_unknown_CA
                 .endif
 		BNE	dispatch_command
-                .if bet2_version
+                .if pres_version
                 lda byte_3A
                 .else
 		LDA	#8
@@ -241,7 +241,7 @@ poll_key:
 
 make_cursor_invisible:
 
-                .if bet2_version
+                .if pres_version
                 pha
                 jsr is_Electron
                 bcs L8772       ; taken if Electron
@@ -249,7 +249,7 @@ make_cursor_invisible:
 					
 		LDX	#10
 		LDY	#32
-                .if bet2_version
+                .if pres_version
                 pla
                 .endif
 ; End of function make_cursor_invisible
@@ -274,13 +274,13 @@ write_crtc:
 		LDX	#1		; $FE01	(CRTC register value)
 		LDA	#151		; write	SHEILA
 		JSR	OSBYTE
-                .if bet2_version
+                .if pres_version
 L8770:
                 .endif
 		PLA
 		RTS
 
-                .if bet2_version
+                .if pres_version
 L8772:
                 ldx #0
                 jsr L87B1
@@ -288,7 +288,7 @@ L8772:
                 .endif
 
 reset_cursor_shape:
-                .if bet2_version
+                .if pres_version
                 jsr is_Electron
                 bcs L87AF
                 .endif					
@@ -326,7 +326,7 @@ get_current_mode_in_x:
 		RTS
 ; End of function get_current_mode_in_x
 
-                .if bet2_version
+                .if pres_version
 L87AF:
                 ldx #1
 L87B1:

@@ -28,7 +28,7 @@ aBasicEditorToolkit:
                 .text " "
                 .endif
                 .text ":"
-                .if bet2_version
+                .if pres_version
                 .text "  "
                 .endif
 hud_text_end:
@@ -118,7 +118,7 @@ be_cmd: .text "BE",0
                 .text "By Chris Gibson & Pete Morris"
                 .endif
                 .text ". P.S. many thanks Pat!"
-                .if bet2_version
+                .if pres_version
 litub_string:
                 .text 13,"LITUB*"
 be_help_subject: .text "  BE"

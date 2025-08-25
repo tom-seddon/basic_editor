@@ -128,7 +128,7 @@ find_mode_getch:
 		PLA
 		STA	is_insert_mode	; 0=overtype 1=insert
 		JSR	getch
-                .if bet2_version
+                .if pres_version
                 jsr LBFB2
                 .endif
 		JMP	make_cursor_invisible

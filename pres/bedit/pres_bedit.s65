@@ -22,9 +22,12 @@ ORIGINAL_CTRL_UP_DOWN=true
                 .weak
 
 acornsoft_version=false
+bet_version=false
 bet2_version=false
                 
                 .endweak
+
+pres_version=bet_version||bet2_version
 
 ;-------------------------------------------------------------------------
 
@@ -40,7 +43,7 @@ bet2_version=false
 
                 .include "../../cmds.s65"
 
-                .if bet2_version
+                .if pres_version
 CMD_unknown_BA=$ba              ; shift+tab??
 CMD_unknown_CA=$CA              ; tab??
 CMD_UTILS=$EC
@@ -55,7 +58,7 @@ brkv_routine=brk_handler
 brkv_routine=LBFEB
                 .endif
 
-                .if bet2_version
+                .if pres_version
 rom_switch_thunk=$a00
                 .endif
                 
@@ -86,23 +89,28 @@ rom_start:
                 .else
                 .byte 1
                 .endif
-                .if bet2_version
+                .if pres_version
 rom_name: .text "BASIC Editor & Toolkit"
                 .else
                 .text "The BASIC Editor",0
                 .endif
 version_number_string:
-                .if bet2_version
-                .text " 1.00"
+                .text " "
+                .if bet_version
+                .text "V1.0"
+                .elif bet2_version
+                .text "1.00"
+                .elif acornsoft_version
+                .text "1.32"
                 .else
-                .text " 1.32"
+                .error
                 .endif
 version_number_string_end:
 copyright:
                 .byte 0
 aC1984Acornsoft:
                 .text "(C)"
-                .if bet2_version
+                .if pres_version
                 .text " 1990 B.E."
                 .else
                 .text " 1984 Acornsoft"
@@ -122,7 +130,7 @@ service_entry .proc
                 pha
                 txa
                 pha
-                .if bet2_version
+                .if pres_version
                 stx $a8
                 sty $a9
                 .endif
@@ -133,12 +141,12 @@ service_entry .proc
                 beq star_command
                 cmp #9
                 beq help
-                .if bet2_version
+                .if pres_version
                 cmp #8
                 beq new_osword
                 .endif
 exit:
-                .if bet2_version
+                .if pres_version
                 jmp restore_a8_a9
                 .else
                 pla
@@ -155,7 +163,7 @@ exit:
                 .endif
                 .endproc
 
-                .if bet2_version
+                .if pres_version
 star_command:
                 jsr L80D4
                 lda #3
@@ -304,12 +312,22 @@ L8132:
                 rts
 
 L8134: .block
+                .if bet_version
+                sei
+                ldy $bff0
+                ldy $bffc
+                ldy $bff4
+                cli
+                .elif bet2_version
                 pha
                 lda $f4
                 eor #1
                 sta $f4
                 sta $fe30
                 pla
+                .else
+                .error
+                .endif
                 jmp (LBFEE)
                 .endblock
 
@@ -608,7 +626,7 @@ init_brkv_and_oshwm: .proc
 ; End of function init_brkv_and_oshwm
                 .endproc
 
-                .if bet2_version
+                .if pres_version
                 .include "pres_bedit.command_table.s65"
                 .include "pres_bedit.B0AC.s65"
                 .include "pres_bedit.commands.cursor_stuff.s65"
@@ -741,12 +759,12 @@ loc_8278:
                 ldy #5
                 jsr gotoxy
 
-                .if bet2_version
+                .if pres_version
                 jsr is_Electron
                 .endif
                 
                 ldx screen_mode
-                .if bet2_version
+                .if pres_version
                 bcc L9670
                 cpx #7
                 bne L9670
@@ -808,7 +826,7 @@ loc_82AE:
                 CMP     #$20 ; ' '
                 BNE     loc_82BA
                 DEY
-                .if bet2_version
+                .if pres_version
                 beq loc_82BA
                 .endif
                 BNE     loc_82AE
@@ -871,7 +889,7 @@ get_text_window_left_bottom:
                 JMP     OSBYTE
 ; End of function get_text_window_left_bottom
 
-                .if bet2_version
+                .if pres_version
                 .include "pres_bedit.get_line_dimensions.s65"
                 .include "pres_bedit.enter_edit_mode.s65"
                 .include "pres_bedit.9FD8.s65"
@@ -1149,7 +1167,7 @@ sub_8314:
                 RTS
 ; End of function sub_8314
 
-                .if bet2_version
+                .if pres_version
                 .include "pres_bedit.B7A1.s65"
                 .include "pres_bedit.clear_5B1_to_600.s65"
                 .include "pres_bedit.osbyte_with_y0.s65"
@@ -1454,7 +1472,7 @@ scan_next_line:
                 JMP     find_program_scan_line
 ; End of function find_program
 
-                .if bet2_version
+                .if pres_version
                 .include "pres_bedit.validate_mode.s65"
                 .endif
 
@@ -1484,14 +1502,14 @@ disable_all_events_loop:
                 LDA     #200            ; set ESCAPE, BREAK effect (AUG p205)
                 LDY     #%11111110      ; normal ESCAPE action (bit 0 reset)
                 JSR     OSBYTE
-                .if bet2_version
+                .if pres_version
                 jsr is_Electron
                 bcs LBE2B
                 .endif
                 LDX     #0              ; TAB key produces CHR$0
                 LDA     #219            ; read/write TAB key char (AUG p222)
                 JSR     osbyte_with_y0
-                .if bet2_version
+                .if pres_version
 LBE2B:
                 .endif
                 LDX     #27             ; ESCAPE key produces CHR$27
@@ -1746,7 +1764,7 @@ copy_error_loop:
                 .include "pres_bedit.set_palette.s65"
                 .endif
 
-                .if bet2_version
+                .if pres_version
                 .include "pres_bedit.A0B1.s65"
                 .endif
 
@@ -1782,7 +1800,7 @@ loc_9F26:
 		JMP	redraw_line_number
 ; End of function sub_9F00
 
-                .if bet2_version
+                .if pres_version
 LBFB2:
                 pha
                 jsr is_Electron

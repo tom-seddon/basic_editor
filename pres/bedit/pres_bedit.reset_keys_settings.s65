@@ -3,7 +3,7 @@ reset_keys_settings:
 		LDX	#0		; Enable cursor	editing	(default)
 		LDA	#4		; Enable/disable cursor	editing	(AUG P120)
 		JSR	OSBYTE
-                .if bet2_version
+                .if pres_version
                 jsr is_Electron
                 bcs LB4C3
                 .endif
