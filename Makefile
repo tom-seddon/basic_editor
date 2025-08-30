@@ -123,8 +123,8 @@ _pres_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils2 FLAG=baseds1_all_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_elk FLAG=baseds1_elk_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_abe FLAG=abe_version
-	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet2 FLAG=bet2_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet FLAG=bet_version
+	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_bet2 FLAG=bet2_version
 
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
@@ -141,19 +141,23 @@ _pres_stuff: _make_output_folders
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet.rom" "./pres/BET.0.rom"
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "./pres/BET2.0.rom"
 
+	$(_V)$(SHELLCMD) concat -o "$(DEST)/BET.32KB.rom" "$(DEST)/bedit_bet.rom" "$(DEST)/butils_bet.rom"
+	$(SHELLCMD) cmp "$(DEST)/BET.32KB.rom" "./pres/BET.32KB.rom"
+
 .PHONY:_pres_beditor_assemble
 _pres_bedit_assemble: STEM=$(error must specify STEM)
 _pres_bedit_assemble: FLAG=$(error must specify FLAG)
 _pres_bedit_assemble: _TASS:=$(TASS) $(TASSARGS) -Wno-implied-reg
 _pres_bedit_assemble:
-	$(_V)$(_TASS) "./pres/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+	$(_V)$(_TASS) "./pres/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
 _pres_butils_assemble: _TASS:=$(TASS) --case-sensitive $(TASSARGS) 
 _pres_butils_assemble:
-	$(_V)$(_TASS) "./pres/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst"
+	$(_V)$(_TASS) "./pres/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
+
 
 ##########################################################################
 ##########################################################################
