@@ -20,7 +20,7 @@ endif
 ##########################################################################
 ##########################################################################
 
-DEST:=.build
+DEST:=build
 RELEASES:=./releases
 DRIVE:=./beeb/0
 SHELLCMD:=$(PYTHON) submodules/shellcmd.py/shellcmd.py
