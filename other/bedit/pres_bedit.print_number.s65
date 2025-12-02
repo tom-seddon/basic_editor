@@ -11,6 +11,10 @@ print_number:
 		LDX	#1
 		LDY	#0
 		LDA	byte_0
+                .if be_version
+                jmp print_n_chars
+                .else
 		JSR	print_n_chars
+                .endif
 		RTS
 ; End of function print_number

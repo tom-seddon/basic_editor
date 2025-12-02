@@ -2,11 +2,20 @@ aSearchString:	.text "  Search string  : "
 aReplaceString:	.text "  Replace string : "
 
 hud_text_begin:
+                .if be_version
+                .byte 26
+                .byte 12
+                .else
                 .byte 22,7
+                .endif
                 .byte 10
                 .if acornsoft_version
 aTheBasicEditor:
+                .if be_version
+                .text "Basic Editor Two"
+                .else
                 .text "The BASIC Editor"
+                .endif
                 .else
 aBasicEditorToolkit:
                 .text "BASIC Editor & Toolkit"
@@ -111,9 +120,17 @@ aOn:		.text " on "
 aTabValue:	.text "Tab value   : "
 aLastSearch:	.text "Last search : "
 aNone_0:	.text "None"
-be_cmd: .text "BE",0
+be_cmd:
+                .if be_version
+                .text "be80",0
+                .else
+                .text "BE",0
+                .endif
                 .if acornsoft_version
-                .text " From the pens of Pete Morris & Chris Gibson"
+                .if release_version
+                .text " F"
+                .endif
+                .text "rom the pens of Pete Morris & Chris Gibson"
                 .else
                 .text "By Chris Gibson & Pete Morris"
                 .endif

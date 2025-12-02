@@ -21,12 +21,15 @@ ORIGINAL_CTRL_UP_DOWN=true
                 
                 .weak
 
-acornsoft_version=false
+release_version=false           ; original 1.32 ROM
+be_version=false                ; BE from 6502Goodies
+tbe_version=false               ; TBE from 6502Goodies
 bet_version=false
 bet2_version=false
                 
                 .endweak
 
+acornsoft_version=release_version||be_version||tbe_version
 pres_version=bet_version||bet2_version
 
 ;-------------------------------------------------------------------------
@@ -91,6 +94,8 @@ rom_start:
                 .endif
                 .if pres_version
 rom_name: .text "BASIC Editor & Toolkit"
+                .elif be_version
+                .text "Basic Editor Two",0
                 .else
                 .text "The BASIC Editor",0
                 .endif
@@ -100,6 +105,8 @@ version_number_string:
                 .text "V1.0"
                 .elif bet2_version
                 .text "1.00"
+                .elif be_version
+                .text "1.50"
                 .elif acornsoft_version
                 .text "1.32"
                 .else
@@ -111,16 +118,23 @@ copyright:
 aC1984Acornsoft:
                 .text "(C)"
                 .if pres_version
-                .text " 1990 B.E."
+                .text " 1990 B.E.",0
+                .elif be_version
+                .text "1985 Acornsoft"
+                nop
+                nop
                 .else
-                .text " 1984 Acornsoft"
+                .text " 1984 Acornsoft",0
                 .endif
-                .byte 0
-                
+
 ; A = code, X = ROM number, Y = parameter.
 
 service_entry .proc
+                .if be_version
+                nop
+                .else
                 php
+                .endif
                 pha
                 tya
                 pha
@@ -158,7 +172,11 @@ exit:
                 pla
                 tay
                 pla
+                .if be_version
+                nop
+                .else
                 plp
+                .endif
                 rts
                 .endif
                 .endproc
@@ -442,7 +460,11 @@ end_of_line:
                 bne service_entry.exit
 
 check_char:
+                .if be_version
+                ora #$20
+                .else
                 and #$df
+                .endif
                 cmp be_cmd,y
                 bne service_entry.exit
                 iny
@@ -502,11 +524,23 @@ language_start:
                 sta background_colour
                 lda #7
                 sta foreground_colour
+                .if be_version
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                .else
                 lda #22
                 jsr oswrch
                 lda #7
                 jsr oswrch
-
+                .endif
                 
                 ; LDA     #7
                 ; STA     foreground_colour
@@ -657,14 +691,27 @@ TEXT_WINDOW_TOP = 7
                 ; it completely.
                 LDA     #26
                 JSR     OSWRCH
+                .if be_version
+                ldx #$09   ; fetch text window bottom row/right column
+                jsr L82F3
+                cpx byte_26     ; check bottom row
+                bne loc_8218
+                cpy byte_27     ; check right column
+                .else
                 JSR     get_text_window_left_bottom
                 CPY     byte_26
                 BNE     loc_8218
                 LDA     #0
                 CMP     byte_25
+                .endif
                 BNE     loc_8218
+                .if be_version
+                lda #0
+                cmp byte_25
+                .else
                 lda #39
                 cmp byte_27
+                .endif
                 BNE     loc_8218
                 LDA     #TEXT_WINDOW_TOP
                 CMP     byte_28
@@ -674,8 +721,13 @@ loc_8218:
                                         
                 LDA     #0
                 STA     byte_25         ; text window left
+                .if be_version
+                stx byte_26     ; text window bottom
+                sty byte_27     ; text window right
+                .else
                 LDA   #39
                 STA   byte_27         ; text window right
+                .endif
                 LDA     #TEXT_WINDOW_TOP
                 STA     byte_28         ; text window top
                 LDA   #$13            ; wait for vsync
@@ -885,6 +937,8 @@ print_5_spaces .proc
 get_text_window_left_bottom:            
                                         
                 LDX     #8
+
+L82F3:
                 LDA     #$A0
                 JMP     OSBYTE
 ; End of function get_text_window_left_bottom

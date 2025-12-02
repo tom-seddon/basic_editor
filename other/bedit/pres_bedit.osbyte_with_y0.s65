@@ -1,7 +1,11 @@
 osbyte_with_y0:.proc
 					
 		LDY	#0
+                .if be_version
+                jmp OSBYTE
+                .else
 		JSR	OSBYTE
+                .endif
                 RTS
 .pend
 ; End of function osbyte_with_y0

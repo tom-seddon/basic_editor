@@ -134,7 +134,7 @@ _other_stuff: _make_output_folders
 	$(SHELLCMD) cmp "$(DEST)/butils_bet.rom" "$(_ORIG)/BET/BET.1.rom"
 	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "$(_ORIG)/BET2/BET2.1.rom"
 
-	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_acornsoft FLAG=release_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
 
 	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_bet FLAG=bet_version
@@ -144,6 +144,9 @@ _other_stuff: _make_output_folders
 
 	$(_V)$(SHELLCMD) concat -o "$(DEST)/BET.32KB.rom" "$(DEST)/bedit_bet.rom" "$(DEST)/butils_bet.rom"
 	$(SHELLCMD) cmp "$(DEST)/BET.32KB.rom" "$(_ORIG)/BET/BET.32KB.rom"
+
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_be FLAG=be_version
+	$(SHELLCMD) cmp "$(DEST)/bedit_be.rom" "$(_ORIG)/acorn/be"
 
 .PHONY:_other_beditor_assemble
 _other_bedit_assemble: STEM=$(error must specify STEM)

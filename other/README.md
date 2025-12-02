@@ -348,11 +348,21 @@ Names are as per the files in the bundle:
 Both look related to the original Acornsoft ROM (as can be found in
 the `old_releases` folder in this repo).
 
-I haven't investigated these yet.
-
 ## Original ROMs
 
 Find them inside `other/orig/acorn`, names as above.
+
+### `BE` vs version 1.32
+
+Looks like a binary patch. Main differences:
+
+- branded `Basic Editor Two` and responds to `*BE80`
+- doesn't change screen mode when started
+- a few minor code tweaks
+
+### `TBE` vs version 1.32
+
+To be continued...
 
 # 64tass format source files
 
