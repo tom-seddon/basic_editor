@@ -118,6 +118,7 @@ clean:
 ##########################################################################
 
 .PHONY:_pres_stuff
+_pres_stuff: _ORIG:=./pres/orig
 _pres_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils FLAG=baseds1_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils2 FLAG=baseds1_all_version
@@ -129,20 +130,20 @@ _pres_stuff: _make_output_folders
 	$(SHELLCMD) cmp "$(DEST)/butils.rom" "./beeb/1/$$.ELECTRON"
 	$(SHELLCMD) cmp "$(DEST)/butils2.rom" "./beeb/1/$$.ELECTRON2"
 # Don't compare butils_elk.rom. It won't match.
-	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "./pres/ABE.0.rom"
-	$(SHELLCMD) cmp "$(DEST)/butils_bet.rom" "./pres/BET.1.rom"
-	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "./pres/BET2.1.rom"
+	$(SHELLCMD) cmp "$(DEST)/butils_abe.rom" "$(_ORIG)/ABE/ABE.0.rom"
+	$(SHELLCMD) cmp "$(DEST)/butils_bet.rom" "$(_ORIG)/BET/BET.1.rom"
+	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "$(_ORIG)/BET2/BET2.1.rom"
 
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
 
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet FLAG=bet_version
 	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_version
-	$(SHELLCMD) cmp "$(DEST)/bedit_bet.rom" "./pres/BET.0.rom"
-	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "./pres/BET2.0.rom"
+	$(SHELLCMD) cmp "$(DEST)/bedit_bet.rom" "$(_ORIG)/BET/BET.0.rom"
+	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "$(_ORIG)/BET2/BET2.0.rom"
 
 	$(_V)$(SHELLCMD) concat -o "$(DEST)/BET.32KB.rom" "$(DEST)/bedit_bet.rom" "$(DEST)/butils_bet.rom"
-	$(SHELLCMD) cmp "$(DEST)/BET.32KB.rom" "./pres/BET.32KB.rom"
+	$(SHELLCMD) cmp "$(DEST)/BET.32KB.rom" "$(_ORIG)/BET/BET.32KB.rom"
 
 .PHONY:_pres_beditor_assemble
 _pres_bedit_assemble: STEM=$(error must specify STEM)
