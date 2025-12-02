@@ -22,7 +22,18 @@ loc_8FFA:
 		LDA	($39),Y		; get command ID
 		CMP	current_command_id ; is	it the desired command?
 		BEQ	loc_9005	; branch taken if desired command found
+                .if tbe_version
+                clc
+                lda byte_39
+                adc #4
+                sta byte_39
+                bcc loc_8FEF
+                inc byte_39+1
+                bne loc_8FEF
+                .else
 		JMP	next_command
+                .endif
+                
 ; Create thunk at unk_6B0: JMP <command routine>
 
 loc_9005:				
@@ -114,6 +125,7 @@ check_bit_6:
 		STA	byte_6A7
 		JMP	unk_6B0
 
+                .if !tbe_version
 next_command:				
 		CLC
 		LDA	byte_39		; ptr LSB
@@ -124,4 +136,6 @@ next_command:
 
 command_ptr_ok:				
 		JMP	loc_8FEF
+                .endif
+                
 ; End of function execute_command

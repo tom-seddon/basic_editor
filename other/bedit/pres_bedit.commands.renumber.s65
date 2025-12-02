@@ -33,7 +33,7 @@ loc_99FD:
 		JSR	atoi_from_command_line ; entry:	(byte_3E) points to command line;
 					; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
 		BCC	loc_9A0D
-		LDA	#$B
+		LDA	#error_code($B)
 		JMP	loc_859D
 
 loc_9A0D:				
@@ -84,7 +84,7 @@ loc_9A49:
 		JSR	atoi_from_command_line ; entry:	(byte_3E) points to command line;
 					; exit:	C set if error,	or (byte_3E, byte_3F) holds result.
 		BCC	loc_9A56
-		LDA	#$B
+		LDA	#error_code($B)
 		JMP	loc_859D
 
 loc_9A56:				
@@ -92,7 +92,7 @@ loc_9A56:
 		BEQ	loc_9A5F
 
 loc_9A5A:				
-		LDA	#$26 ; '&'
+		LDA	#error_code($26) ; '&'
 		JMP	loc_859D
 
 loc_9A5F:				
@@ -124,7 +124,7 @@ loc_9A79:
 		BNE	loc_9A79
 
 loc_9A86:				
-		LDA	#$C
+		LDA	#error_code($C)
 		JMP	loc_859D
 
 loc_9A8B:				
@@ -141,7 +141,7 @@ loc_9A99:
 		JSR	sub_9AAD
 		LDA	byte_39
 		BPL	loc_9AAA
-		LDA	#$19
+		LDA	#error_code($19)
 		JMP	loc_859D
 
 loc_9AAA:				
@@ -168,12 +168,21 @@ loc_9ABF:
 		TXA
 		ADC	byte_3A
 		STA	byte_3A
+                .if tbe_version
+                bcc loc_9ABF
+                .else
 		BCC	loc_9AD4
+                .endif
 		INC	byte_39
+                .if tbe_version
+                bpl loc_9ABF
+                .else
 		BMI	locret_9AD7
-
-loc_9AD4:				
+                .endif
+loc_9AD4:
+                .if !tbe_version
 		JMP	loc_9ABF
+                .endif
 
 locret_9AD7:				
 		RTS

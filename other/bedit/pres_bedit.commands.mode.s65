@@ -5,7 +5,7 @@ mode_command:
                 beq loc_B304
 
 loc_B2FF:				
-		LDA	#$D		; "Only	modes 0,1,3,4,6,7 are valid"
+		LDA	#error_code($D)		; "Only	modes 0,1,3,4,6,7 are valid"
 		JMP	loc_859D
 
 loc_B304:				
@@ -24,11 +24,23 @@ loc_B304:
 		BEQ	locret_B329
                 sta screen_mode
 		JSR	clear_5B1_to_600
-		LDA	#$E		; "No room for this mode"
+		LDA	#error_code($E)		; "No room for this mode"
 		JMP	loc_859D
 
 locret_B329:
+                .if tbe_version
+
+                lda #22
+                jsr oswrch
+                lda screen_mode
+                jsr oswrch
+                jmp set_palette
+
+                .else
+                
 		RTS
+
+                .endif
 ; End of function mode_command
 
 

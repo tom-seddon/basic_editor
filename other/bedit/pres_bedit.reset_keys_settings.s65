@@ -11,7 +11,9 @@ reset_keys_settings:
 		LDA	#219		; set TAB key to 9
 		JSR	osbyte_with_y0
                 .if acornsoft_version
+                .if !tbe_version
 		JSR	kbflush
+                .endif
                 .else
 LB4C3:
                 .endif
@@ -53,6 +55,9 @@ run_star_command:
 getch:					
 					
 		JSR	OSRDCH
+                .if tbe_version
+                bcc LCC6F
+                .endif
 ; End of function getch
 
 
@@ -65,4 +70,7 @@ clear_escape_condition:
 		PLA
 ; End of function clear_escape_condition
 
+                .if tbe_version
+LCC6F:
+                .endif
 		RTS

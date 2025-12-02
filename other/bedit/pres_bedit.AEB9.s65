@@ -2,7 +2,7 @@ loc_AEB9:
 		LDA	byte_46
 		CMP	#$20 ; ' '
 		BEQ	loc_AEC4
-		LDA	#$1C
+		LDA	#error_code($1C)
 		JMP	loc_859D
 
 loc_AEC4:				

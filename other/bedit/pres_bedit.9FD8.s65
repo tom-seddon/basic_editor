@@ -37,7 +37,7 @@ sub_9FF2:
 		BEQ	loc_A007
 
 loc_A002:				
-		LDA	#5
+		LDA	#error_code(5)
 		JMP	loc_859D
 
 loc_A007:				

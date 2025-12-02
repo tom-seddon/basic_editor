@@ -136,13 +136,21 @@ sub_A804:
 		SEC
 		LDA	unk_11
 		BMI	locret_A812
+
+                .if tbe_version
+
+                bne loc_A811
+
+                .else
+                
 		BEQ	loc_A80D
 		BNE	loc_A811
+loc_A80D:
 
-loc_A80D:				
+                .endif
+
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		BEQ	locret_A812
-
 loc_A811:				
 		CLC
 

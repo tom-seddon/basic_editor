@@ -1,7 +1,7 @@
 continue_edit_mode_command:		
 		LDA	byte_62
 		BNE	loc_9794
-		LDA	#$23 ; '#'
+		LDA	#error_code($23)
 
 loc_9791:				
 		JMP	loc_859D
@@ -11,7 +11,7 @@ loc_9794:
 		BCC	loc_979D
 
 loc_9799:				
-		LDA	#8
+		LDA	#error_code(8)
 		BNE	loc_9791
 
 loc_979D:				

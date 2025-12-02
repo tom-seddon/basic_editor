@@ -1,5 +1,8 @@
 brk_handler:
                 JSR     clear_5B1_to_600
+
+                .if !tbe_version
+                
                 LDY     higher_order_address
                 INY
                 BNE     loc_846C
@@ -21,24 +24,48 @@ loc_846C:
 loc_8473:                               
                 LDY     #0
 
+                .else
+
+                ldy #1
+
+                .endif
+
 loc_8475:                               
                 LDA     ($FD),Y
                 CMP     #$20 ; ' '
                 BCC     loc_8483
-		STA	$5B1,Y
+                .if tbe_version
+                sta $5b0,y
+                .else
+		STA	unk_5B1,Y
+                .endif
 		INY
+                .if tbe_version
+                cpy #$50
+                .else
 		CPY	#$4F ; 'O'
+                .endif
 		BCC	loc_8475
 
-loc_8483:				
+loc_8483:
+                .if !tbe_version
 		CLI
+                .endif
 		LDA	#-1
 		STA	byte_15
+                .if tbe_version
+
+                jsr beep
+
+                .else
+
 		BNE	loc_848F
 
 loc_848A:				
 		LDA	#2
 		JSR	get_error	; A = error code
 
-loc_848F:				
+loc_848F:
+                .endif
+                
 		JMP	language_entry.loc_814D

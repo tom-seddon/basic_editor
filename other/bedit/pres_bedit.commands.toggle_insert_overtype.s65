@@ -42,9 +42,13 @@ loc_A5EB:
 
 loc_A5F7:				
 		STA	$A,Y
+                .if tbe_version
+                jmp set_palette
+                .else
 		JSR	set_palette
 		RTS
-
+                .endif
+                
 run_or_exit_command:			
 		LDA	#0
 		STA	is_insert_mode	; 0=overtype 1=insert
@@ -108,12 +112,25 @@ L9D31:
 L9D3E:
                 .endif
 
+                .if tbe_version
+
+                ldx #<LDD9A
+                ldy #>LDD9A
+                jmp oscli
+
+LDD9A:
+                .text "TB",13
+
+                .else
+
 		LDX	#0
 		LDY	#255
 		LDA	#187		; get ROM containing BASIC
 		JSR	OSBYTE
 		LDA	#142		; enter	language ROM
 		JSR	OSBYTE
+
+                .endif
 
                 .if pres_version
 L9D4C:
@@ -289,6 +306,13 @@ loc_A726:
 		STA	current_line_no_lsb
 		JSR	sub_9FD8
 		JMP	position_edit_mode_cursor
+
+                .if tbe_version
+LDE7D:
+                lda #4
+                ldx #0
+                jmp osbyte
+                .endif
 
 copy_key_edit_mode_command:		
 		LDX	#0

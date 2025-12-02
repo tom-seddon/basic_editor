@@ -198,7 +198,7 @@ loc_858C:
 		BPL	loc_858C
 		LDA	unk_33
 		BEQ	locret_85BE
-		LDA	#7
+		LDA	#error_code(7)
 
 loc_859D:				
 					

@@ -2,7 +2,7 @@ loc_AD39:
 		LDA	byte_46
 		CMP	#$20 ; ' '
 		BNE	loc_AD44
-		LDA	#$1E
+		LDA	#error_code($1E)
 		JMP	loc_859D
 
 loc_AD44:				
@@ -23,11 +23,20 @@ loc_AD44:
 		LDY	#1
 		LDA	($39),Y
 		CMP	byte_41
+
+                .if tbe_version
+
+                bcc loc_AD74
+                bne loc_AD87
+
+                .else
+                
 		BEQ	loc_AD6D
 		BCS	loc_AD87
 		BCC	loc_AD74
-
-loc_AD6D:				
+loc_AD6D:
+                .endif
+                
 		INY
 		LDA	($39),Y
 		CMP	byte_42
@@ -106,11 +115,21 @@ loc_ADE3:
 		JSR	sub_AE9E
 		LDA	byte_3A
 		CMP	byte_36
+
+                .if tbe_version
+
+                bcc loc_ADFA
+                bne loc_AE0D
+
+                .else
+               
 		BEQ	loc_ADF2
 		BCS	loc_AE0D
 		BCC	loc_ADFA
 
-loc_ADF2:				
+loc_ADF2:
+                .endif
+                
 		LDA	byte_39
 		CMP	byte_35
 		BEQ	loc_ADFA

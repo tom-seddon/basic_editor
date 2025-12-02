@@ -47,8 +47,12 @@ loc_9F65:
 beep:					
 					
 		LDA	#7
+                .if tbe_version
+                jmp oswrch
+                .else
 		JSR	OSWRCH
 		RTS
+                .endif
 ; End of function beep
 
 sub_9F6F:				

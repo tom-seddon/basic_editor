@@ -34,6 +34,18 @@ pres_version=bet_version||bet2_version
 
 ;-------------------------------------------------------------------------
 
+error_code: .function number
+                .if tbe_version&&(number)>=2
+                .cerror (number)==2
+result=(number)-1
+                .else
+result=(number)
+                .endif
+                .endfunction result
+                
+                
+;-------------------------------------------------------------------------
+
 *=0
                 .dsection zp
                 .cerror *>$8f,"zp overflow"
@@ -52,6 +64,10 @@ CMD_unknown_CA=$CA              ; tab??
 CMD_UTILS=$EC
 CMD_UPDATE=$ED
                 .endif
+
+                .if tbe_version
+CMD_unknown_BB=$bb
+                .endif
                 
                 .include "../pres_constants.s65"
 
@@ -64,7 +80,12 @@ brkv_routine=LBFEB
                 .if pres_version
 rom_switch_thunk=$a00
                 .endif
-                
+
+;-------------------------------------------------------------------------
+
+                .if tbe_version
+LD4B1=$d4b1
+                .endif
 
 ;-------------------------------------------------------------------------
 ; SLRE---1-
@@ -73,7 +94,13 @@ rom_switch_thunk=$a00
 ; R=copro relocation
 ; E=electron soft key
 
+                .if tbe_version
+ROM_FLAGS=%11100010
+LANGUAGE_ADDR=$b800
+                .else
 ROM_FLAGS = %11000010
+LANGUAGE_ADDR=$8000
+                .endif
                 
 ;-------------------------------------------------------------------------
                 
@@ -96,6 +123,8 @@ rom_start:
 rom_name: .text "BASIC Editor & Toolkit"
                 .elif be_version
                 .text "Basic Editor Two",0
+                .elif tbe_version
+rom_name: .text "Our BASIC Editor",0
                 .else
                 .text "The BASIC Editor",0
                 .endif
@@ -107,6 +136,8 @@ version_number_string:
                 .text "1.00"
                 .elif be_version
                 .text "1.50"
+                .elif tbe_version
+                .text "1.38"
                 .elif acornsoft_version
                 .text "1.32"
                 .else
@@ -123,13 +154,113 @@ aC1984Acornsoft:
                 .text "1985 Acornsoft"
                 nop
                 nop
+                .elif tbe_version
+                .text "1986 Acorn",0
                 .else
                 .text " 1984 Acornsoft",0
                 .endif
 
+                .if tbe_version
+                .dword LANGUAGE_ADDR
+be_command:
+                .text 'be',0
+                .endif
+
 ; A = code, X = ROM number, Y = parameter.
 
-service_entry .proc
+service_entry: .proc
+                .if tbe_version
+
+                cmp #4
+                beq L806D
+                cmp #9
+                bne L80AC
+                pha
+L803E:
+                lda ($f2),y
+                cmp #' '
+                bne L8047
+                iny
+                bne L803E
+L8047:
+                cmp #13
+                bne L80A9
+                jsr osnewl
+                ldx #0
+L8050:
+                lda rom_name,x
+                beq L805B
+                jsr oswrch
+                inx
+                bne L8050
+
+L805B:
+                tax
+L805C:
+                lda version_number_string,x
+                beq L8067
+                jsr oswrch
+                inx
+                bne L805C
+
+L8067:
+                jsr osnewl
+                jmp L80A9
+
+L806D:
+                pha
+                tya
+                pha
+                ldx #0
+L8072:
+                lda ($f2),y
+                cmp #13
+                beq L80A2
+                ora #$20
+                cmp be_command,x
+                bne L8083
+                inx
+                iny
+                bne L8072
+
+L8083:
+                cmp #'.'
+                bne L809E
+                cpx #2
+                bcc L80A7
+L808B:
+                lda #234        ; OSBYTE r/w Tube presence
+                ldx #0
+                ldy #$ff
+                jsr osbyte
+                txa
+                beq L80A7
+                ldx $f4
+                lda #142        ; OSBYTE enter language ROM
+                jmp osbyte
+
+L809E:
+                cmp #' '
+                bne L80A7
+
+L80A2:
+                lda be_command,x
+                beq L808B
+
+L80A7:
+                pla
+                tay
+
+L80A9:
+                pla
+                ldx $f4
+
+L80AC:
+exit:                           ; TODO
+                rts
+
+                .else
+                
                 .if be_version
                 nop
                 .else
@@ -178,6 +309,7 @@ exit:
                 plp
                 .endif
                 rts
+                .endif
                 .endif
                 .endproc
 
@@ -390,7 +522,7 @@ L87DC:
                 .include "pres_bedit.commands.help.s65"
                 .include "pres_bedit.commands.goto.s65"
            
-                .else
+                .elif !tbe_version
 
 help:
                 lda ($f2),y
@@ -472,14 +604,21 @@ check_char:
 
                 .endproc
                 
+                ; fall through to language entry
                 .endif
 
-                ; fall through to language entry
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+                .logical LANGUAGE_ADDR+(*-$8000)
+                
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;                
                 
 language_entry: .proc
+                .if !tbe_version
                 CMP     #1              ; normal language entry?
                 BEQ     language_start
                 RTS
+                .endif
 
 language_start:
                 ; lda #0
@@ -504,9 +643,12 @@ language_start:
                 JSR     reset_program_name
                 LDX     #5
                 STX     unk_61
+                .if !tbe_version
                 LDX     #0
-                LDA     #$D2
+                LDA     #$D2 ; OSBYTE read/write sound suppression
+                             ; status
                 JSR     osbyte_with_y0
+                .endif
                 LDX     #$60 ; '`'
                 STX     unk_31
                 LDX     #0
@@ -514,7 +656,8 @@ language_start:
                 STX     byte_62
                 INX
                 STX     scroll_status   ; 1=scroll, 0=noscroll
-                LDA     #$E4
+                LDA     #$E4 ; OSBYTE Read/write CTRL+SHIFT+function
+                             ; key status (soft key or code)
                 JSR     osbyte_with_y0
                 JSR     clear_5B1_to_600
                 LDA   #$87            ; get MODE in Y (and char under cursor in X)
@@ -535,6 +678,11 @@ language_start:
                 nop
                 nop
                 nop
+                .elif tbe_version
+                lda #26
+                jsr oswrch
+                lda #12
+                jsr oswrch
                 .else
                 lda #22
                 jsr oswrch
@@ -599,6 +747,9 @@ loc_8144:
 loc_8147:                               
                                         
                 JSR     print_command_screen
+                .if tbe_version
+                jsr reset_keys_settings
+                .endif
                 JSR     do_command_line
 
 loc_814D:                               
@@ -898,7 +1049,9 @@ loc_82BA:
                 JSR     print_n_chars
                 JSR     OSNEWL
                 JSR     OSNEWL
+                .if !tbe_version
                 JSR     beep
+                .endif
 
 loc_82CB:                               
                 LDA     #'>'
@@ -1446,7 +1599,7 @@ line_start_ok:
 force_mode_7:                           
                 LDY     #7
                 JSR     validate_mode
-                LDA     #3
+                LDA     #error_code(3)
                 JSR     get_error       ; A = error code
 
 TOP_in_bounds:                          
@@ -1477,11 +1630,15 @@ loc_8387:
                 PLA
                 BMI     loc_83A0
                 CMP     (byte_38),Y
+                .if tbe_version
+                bcc loc_83A0
+                bne loc_839A
+                .else
                 BEQ     loc_8392
                 BCC     loc_83A0
                 BCS     loc_839A
-
 loc_8392:                               
+                .endif
                 INY
                 PLA
                 CMP     (byte_38),Y
@@ -1636,7 +1793,9 @@ error_message: .macro text
                 
 error_messages_table:
                 .error_message "Bad program" ;1
+                .if !tbe_version
                 .error_message "Unknown error message" ;2
+                .endif
                 .error_message "No room - Mode reset" ;3
                 .error_message "Line too long" ;4
 		.error_message "No room"   ;5
@@ -1684,9 +1843,14 @@ error_messages_table:
                 .include "pres_bedit.find_first_non_alpha_char.s65"
                 .include "pres_bedit.memset.s65"
                 .include "pres_bedit.osbyte_with_y0.s65"
+                .if !tbe_version
                 .include "pres_bedit.print_number.s65"
+                .endif
                 .include "pres_bedit.memmove.s65"
                 .include "pres_bedit.gotoxy.s65"
+                .if tbe_version
+                .include "pres_bedit.print_number.s65"
+                .endif
                 .endif
 
 print_n_chars .proc			
@@ -1785,14 +1949,22 @@ loc_90C5:
 		INC	byte_D
 		BNE	find_error_loop
 
-found_error:				
+found_error:
+                .if !tbe_version
 		LDX	#0
+                .endif
 
 copy_error_loop:			
 		AND	#$7F		; mask out top bit (in case)
+                .if tbe_version
+                sta unk_5B1,y
+                .else
 		STA	unk_5B1,X	; store	in error message buffer
+                .endif
 		INY			; next source byte...
+                .if !tbe_version
 		INX			; next dest byte...
+                .endif
 		LDA	($C),Y		; load next byte from error table
 		BPL	copy_error_loop	; taken	if haven't ended up in the next error
 		RTS
@@ -1803,6 +1975,20 @@ copy_error_loop:
                 .include "pres_bedit.commands.load.s65"
                 .include "pres_bedit.read_line.s65"
                 .include "pres_bedit.reset_keys_settings.s65"
+
+                .if tbe_version
+LCC70:
+                lda #237        ; OSBYTE Read/write cursor editing status
+                ldx #0
+                ldy #$ff
+                jsr osbyte
+                txa
+                bne LCC7F
+                jmp LD4B1
+LCC7F:
+                jmp language_entry.loc_814D
+                .endif
+                
                 .include "pres_bedit.command_jump_table.s65"
                 .include "pres_bedit.967A.s65"
                 .include "pres_bedit.commands.tab_key.s65"
@@ -1929,7 +2115,88 @@ LBFEE:
                 .include "pres_bedit.BE98.s65"
                 .endif
 
+                .if tbe_version
+LF72C:
+                lda #236        ; OSBYTE Read/write write character destination status
+                ldx #0
+                ldy #0
+                pha
+                lda #8
+                jsr LF75C
+                pla
+                jsr LF75C
+                tya
+                jsr LF75C
+                dey
+                bmi LF74B
+LF743:
+                lda ($43),y
+                jsr LF75C
+                dey
+                bpl LF743
+
+LF74B:
+                txa
+                tay
+                jsr LF75C
+                dey
+                bmi LF75B
+
+LF753:
+                jsr LF765
+                sta ($45),y
+                dey
+                bpl LF753
+
+LF75B:
+                rts
+
+LF75C:
+                bit $fefa
+                bvc LF75C
+                sta $fefb
+                rts
+
+LF765:
+                bit $fefa
+                bpl LF765
+                lda $fefb
+                rts
+
+LF76E:
+                ldx #$6b
+                stx $45
+                ldx #0
+                stx $46
+                rts
+
+                lda #1
+                sta $43
+                lda #0
+                sta $44
+                jsr LF76E
+                ldy #6
+                ldx #1
+                rts
+
+                ldy #0
+                sty $45
+                ldx #$7f
+                rts
+                
+                .endif
+
                 .if acornsoft_version
+                .if tbe_version
+                .rept 14
+                .dint 0,-1
+                .endrept
+                .byte 0,0
+                ;.cerror *!=$f800
+                .else
                 .fill $c000-*,0
                 .endif
+                .endif
+
+                .endlogical
                 

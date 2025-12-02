@@ -22,7 +22,7 @@ loc_92B1:
 		BNE	loc_92B1
 
 loc_92BE:				
-		LDA	#$17
+		LDA	#error_code($17)
 
 loc_92C0:				
 		JMP	loc_859D
@@ -69,7 +69,7 @@ loc_92F1:
 		BNE	loc_92F1
 
 loc_92FE:				
-		LDA	#$18
+		LDA	#error_code($18)
 		BNE	loc_92C0
 
 loc_9302:				
@@ -160,7 +160,7 @@ loc_9369:
 		STA	current_line_no_msb
 		PLA
 		STA	current_line_no_lsb
-		LDA	#8
+		LDA	#error_code(8)
 		JSR	get_error	; A = error code
 
 loc_937B:				

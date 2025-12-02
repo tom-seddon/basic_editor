@@ -41,9 +41,15 @@ atoi_error:
 is_digit:				
 		INX			; count	number of digits
 		CPX	#5		; 5 digits?
+                .if !tbe_version
 		BEQ	check_most_significant_digit ; ==5 is OK
+                .endif
 		BCC	add_digit	; <5 is	OK
+                .if tbe_version
+                bne atoi_error
+                .else
 		BCS	atoi_error		; >5 is	an error
+                .endif
 
 check_most_significant_digit:		
 		PLA

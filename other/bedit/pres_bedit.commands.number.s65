@@ -20,7 +20,7 @@ loc_B3BB:
 		LDA	unk_1E
 		AND	#1
 		BEQ	loc_B3D2
-		LDA	#$10
+		LDA	#error_code($10)
 
 loc_B3CF:				
 		JMP	loc_859D
@@ -28,7 +28,7 @@ loc_B3CF:
 loc_B3D2:				
 		LDA	unk_1E
 		BNE	locret_B3DA
-		LDA	#$F
+		LDA	#error_code($F)
 		BNE	loc_B3CF
 
 locret_B3DA:				

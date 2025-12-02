@@ -68,7 +68,7 @@ tab_command:
 		BEQ	loc_977A
 
 loc_9775:				
-		LDA	#$21 ; '!'
+		LDA	#error_code($21)
 		JMP	loc_859D
 
 loc_977A:				

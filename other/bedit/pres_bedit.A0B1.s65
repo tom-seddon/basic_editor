@@ -68,11 +68,16 @@ loc_A115:
 		LDX	#0
 		LDA	byte_27
 		CMP	byte_24
+                .if tbe_version
+                BCC loc_A127
+                bne loc_A129
+                .else
 		BEQ	loc_A121
 		BCS	loc_A129
 		BCC	loc_A127
-
 loc_A121:				
+                .endif
+
 		LDA	byte_26
 		CMP	byte_23
 		BCS	loc_A129

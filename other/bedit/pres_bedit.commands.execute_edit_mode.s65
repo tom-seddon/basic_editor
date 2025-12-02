@@ -4,7 +4,7 @@ execute_edit_mode_command:
 		BNE	loc_AC7E	; taken	if slot	not empty
 		CMP	byte_46		; slot id 6 empty?
 		BEQ	locret_AC7D	; taken	if slot	empty
-		LDA	#6		; "Missing line	command"
+		LDA	#error_code(6)  ; "Missing line	command"
 		BNE	execute_edit_mode_command_error
 
 locret_AC7D:				
@@ -19,7 +19,7 @@ loc_AC7E:
 		LDA	byte_43
 		CMP	#$20 ; ' '
 		BEQ	loc_AC94
-		LDA	#$1A
+		LDA	#error_code($1A)
 		BNE	execute_edit_mode_command_error
 
 loc_AC94:				
@@ -43,7 +43,7 @@ loc_ACA7:
 		BNE	loc_ACC7
 		CMP	#$64 ; 'd'
 		BEQ	loc_ACB9
-		LDA	#$1F		; "Incomplete line command"
+		LDA	#error_code($1F) ; "Incomplete line command"
 		BNE	execute_edit_mode_command_error
 
 loc_ACB9:				
@@ -52,11 +52,11 @@ loc_ACB9:
 		BEQ	loc_ACCC
 		CMP	#$45 ; 'E'
 		BEQ	loc_ACCC
-		LDA	#$1C		; "Invalid delete command"
+		LDA	#error_code($1C) ; "Invalid delete command"
 		BNE	execute_edit_mode_command_error
 
 loc_ACC7:				
-		LDA	#$1B		; "Incompatible	line commands"
+		LDA	#error_code($1B) ; "Incompatible	line commands"
 
 execute_edit_mode_command_error:					
 					
@@ -98,7 +98,7 @@ loc_ACF4:
 		LDX	#3
 		JSR	sub_AD0E
 		BCS	loc_AD09
-		LDA	#$1D
+		LDA	#error_code($1D)
 		BNE	execute_edit_mode_command_error
 
 loc_AD09:				
@@ -131,10 +131,19 @@ sub_AD1A:
 		LDX	byte_41
 		CPX	byte_44
 		BCC	locret_AD38
+
+                .if tbe_version
+
+                bne loc_AD2A
+
+                .else
+
 		BEQ	loc_AD24
 		BCS	loc_AD2A
-
 loc_AD24:				
+
+                .endif
+
 		LDY	byte_42
 		CPY	byte_45
 		BCC	locret_AD38

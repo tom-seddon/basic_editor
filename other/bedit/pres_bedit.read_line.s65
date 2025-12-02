@@ -18,11 +18,20 @@ read_line: .proc
 		INY
 		TYA
 		PHA
+                .if tbe_version
+                bcc LCBDA
+                .else
 		BCC	loc_9497
+                .endif
 		JSR	OSNEWL
 
-loc_9497:				
+                .if !tbe_version
+loc_9497:
+                .endif
 		JSR	clear_escape_condition
+                .if tbe_version
+LCBDA:
+                .endif
 		PLA
 		PLP
                 RTS

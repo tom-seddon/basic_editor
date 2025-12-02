@@ -52,7 +52,7 @@ loc_BE23:
 					;
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	#$25 ; '%'
+		LDA	#error_code($25)
 		JMP	loc_859D
 
 loc_BE2B:				

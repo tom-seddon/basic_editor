@@ -20,6 +20,13 @@ get_HIMEM_for_mode_X:
                 INY
                 BEQ     is_not_tube
 
+                .if tbe_version
+is_tube:
+                lda #$84   ; OSBYTE read bottom of display RAM address
+                bne LB9B0
+is_not_tube:
+                lda #$85 ; OSBYTE read bottom of display RAM address for given mode
+                .else
 is_tube:
                 lda #0
                 sta HIMEM+0
@@ -29,6 +36,10 @@ is_tube:
 
 is_not_tube:
                 LDA     #133    ;read HIMEM for given MODE
+                .endif
+                .if tbe_version
+LB9B0:
+                .endif
                 JSR     OSBYTE
                 STX     HIMEM
                 STY     HIMEM+1

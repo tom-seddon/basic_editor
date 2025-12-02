@@ -63,7 +63,7 @@ loc_A905:
 		BEQ	loc_A928
 		LDA	byte_6A7
 		BNE	loc_A91F
-		LDA	#$25 ; '%'      ; "Updates would make line too long"
+		LDA	#error_code($25) ; "Updates would make line too long"
 		JMP	loc_859D
 
 loc_A91F:				
@@ -229,7 +229,7 @@ loc_A9F3:
 					; Y is LSB of size
 		LDA	byte_6A8
 		BEQ	locret_AA05
-		LDA	#$24 ; '$'
+		LDA	#error_code($24)
 		JMP	loc_859D
 
 locret_AA05:				

@@ -10,6 +10,15 @@ L9717:
                 .endif
 
 loc_9D2D:
+                .if tbe_version
+
+                lda #26
+                jsr oswrch
+                lda #12
+                jsr oswrch
+
+                .else
+
                 lda #22
                 jsr oswrch
                 lda screen_mode
@@ -18,7 +27,9 @@ loc_9D2D:
 		BCC	loc_9D3F
 		JMP	language_entry.loc_814D
 
-loc_9D3F:				
+loc_9D3F:
+
+                .endif        
 		JSR	set_palette
 		LDA	#2
 		STA	editor_mode_id	; 1=command mode, 2=edit mode

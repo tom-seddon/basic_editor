@@ -362,7 +362,18 @@ Looks like a binary patch. Main differences:
 
 ### `TBE` vs version 1.32
 
-To be continued...
+Looks like it was rebuilt from altered source, and build for use with
+!6502Tube rather than a genuine BBC. Main changes:
+
+- rewritten service routine
+- language code assembled to run at $b800 (plus associated changes)
+- resets input settings (F keys, etc.) each time round the command
+  loop
+- doesn't forcibly enable sound on entry
+- clears ESCAPE condition only when ESCAPE pressed
+- various minor code tweaks to reduce code size
+- command to enable cursor key editing in edit mode?
+- enters BASIC by doing `*TB` (a HIBASIC called `TB` is supplied)
 
 # 64tass format source files
 

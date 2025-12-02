@@ -7,7 +7,7 @@ set_colour_from_command_line:
 		BEQ	loc_BA98
 
 back_command_error:					
-		LDA	#$15
+		LDA	#error_code($15)
 		JMP	loc_859D
 
 loc_BA98:				

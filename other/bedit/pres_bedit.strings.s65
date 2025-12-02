@@ -2,7 +2,7 @@ aSearchString:	.text "  Search string  : "
 aReplaceString:	.text "  Replace string : "
 
 hud_text_begin:
-                .if be_version
+                .if be_version||tbe_version
                 .byte 26
                 .byte 12
                 .else
@@ -12,15 +12,16 @@ hud_text_begin:
                 .if acornsoft_version
 aTheBasicEditor:
                 .if be_version
-                .text "Basic Editor Two"
+                .text "Basic Editor Two",0
+                .elif tbe_version
+                .text "Our BASIC Editor"
                 .else
-                .text "The BASIC Editor"
+                .text "The BASIC Editor",0
                 .endif
                 .else
 aBasicEditorToolkit:
-                .text "BASIC Editor & Toolkit"
+                .text "BASIC Editor & Toolkit",0
                 .endif
-                .byte 0
                 .byte 13,10,10
                 .text "Program size"
                 .if acornsoft_version
@@ -120,6 +121,7 @@ aOn:		.text " on "
 aTabValue:	.text "Tab value   : "
 aLastSearch:	.text "Last search : "
 aNone_0:	.text "None"
+                .if !tbe_version
 be_cmd:
                 .if be_version
                 .text "be80",0
@@ -143,5 +145,6 @@ new_osword_stuff:
                 .byte 2
 load_string: .text "Load",0
 append_string: .text "Append",0
+                .endif
                 .endif
                 

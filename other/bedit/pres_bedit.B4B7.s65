@@ -62,10 +62,15 @@ loc_B508:
 		LDY	#0
 		LDA	($33),Y
 		CMP	#$40 ; '@'
+                .if !tbe_version
 		BEQ	loc_B512
+                .endif
 		BNE	loc_B52F
 
-loc_B512:				
+                .if !tbe_version
+loc_B512:
+                .endif
+
 		INY
 
 loc_B513:				
@@ -82,10 +87,11 @@ loc_B521:
 		BCS	loc_B52F
 		LDA	($1F),Y
 		JSR	sub_B484
+                .if !tbe_version
 		BCS	loc_B52F
+                .endif
 		BCC	loc_B532
-
-loc_B52F:				
+loc_B52F:
 		CLC
 		BCC	loc_B533
 
@@ -162,7 +168,7 @@ loc_B53E:
 		JMP	loc_B463
 
 loc_B59E:				
-		LDA	#$11
+		LDA	#error_code($11)
 		JMP	loc_859D
 
 loc_B5A3:				

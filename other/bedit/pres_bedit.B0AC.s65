@@ -167,8 +167,10 @@ isnumchar:
 		RTS
 ; End of function isnumchar
 
+                .if !tbe_version
 		.byte  $B1 ; ±
 		.byte  $27 ; '
+                .endif
 
 increment_27:				
 		JSR	ensure_1_byte_spare

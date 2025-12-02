@@ -74,5 +74,5 @@ goto_command:
 		JMP	loc_B370
 
 loc_B3A6:				
-		LDA	#$22 ; '"'
+		LDA	#error_code($22)
 		JMP	loc_859D

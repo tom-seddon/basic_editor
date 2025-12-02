@@ -37,7 +37,7 @@ loc_9C26:
 					;
 					; Exit:
 					; current_line_no_lsb, current_line_no_msb = the line number
-		LDA	#4		; "Line	too long"
+		LDA	#error_code(4)  ; "Line	too long"
 		JMP	loc_859D
 ; End of function detokenize_one_line
 

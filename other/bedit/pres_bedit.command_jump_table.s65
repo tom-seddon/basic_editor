@@ -9,7 +9,11 @@ command_jump_table:.byte $20		   ; unknown
 		.word it_cmd		; address
 		.byte 8			; unknown
 		.byte $1B		; command_id
+                .if tbe_version
+                .word LCC70
+                .else
 		.word language_entry.loc_814D		; address
+                .endif
 		.byte 0			; unknown
 		.byte CMD_toggle_insert_overtype; command_id
 		.word toggle_insert_overtype_command; address
@@ -94,12 +98,25 @@ command_jump_table:.byte $20		   ; unknown
 		.byte 0			; unknown
 		.byte $CD		; command_id
 		.word ctrl_cursor_right_edit_mode_command; address
+                .if tbe_version
+                .byte $19       ; unknown
+                .else
 		.byte $10		; unknown
+                .endif
 		.byte $CE		; command_id
+                .if tbe_version
+                .word end_edit_mode_command ; address
+                .byte $19                   ; unknown
+                .else
 		.word ctrl_cursor_down_edit_mode_command; address
 		.byte $10		; unknown
+                .endif
 		.byte $CF		; command_id
+                .if tbe_version
+                .word top_edit_mode_command
+                .else
 		.word ctrl_cursor_up_edit_mode_command;	address
+                .endif
 		.byte 2			; unknown
 		.byte CMD_LOAD		; command_id
 		.word load_command	; address
@@ -159,11 +176,24 @@ command_jump_table:.byte $20		   ; unknown
 		.word copy_key_edit_mode_command; address
 		.byte 0			; unknown
                 .if acornsoft_version
+                .if tbe_version
+                .byte CMD_unknown_BB
+                .else
 		.byte CMD_tab_key	; command_id
+                .endif
                 .else
                 .byte CMD_unknown_CA
                 .endif
+                .if tbe_version
+                .word LDE7D
+                .else
 		.word tab_key_command	; address
+                .endif
+                .if tbe_version
+                .byte 0
+                .byte CMD_tab_key
+                .word tab_key_command
+                .endif
 		.byte 0			; unknown
 		.byte CMD_RUN		; command_id
 		.word run_or_exit_command; address
@@ -260,6 +290,13 @@ command_jump_table:.byte $20		   ; unknown
                 .byte CMD_UPDATE
                 .word update_command
                 .endif
+
+                ; .if tbe_version
+                ; ; ???
+                ; .word $ffff
+                ; .byte 0
+                ; .byte 0
+                ; .endif
                 
                 ;.byte 0                  ; unknown
                 ; .byte CMD_ZAUTOSAVE      ; command_id

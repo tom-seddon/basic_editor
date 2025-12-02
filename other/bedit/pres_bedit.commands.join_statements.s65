@@ -96,7 +96,7 @@ loc_B987:
 		BCC	loc_B9B2
 
 loc_B9AD:				
-		LDA	#$14
+		LDA	#error_code($14)
 		JMP	loc_859D
 
 loc_B9B2:				

@@ -49,11 +49,21 @@ locret_AACC:
 loc_AACD:				
 		LDA	cursor_offset	; offset of cursor in detokenized buffer
 		CMP	byte_400
+
+                .if tbe_version
+
+                bcc loc_AADC
+                bne locret_AACC
+
+                .else
+                
 		BEQ	loc_AAD8
 		BCS	locret_AACC
 		BCC	loc_AADC
-
 loc_AAD8:				
+
+                .endif
+                
 		INC	cursor_offset	; offset of cursor in detokenized buffer
 		BNE	loc_AAA6
 

@@ -148,17 +148,20 @@ _other_stuff: _make_output_folders
 	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_be FLAG=be_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_be.rom" "$(_ORIG)/acorn/be"
 
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_tbe FLAG=tbe_version
+	$(SHELLCMD) cmp "$(DEST)/bedit_tbe.rom" "$(_ORIG)/acorn/tbe"
+
 .PHONY:_other_beditor_assemble
 _other_bedit_assemble: STEM=$(error must specify STEM)
 _other_bedit_assemble: FLAG=$(error must specify FLAG)
-_other_bedit_assemble: _TASS:=$(TASS) $(TASSARGS) -Wno-implied-reg
+_other_bedit_assemble: _TASS:=$(TASS) $(TASSARGS) -Wno-implied-reg --line-numbers
 _other_bedit_assemble:
 	$(_V)$(_TASS) "./other/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
-_pres_butils_assemble: _TASS:=$(TASS) --case-sensitive $(TASSARGS) 
+_pres_butils_assemble: _TASS:=$(TASS) --case-sensitive $(TASSARGS) --line-numbers
 _pres_butils_assemble:
 	$(_V)$(_TASS) "./other/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
 

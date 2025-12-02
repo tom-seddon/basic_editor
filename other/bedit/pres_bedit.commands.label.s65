@@ -48,14 +48,14 @@ loc_B5EC:
 		STA	current_line_no_lsb
 		LDA	unk_1E
 		BNE	locret_B5FB
-		LDA	#$13
+		LDA	#error_code($13)
 		JMP	loc_859D
 
 locret_B5FB:				
 		RTS
 
 label_edit_mode_command:		
-		LDA	#$13
+		LDA	#error_code($13)
 		PHA
 		LDA	#<label_command ; $B3 ; -$4D
 		STA	unk_6B1
@@ -64,7 +64,7 @@ label_edit_mode_command:
 		BNE	loc_B618
 
 number_edit_mode_command:		
-		LDA	#$F
+		LDA	#error_code($F)
 		PHA
 		LDA	#<number_command ; $AB ; -$55
 		STA	unk_6B1
@@ -283,7 +283,7 @@ loc_B72F:
 		CLC
 		ADC	byte_36
 		BCC	loc_B745
-		LDA	#$12
+		LDA	#error_code($12)
 		JMP	loc_859D
 
 loc_B745:				

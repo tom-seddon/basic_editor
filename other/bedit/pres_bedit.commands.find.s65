@@ -52,7 +52,7 @@ loc_9113:
 loc_9122:				
 		LDA	byte_6AF
 		BNE	loc_912C
-		LDA	#8		; "String not found"
+		LDA	#error_code(8) ; "String not found"
 		JSR	get_error	; A = error code
 
 loc_912C:				

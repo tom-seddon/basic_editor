@@ -1,4 +1,18 @@
-clear_5B1_to_600:			
+clear_5B1_to_600:
+
+                .if tbe_version
+
+                lda #0
+                sta byte_15
+                ldy #$4f
+                lda #$20
+clear_5B1_to_600_loop:
+                sta unk_5B1,y
+                dey
+                bpl clear_5B1_to_600_loop
+                rts
+
+                .else
 					
 		LDA	#0
 		STA	byte_15
@@ -17,3 +31,5 @@ clear_5B1_to_600:
 					; A holds value	to write.
 		RTS
 ; End of function clear_5B1_to_600
+
+                .endif
