@@ -117,9 +117,9 @@ clean:
 ##########################################################################
 ##########################################################################
 
-.PHONY:_pres_stuff
-_pres_stuff: _ORIG:=./pres/orig
-_pres_stuff: _make_output_folders
+.PHONY:_other_stuff
+_other_stuff: _ORIG:=./other/orig
+_other_stuff: _make_output_folders
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils FLAG=baseds1_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils2 FLAG=baseds1_all_version
 	$(_V)$(MAKE) _pres_butils_assemble STEM=butils_elk FLAG=baseds1_elk_version
@@ -134,30 +134,30 @@ _pres_stuff: _make_output_folders
 	$(SHELLCMD) cmp "$(DEST)/butils_bet.rom" "$(_ORIG)/BET/BET.1.rom"
 	$(SHELLCMD) cmp "$(DEST)/butils_bet2.rom" "$(_ORIG)/BET2/BET2.1.rom"
 
-	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_acornsoft FLAG=acornsoft_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_acornsoft.rom" "./old_releases/1.32_original/basiced.rom"
 
-	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet FLAG=bet_version
-	$(_V)$(MAKE) _pres_bedit_assemble STEM=bedit_bet2 FLAG=bet2_version
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_bet FLAG=bet_version
+	$(_V)$(MAKE) _other_bedit_assemble STEM=bedit_bet2 FLAG=bet2_version
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet.rom" "$(_ORIG)/BET/BET.0.rom"
 	$(SHELLCMD) cmp "$(DEST)/bedit_bet2.rom" "$(_ORIG)/BET2/BET2.0.rom"
 
 	$(_V)$(SHELLCMD) concat -o "$(DEST)/BET.32KB.rom" "$(DEST)/bedit_bet.rom" "$(DEST)/butils_bet.rom"
 	$(SHELLCMD) cmp "$(DEST)/BET.32KB.rom" "$(_ORIG)/BET/BET.32KB.rom"
 
-.PHONY:_pres_beditor_assemble
-_pres_bedit_assemble: STEM=$(error must specify STEM)
-_pres_bedit_assemble: FLAG=$(error must specify FLAG)
-_pres_bedit_assemble: _TASS:=$(TASS) $(TASSARGS) -Wno-implied-reg
-_pres_bedit_assemble:
-	$(_V)$(_TASS) "./pres/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
+.PHONY:_other_beditor_assemble
+_other_bedit_assemble: STEM=$(error must specify STEM)
+_other_bedit_assemble: FLAG=$(error must specify FLAG)
+_other_bedit_assemble: _TASS:=$(TASS) $(TASSARGS) -Wno-implied-reg
+_other_bedit_assemble:
+	$(_V)$(_TASS) "./other/bedit/pres_bedit.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
 
 .PHONY:_pres_butils_assemble
 _pres_butils_assemble: STEM=$(error must specify STEM)
 _pres_butils_assemble: FLAG=$(error must specify FLAG)
 _pres_butils_assemble: _TASS:=$(TASS) --case-sensitive $(TASSARGS) 
 _pres_butils_assemble:
-	$(_V)$(_TASS) "./pres/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
+	$(_V)$(_TASS) "./other/butils/pres_butils.s65" "-D$(FLAG)=true" "-o$(DEST)/$(STEM).rom" "-L$(DEST)/$(STEM).lst" "-l$(DEST)/$(STEM).sym"
 
 
 ##########################################################################
@@ -176,6 +176,6 @@ _pres_stuff_2: _make_output_folders
 _tom_emacs:
 	$(_V)$(MAKE) build
 	$(_V)$(SHELLCMD) blank-line
-	$(_V)$(MAKE) _pres_stuff
+	$(_V)$(MAKE) _other_stuff
 	$(_V)$(SHELLCMD) blank-line
 	curl --connect-timeout 0.25 --silent -G 'http://localhost:48075/reset/b2' --data-urlencode "config=BASIC Editor Test"
