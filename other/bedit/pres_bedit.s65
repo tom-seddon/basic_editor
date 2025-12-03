@@ -2116,7 +2116,7 @@ LBFEE:
                 .endif
 
                 .if tbe_version
-LF72C:
+LF72C: .block
                 lda #236        ; OSBYTE Read/write write character destination status
                 ldx #0
                 ldy #0
@@ -2183,7 +2183,8 @@ LF76E:
                 sty $45
                 ldx #$7f
                 rts
-                
+
+                .endblock
                 .endif
 
                 .if acornsoft_version
