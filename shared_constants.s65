@@ -1,8 +1,14 @@
 ;-------------------------------------------------------------------------
 
-; Language entry point modes. Must have bit 7 set, and may not be 255.
-;
-LANGUAGE_MODE_NORMAL=$81
-LANGUAGE_MODE_SHIFT_ESCAPE=$82
-LANGUAGE_MODE_ZSAVE=$83
-LANGUAGE_MODE_ZRUN=$84
+; Language entry modes. Must have bit 7 set, and may not be 255.
+; 
+; If bit 6 is set, mode is intended for interactive use from BASIC:
+; when an error occurs, print it, and enter BASIC after arranging for
+; an OLD. If bit 6 is clear, mode is a standard entry mode: when an
+; error occurs, print it, and return to the command mode loop.
+
+LANGUAGE_MODE_NORMAL=$80
+LANGUAGE_MODE_SHIFT_ESCAPE=$81
+                
+LANGUAGE_MODE_ZSAVE=$C0
+LANGUAGE_MODE_ZRUN=$C1

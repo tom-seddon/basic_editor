@@ -539,7 +539,7 @@ init_language_entry_mode: .proc
                 ; read the user flag that was set by the service call
                 ; 4 handler.
                 lda #1
-                ldx #0
+                ldx #0          ; reset value to 0
                 jsr osbyte
 
                 stx language_entry_mode
@@ -12611,7 +12611,14 @@ return:
 
 maybe_verbose_exit_on_error: .proc
                 bit language_entry_mode
+
+                ; taken if not a specific language entry mode. Can end
+                ; up in this situation if the ROM is entered with
+                ; *FX142.
                 bpl find_program_name.return
+
+                ; taken if this entry mode is a standard entry mode.
+                bvc find_program_name.return
 
                 jsr display_error_message
                 jmp exit_and_OLD
